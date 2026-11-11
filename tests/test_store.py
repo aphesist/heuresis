@@ -515,3 +515,21 @@ def test_scope_filters_and_lexical_any_date():
     assert ids == ["doc/a", "doc/c", "other/b"]
     ids = sorted(p.unit_id for p in s.lexical_any_date("tariff", Scope(unit_prefix="doc/"), 10))
     assert ids == ["doc/a", "doc/c"]
+
+
+def test_time_profile_unversioned_versioned_and_cache():
+    s = make([ev("e1", "a", "create", "1970-01-01", "one"),
+              ev("e2", "b", "create", "1970-01-01", "two")])
+    assert s.time_profile() == {"versioned": False, "min_valid_from": "1970-01-01",
+                                "max_valid_from": "1970-01-01"}
+    assert Store(":memory:").time_profile() == {"versioned": False, "min_valid_from": None,
+                                                "max_valid_from": None}
+    # a second version of one unit makes the corpus versioned; rebuild drops the cache
+    s.add(events=[ev("e3", "a", "replace", "2021-05-01", "uno")])
+    s.rebuild()
+    assert s.time_profile() == {"versioned": True, "min_valid_from": "1970-01-01",
+                                "max_valid_from": "2021-05-01"}
+    # a closed version alone (repeal) also counts
+    r = make([ev("e1", "a", "create", "2020-01-01", "one"),
+              ev("e2", "a", "repeal", "2022-01-01")])
+    assert r.time_profile()["versioned"] is True

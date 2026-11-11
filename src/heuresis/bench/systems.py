@@ -54,8 +54,11 @@ AGENT_SYSTEM = (
 AGENT_MORE = "Reply with exactly one line `SEARCH: <query>` to search again, or answer now."
 AGENT_LAST = "No searches remain. Answer now."
 
-SYSTEM_NAMES = ("closed_book", "bm25", "vector", "hybrid_rerank", "agentic",
+SYSTEM_NAMES = ("closed_book", "bm25", "vector", "hybrid", "hybrid_rerank", "agentic",
                 "long_context", "engine", "oracle")
+#: Systems that also get a time-aware copy (suffix ``+asof``) under ``time_aware_variants``.
+VARIANT_BASES = ("bm25", "vector", "hybrid", "hybrid_rerank", "agentic")
+VARIANT_SUFFIX = "+asof"
 
 _CONF = re.compile(r"^\s*CONFIDENCE\s*:\s*(\d+(?:\.\d+)?)\s*%?\s*$", re.I | re.M)
 _SEARCH = re.compile(r"^\s*SEARCH\s*:\s*(.+?)\s*$", re.I)
@@ -267,6 +270,7 @@ class System:
     reason = ""
     time_aware = False
     cites = False
+    exploratory = False
 
     def __init__(self, ctx: BenchContext, *, time_aware: bool = False):
         self.ctx = ctx
@@ -274,7 +278,8 @@ class System:
 
     def describe(self) -> dict:
         return {"name": self.name, "available": self.available, "reason": self.reason,
-                "time_aware": self.time_aware, **self.params()}
+                "time_aware": self.time_aware, "exploratory": self.exploratory,
+                **self.params()}
 
     def params(self) -> dict:
         return {}
@@ -353,28 +358,43 @@ class Vector(_Retrieving):
                                       k or self.k)
 
 
-class HybridRerank(_Retrieving):
-    name = "hybrid_rerank"
+class Hybrid(_Retrieving):
+    """BM25 and dense fused with RRF, no reranker."""
+
+    name = "hybrid"
+    rerank = False
 
     def retrieve(self, text, q, k=None):
         cfg = dataclasses.replace(
-            self.ctx.config.retrieve, early_stop=False, dense=True, rerank=True,
+            self.ctx.config.retrieve, early_stop=False, dense=True, rerank=self.rerank,
             expand=False, rewrite=False, second_round=False, rerank_out=k or self.k)
         query = Query(text=text, as_of=self.as_of(q))
         return cascade(self.ctx.store(), query, cfg, embedder=self.ctx.embedder,
                        reranker=self.ctx.reranker, trace=[])
 
 
-class Agentic(HybridRerank):
+class HybridRerank(Hybrid):
+    """Hybrid retrieval followed by the cross-encoder reranker."""
+
+    name = "hybrid_rerank"
+    rerank = True
+
+
+class Agentic(Hybrid):
+    """Search-tool loop. Its retriever is ``hybrid``, or ``hybrid_rerank`` when
+    ``agent_rerank`` is true."""
+
     name = "agentic"
 
     def __init__(self, ctx: BenchContext, *, k: int = 5, max_actions: int = 4,
-                 time_aware: bool = False):
+                 time_aware: bool = False, agent_rerank: bool = False):
         super().__init__(ctx, k=k, time_aware=time_aware)
         self.max_actions = max_actions
+        self.rerank = bool(agent_rerank)
 
     def params(self) -> dict:
-        return {"k": self.k, "max_actions": self.max_actions}
+        return {"k": self.k, "max_actions": self.max_actions,
+                "retriever": "hybrid_rerank" if self.rerank else "hybrid"}
 
     def _answer(self, q: Question) -> Result:
         n = self.max_actions
@@ -511,28 +531,45 @@ class EngineSystem(System):
 
 
 _CLASSES: dict[str, Callable[..., System]] = {
-    "closed_book": ClosedBook, "bm25": BM25, "vector": Vector, "hybrid_rerank": HybridRerank,
+    "closed_book": ClosedBook, "bm25": BM25, "vector": Vector, "hybrid": Hybrid,
+    "hybrid_rerank": HybridRerank,
     "agentic": Agentic, "long_context": LongContext, "engine": EngineSystem, "oracle": Oracle,
 }
 
 
 def build_systems(ctx: BenchContext, names: tuple[str, ...] | list[str] = SYSTEM_NAMES, *,
                   k: int = 8, agent_k: int = 5, max_actions: int = 4,
-                  time_aware: bool = False, long_context_limit: int = 90_000) -> list[System]:
-    """Build the named systems. ``time_aware`` applies to baselines 2-6 only."""
+                  time_aware: bool = False, long_context_limit: int = 90_000,
+                  agent_rerank: bool = False,
+                  time_aware_variants: bool = False) -> list[System]:
+    """Build the named systems. ``time_aware`` applies to baselines 2-6 only.
+
+    ``agent_rerank`` picks the agentic search tool's retriever: ``hybrid`` (default) or
+    ``hybrid_rerank``. With ``time_aware_variants`` a time-aware copy of each of
+    ``VARIANT_BASES`` that was asked for is appended, named with the suffix ``+asof``
+    and marked exploratory, so one run holds both."""
+    def make(n: str, aware: bool) -> System:
+        if n == "closed_book":
+            return ClosedBook(ctx)
+        if n in ("bm25", "vector", "hybrid", "hybrid_rerank"):
+            return _CLASSES[n](ctx, k=k, time_aware=aware)
+        if n == "agentic":
+            return Agentic(ctx, k=agent_k, max_actions=max_actions, time_aware=aware,
+                           agent_rerank=agent_rerank)
+        if n == "long_context":
+            return LongContext(ctx, limit_tokens=long_context_limit, time_aware=aware)
+        return _CLASSES[n](ctx)
+
     out: list[System] = []
     for n in names:
         if n not in _CLASSES:
             raise ValueError(f"unknown system {n!r}; known: {', '.join(SYSTEM_NAMES)}")
-        if n == "closed_book":
-            s = ClosedBook(ctx)
-        elif n in ("bm25", "vector", "hybrid_rerank"):
-            s = _CLASSES[n](ctx, k=k, time_aware=time_aware)
-        elif n == "agentic":
-            s = Agentic(ctx, k=agent_k, max_actions=max_actions, time_aware=time_aware)
-        elif n == "long_context":
-            s = LongContext(ctx, limit_tokens=long_context_limit, time_aware=time_aware)
-        else:
-            s = _CLASSES[n](ctx)
-        out.append(s)
+        out.append(make(n, time_aware))
+    if time_aware_variants:
+        for n in names:
+            if n in VARIANT_BASES:
+                v = make(n, True)
+                v.name = n + VARIANT_SUFFIX
+                v.exploratory = True
+                out.append(v)
     return out

@@ -228,11 +228,20 @@ def test_expand_off():
 def test_rerank_on_sorts_and_stages():
     lex = [P("A", score=3, text="aa"), P("B", score=2, text="bbbbbb"),
            P("C", score=1, text="cccc")]
-    out, trace = run(FakeStore(lexical=lex), reranker=LenReranker())
+    out, trace = run(FakeStore(lexical=lex), c=cfg(rerank=True), reranker=LenReranker())
     assert [p.unit_id for p in out] == ["B", "C", "A"]
     assert all(p.stage == "rerank" for p in out)
     assert out[0].score == 6.0
     assert stages(trace) == ["lexical", "rerank"]
+
+
+def test_default_config_has_rerank_off_and_returns_top_of_list():
+    assert RetrieveCfg().rerank is False
+    lex = [P(f"U{i}", score=10 - i, text="x" * (i + 1)) for i in range(12)]
+    out, trace = run(FakeStore(lexical=lex), c=RetrieveCfg(early_stop=False),
+                     reranker=LenReranker())
+    assert [p.unit_id for p in out] == [f"U{i}" for i in range(8)]
+    assert stages(trace) == ["lexical"]
 
 
 def test_rerank_off_by_switch_or_missing():
@@ -252,7 +261,7 @@ def test_rerank_scores_only_top_rerank_in():
             return super().score(query, texts)
 
     lex = [P(f"U{i}", score=10 - i, text="x" * (i + 1)) for i in range(6)]
-    out, _ = run(FakeStore(lexical=lex), c=cfg(rerank_in=3, rerank_out=6),
+    out, _ = run(FakeStore(lexical=lex), c=cfg(rerank=True, rerank_in=3, rerank_out=6),
                  reranker=Counting())
     assert Counting.n == 3
     assert [p.unit_id for p in out][:3] == ["U2", "U1", "U0"]
@@ -261,7 +270,7 @@ def test_rerank_scores_only_top_rerank_in():
 
 def test_full_pipeline_order_of_traces():
     store = FakeStore(lexical=[P("A", score=3)], dense=[P("B")], links={"A": ["X"]})
-    out, trace = run(store, c=cfg(expand=True), embedder=FakeEmbedder(),
+    out, trace = run(store, c=cfg(expand=True, rerank=True), embedder=FakeEmbedder(),
                      reranker=LenReranker())
     assert stages(trace) == ["lexical", "dense", "expand", "rerank"]
     assert all(t.ms >= 0 for t in trace)
@@ -306,7 +315,7 @@ def test_early_stop_still_reranks():
     lex = [P("A", score=10, text="a"), P("B", score=5, text="bbb"),
            P("C", score=1, text="cc"), P("D", score=.5, text="d")]
     out, trace = run(FakeStore(lexical=lex),
-                     c=cfg(early_stop=True, rerank_out=3), reranker=LenReranker())
+                     c=cfg(early_stop=True, rerank=True, rerank_out=3), reranker=LenReranker())
     assert [p.unit_id for p in out] == ["B", "C", "A"]
     assert stages(trace) == ["lexical", "rerank"]
 

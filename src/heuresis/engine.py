@@ -171,9 +171,28 @@ class Engine:
                                      rules=self.domain.rules(), classifier=self.classifier,
                                      as_of=as_of, scope=scope)
 
+    def _settle_date(self, query: Query, as_of: AsOf | None) -> tuple[Query, str]:
+        """Keep a question-extracted as-of date only when it can mean "the state at that
+        date": the corpus must hold history and the date must not precede it. Otherwise
+        the date is just a fact named in the question; search as of today instead. A
+        caller-supplied ``as_of`` is never touched. Returns (query, trace note)."""
+        if as_of is not None or not query.dated or query.as_of.valid is None:
+            return query, ""
+        d = query.as_of.valid
+        prof = self.store.time_profile()
+        if not prof["versioned"]:
+            why = "the corpus has no version history"
+        elif prof["min_valid_from"] is not None and d < prof["min_valid_from"]:
+            why = f"it is earlier than the first version ({prof['min_valid_from']})"
+        else:
+            return query, ""
+        new = dataclasses.replace(query, as_of=dataclasses.replace(query.as_of, valid=None),
+                                  dated=False)
+        return new, f"question date {d} not used as as-of ({why}); as-of = today"
+
     def search(self, question: str, as_of: AsOf | None = None, scope: Scope | None = None,
                k: int = 10) -> list[Passage]:
-        q = self._understand(question, as_of, scope)
+        q, _ = self._settle_date(self._understand(question, as_of, scope), as_of)
         cfg = dataclasses.replace(self.config.retrieve, rerank_out=k)
         return retrieve_mod.cascade(self.store, q, cfg, embedder=self.embedder,
                                     reranker=self.reranker, trace=[])
@@ -254,8 +273,10 @@ class Engine:
         # 1. understand
         t0 = time.perf_counter()
         query = self._understand(question, as_of, scope)
+        query, date_note = self._settle_date(query, as_of)
         trace.append(StageTrace("understand", _ms(t0),
-                                note=f"intent={query.intent}; decided_by={query.decided_by}"))
+                                note=f"intent={query.intent}; decided_by={query.decided_by}"
+                                     + (f"; {date_note}" if date_note else "")))
         if query.clarify:
             return finish("needs_input", "needs_input", query.clarify, query=query)
         if query.intent == "out_of_scope":

@@ -14,6 +14,10 @@ Definitions
 * paired comparisons use the questions both systems finished; the engine is the
   first system in each pair; the McNemar family (Holm) is every compared baseline.
   The oracle is a ceiling and is excluded from comparisons.
+* the confirmatory family is the engine against every available system except the
+  oracle and except the time-aware variants (suffix ``+asof``). The variants are
+  exploratory: they are compared separately, with their own Holm correction, and
+  are not part of the confirmatory family.
 """
 from __future__ import annotations
 
@@ -32,6 +36,11 @@ from . import stats
 BANNER = "DRY RUN — offline fakes, not a measurement"
 REFERENCE = "engine"
 EXCLUDED = ("oracle",)
+EXPLORATORY_SUFFIX = "+asof"
+
+
+def is_exploratory(name: str) -> bool:
+    return name.endswith(EXPLORATORY_SUFFIX)
 
 
 def load(out_dir: str) -> tuple[dict, list[dict], int]:
@@ -166,21 +175,23 @@ def build(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
         "unavailable": {s["name"]: s["reason"] for s in manifest.get("systems", [])
                         if not s.get("available", True)},
         "systems": {s: system_metrics(by[s], iters, seed) for s in order},
-        "paired": {}, "reference": REFERENCE,
+        "paired": {}, "exploratory_paired": {}, "reference": REFERENCE,
+        "exploratory_systems": [s for s in order if is_exploratory(s)],
     }
     if REFERENCE in by:
-        names, ps = [], []
-        for s in order:
-            if s == REFERENCE or s in EXCLUDED:
-                continue
-            p = paired(by[REFERENCE], by[s], iters, seed)
-            if p:
-                names.append(s)
-                ps.append(p)
-        adj = stats.holm([p["mcnemar_p"] for p in ps])
-        for s, p, q in zip(names, ps, adj):
-            p["mcnemar_p_holm"] = q
-            res["paired"][s] = p
+        for key, want in (("paired", False), ("exploratory_paired", True)):
+            names, ps = [], []
+            for s in order:
+                if s == REFERENCE or s in EXCLUDED or is_exploratory(s) != want:
+                    continue
+                p = paired(by[REFERENCE], by[s], iters, seed)
+                if p:
+                    names.append(s)
+                    ps.append(p)
+            adj = stats.holm([p["mcnemar_p"] for p in ps])
+            for s, p, q in zip(names, ps, adj):
+                p["mcnemar_p_holm"] = q
+                res[key][s] = p
     return res
 
 
@@ -213,7 +224,8 @@ def render(res: dict) -> str:
     for s, why in res["unavailable"].items():
         L.append(f"Not run: `{s}` ({why}).")
     L.append("")
-    sysm = res["systems"]
+    sysm = {(f"{s} (exploratory)" if is_exploratory(s) else s): m
+            for s, m in res["systems"].items()}
     sp = f"split `{res['split']}`"
     L.append(f"## Table 1. Outcomes ({sp}; n per system in column n)")
     L += ["", "| system | n | correct | wrong | abstained | penalised score |", "|---|---|---|---|---|---|"]
@@ -252,10 +264,22 @@ def render(res: dict) -> str:
     if res["paired"]:
         L += [f"## Table 5. `{res['reference']}` against each baseline ({sp}; paired on shared questions)",
               "", "Score difference = engine minus baseline (penalised score). McNemar is exact, "
-              "two-sided, on correct outcomes; Holm adjusts across the rows below. The oracle is excluded.",
+              "two-sided, on correct outcomes; Holm adjusts across the rows below. The oracle is excluded. Time-aware variants are in Table 6.",
               "", "| baseline | n | score diff | engine only | baseline only | McNemar p | Holm p | min detectable diff |",
               "|---|---|---|---|---|---|---|---|"]
         for s, p in res["paired"].items():
+            L.append(f"| {s} | {p['n']} | {_ci_s(p['score_diff'])} | {p['reference_only_correct']} | "
+                     f"{p['other_only_correct']} | {_f(p['mcnemar_p'], 4)} | {_f(p['mcnemar_p_holm'], 4)} | "
+                     f"{_f(p['min_detectable_diff'])} |")
+        L.append("")
+    if res.get("exploratory_paired"):
+        L += [f"## Table 6. Exploratory: `{res['reference']}` against the time-aware variants "
+              f"({sp}; paired on shared questions)",
+              "", "The `+asof` systems search as of the question date. They are exploratory: not part "
+              "of the confirmatory family of Table 5, and Holm here adjusts only across the rows below.",
+              "", "| variant | n | score diff | engine only | variant only | McNemar p | Holm p | min detectable diff |",
+              "|---|---|---|---|---|---|---|---|"]
+        for s, p in res["exploratory_paired"].items():
             L.append(f"| {s} | {p['n']} | {_ci_s(p['score_diff'])} | {p['reference_only_correct']} | "
                      f"{p['other_only_correct']} | {_f(p['mcnemar_p'], 4)} | {_f(p['mcnemar_p_holm'], 4)} | "
                      f"{_f(p['min_detectable_diff'])} |")

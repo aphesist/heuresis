@@ -225,6 +225,7 @@ _INSERT_VERSION = (
 class Store:
     def __init__(self, path: str):
         self.path = path
+        self._time_profile: dict | None = None
         self._con = sqlite3.connect(path)
         self._con.row_factory = sqlite3.Row
         if path != ":memory:":
@@ -291,6 +292,27 @@ class Store:
             )
             self._con.execute("INSERT INTO fts(fts) VALUES('rebuild')")
             self._con.execute("INSERT OR REPLACE INTO meta VALUES ('dirty', '0')")
+        self._time_profile = None
+
+    def time_profile(self) -> dict:
+        """How much history the corpus holds: ``{"versioned": bool, "min_valid_from":
+        str | None, "max_valid_from": str | None}``. ``versioned`` is true when any unit
+        has more than one version or any version has a ``valid_to``. Cached until the
+        next rebuild."""
+        self._ensure_built()
+        if self._time_profile is None:
+            multi = self._con.execute(
+                "SELECT 1 FROM versions GROUP BY unit_id HAVING COUNT(*) > 1 LIMIT 1"
+            ).fetchone()
+            closed = self._con.execute(
+                "SELECT 1 FROM versions WHERE valid_to IS NOT NULL LIMIT 1"
+            ).fetchone()
+            lo, hi = self._con.execute(
+                "SELECT MIN(valid_from), MAX(valid_from) FROM versions"
+            ).fetchone()
+            self._time_profile = {"versioned": multi is not None or closed is not None,
+                                  "min_valid_from": lo, "max_valid_from": hi}
+        return dict(self._time_profile)
 
     def put_vectors(self, embedder_id: str, rows: list[tuple[str, int, np.ndarray]]) -> None:
         self._ensure_built()

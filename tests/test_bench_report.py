@@ -107,7 +107,10 @@ def test_end_to_end_dry_run(tmp_path):
     run(ds, "dev", build_systems(ctx), out, None, workers=2, dry_run=True)
     res = report.write(out, iters=200)
     assert res["dry_run"] and set(res["systems"]) == {
-        "closed_book", "bm25", "vector", "hybrid_rerank", "agentic", "long_context", "engine", "oracle"}
+        "closed_book", "bm25", "vector", "hybrid", "hybrid_rerank", "agentic", "long_context",
+        "engine", "oracle"}
+    assert set(res["paired"]) == {"closed_book", "bm25", "vector", "hybrid", "hybrid_rerank",
+                                  "agentic", "long_context"}
     assert all(m["n"] == 12 for m in res["systems"].values())
     assert "engine" in open(os.path.join(out, "results.md")).read()
 
@@ -121,3 +124,16 @@ def test_mean_answer_chars(tmp_path):
     res = report.write(out, iters=50)
     assert res["systems"]["engine"]["mean_answer_chars"] == pytest.approx(5.0)
     assert "mean answer chars" in report.render(res)
+
+
+def test_asof_variants_are_exploratory_not_in_the_family(tmp_path):
+    out = str(tmp_path)
+    rs = hand_rows() + [dict(r, system="bm25+asof", time_aware=True)
+                        for r in hand_rows() if r["system"] == "bm25"]
+    write(out, rs, systems=("engine", "bm25", "bm25+asof"))
+    res = report.write(out, iters=100)
+    assert set(res["paired"]) == {"bm25"} and set(res["exploratory_paired"]) == {"bm25+asof"}
+    assert res["exploratory_systems"] == ["bm25+asof"]
+    assert res["paired"]["bm25"]["mcnemar_p_holm"] == pytest.approx(0.5)  # family of one
+    md = open(os.path.join(out, "results.md")).read()
+    assert "| bm25+asof (exploratory) |" in md and "Table 6. Exploratory" in md

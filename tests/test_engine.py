@@ -329,3 +329,53 @@ def test_open_domain_default_uses_stored(tmp_path):
     Engine.open(p, "legal_br").close()
     with pytest.raises(ValueError, match="legal_br.*text|text.*legal_br"):
         Engine.open(p, "text")
+
+
+# ------------------------------------------------------ question dates vs corpus history
+
+
+BARDOLI = "When did the person who launched the Bardoli Satyagraha on 4th february 1928 die?"
+
+
+def _undated_engine(tmp_path):
+    from heuresis.model import Event, Source, Unit
+    e = Engine.open(str(tmp_path / "u.db"), llm=EchoLLM())
+    e.store.add(sources=[Source("s")], units=[Unit("u1", "s", title="Bardoli")],
+                events=[Event(id="e1", unit_id="u1", op="create", date="1970-01-01",
+                              text="Vallabhbhai Patel launched the Bardoli Satyagraha and "
+                                   "died in 1950.", recorded_at="1970-01-01")])
+    e.store.rebuild()
+    return e
+
+
+def test_date_in_question_on_unversioned_corpus_is_not_an_as_of(tmp_path):
+    e = _undated_engine(tmp_path)
+    a = e.ask(BARDOLI)
+    assert a.status == "answered", a.abstention
+    assert a.query.dated is False and a.query.as_of.valid is None
+    note = next(t.note for t in a.trace if t.stage == "understand")
+    assert "1928-02-04" in note and "no version history" in note
+    assert e.search(BARDOLI) and e.search(BARDOLI)[0].unit_id == "u1"
+    # a caller-supplied as_of is never discarded, even when nothing is in force then
+    b = e.ask(BARDOLI, as_of=AsOf(valid="1928-02-04"))
+    assert b.abstention and b.abstention.type == "not_valid_at_date"
+    assert b.query.as_of.valid == "1928-02-04"
+    e.close()
+
+
+def test_date_before_the_first_version_is_discarded(legal):
+    # versioned corpus whose first version starts 2020-03-10
+    a = legal.ask("texto sintético gama em 4 de fevereiro de 1928", scope=Scope(unit_prefix=ART3))
+    assert a.query.dated is False and a.query.as_of.valid is None
+    assert "earlier than the first version" in next(
+        t.note for t in a.trace if t.stage == "understand")
+
+
+def test_date_inside_the_range_of_a_versioned_corpus_still_applies(legal):
+    assert legal.store.time_profile()["versioned"] is True
+    a = legal.ask("texto sintético redação em 1 de janeiro de 2021", scope=Scope(unit_prefix=ART2))
+    assert a.query.dated is True and a.query.as_of.valid == "2021-01-01"
+    assert a.status == "answered" and "alfa" in a.text
+    assert "not used as as-of" not in next(t.note for t in a.trace if t.stage == "understand")
+    p = legal.search("texto sintético redação em 1 de janeiro de 2021", scope=Scope(unit_prefix=ART2))
+    assert [x.seq for x in p] == [0]

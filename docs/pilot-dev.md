@@ -304,3 +304,16 @@ Total pilot compute time (ingest through dry runs, excluding script writing): ab
 - Timings are for a 4-core CPU, single thread of queries, warm file cache; the `hoh` dense scan reads every in-force vector from SQLite on every query.
 - The cost model is an extrapolation from dev prompt sizes to 500 test questions at assumed prices; it is not a quote.
 
+
+## Cascade after the pilot's changes
+
+Date: 2026-11-11. Measured on dev (n=100 per dataset; 88 answerable for `multihoprag`), retrieval only, k = 8, zero cost, same stores and local ONNX embedder as item 2 (`scripts/pilot/p8_cascade_norerank.py`, raw output `runs/pilot-dev/<dataset>/p8_cascade_norerank.json`). The cascade is the packaged default with `rerank` now `false` (lexical, early-stop test, dense + RRF when the stop did not fire; no cross-encoder), run with a default `Query` and without the router, as in item 2. Time is wall-clock per query over all 100 dev questions, one thread, including embedding the query.
+
+| dataset | any gold @8 | all gold @8 | early stop fired | any @8 fired / not fired | all @8 fired / not fired | ms / query |
+|---|---|---|---|---|---|---|
+| musique | 89/100 = 89% [81, 94] | 16/100 = 16% [10, 24] | 51/100 | 49/51 = 96% [87, 99] / 40/49 = 82% [69, 90] | 8/51 = 16% / 8/49 = 16% | 63 |
+| multihoprag | 81/88 = 92% [84, 96] | 25/88 = 28% [20, 39] | 38/100 (35 of the 88 scored) | 35/35 = 100% [90, 100] / 46/53 = 87% [75, 93] | 16/35 = 46% / 9/53 = 17% | 80 |
+| hoh, as-of question date | 100/100 = 100% [96, 100] | 100/100 = 100% [96, 100] | 97/100 | 97/97 = 100% [96, 100] / 3/3 = 100% [44, 100] | 97/97 / 3/3 | 110 |
+| hoh, as-of today | 100/100 = 100% [96, 100] | 100/100 = 100% [96, 100] | 95/100 | 95/95 = 100% [96, 100] / 5/5 = 100% [57, 100] | 95/95 / 5/5 | 144 |
+
+The default changed because of the dev measurements above (item 2 and the side findings): the cross-encoder raised any-gold recall on `musique` but lowered it on `multihoprag` and `hoh`, at 1.3 to 4.2 s per query, so it is now an optional stage that stays off unless a configuration turns it on.

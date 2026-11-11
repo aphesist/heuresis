@@ -20,8 +20,13 @@ __all__ = ["Ledger", "LedgerLLM", "BudgetExceeded"]
 
 
 class Ledger:
-    def __init__(self, path: str, cap_usd: float, margin_usd: float = 1.0):
+    def __init__(self, path: str, cap_usd: float, margin_usd: float = 1.0,
+                 dry_run: bool = False):
         self.path = str(path)
+        #: A dry run is offline and costs $0: no safety margin, and ``check`` never stops it.
+        self.dry_run = bool(dry_run)
+        if self.dry_run:
+            margin_usd = 0.0
         self.cap_usd = float(cap_usd)
         self.margin_usd = float(margin_usd)
         self._lock = threading.RLock()
@@ -61,6 +66,8 @@ class Ledger:
 
     def check(self, estimated_usd: float = 0.0) -> None:
         with self._lock:
+            if self.dry_run:
+                return
             if self._spent + estimated_usd > self.cap_usd - self.margin_usd:
                 raise BudgetExceeded(
                     f"spent ${self._spent:.4f} + estimated ${estimated_usd:.4f} would pass "

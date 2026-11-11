@@ -14,7 +14,7 @@
     "dense": true,
     "expand": false,
     "expand_hops": 1,
-    "rerank": true,
+    "rerank": false,
     "rewrite": false,
     "second_round": false
   },

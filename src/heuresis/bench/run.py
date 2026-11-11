@@ -94,7 +94,8 @@ def _row(q: Question, split: str, s: System, res: Any) -> dict:
         "tokens_out": res.usage.tokens_out, "usd": res.usage.usd, "ms": res.ms,
         "calls": res.calls, "searches": res.searches, "note": res.note,
         "answerable": q.answerable, "as_of": q.as_of, "kind": q.kind, "cluster": q.cluster,
-        "gold_units": list(q.gold_units), "time_aware": s.time_aware, **g,
+        "gold_units": list(q.gold_units), "time_aware": s.time_aware,
+        "exploratory": s.exploratory, **g,
     }
 
 
@@ -106,6 +107,8 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
     os.makedirs(out_dir, exist_ok=True)
     results_path = os.path.join(out_dir, "results.jsonl")
     manifest_path = os.path.join(out_dir, "manifest.json")
+    if ledger is not None and dry_run:
+        ledger.dry_run, ledger.margin_usd = True, 0.0  # a $0 run is never stopped by the cap
     active = [s for s in systems if s.available]
     qs = select_questions(dataset.questions[split], limit, seed)
 
@@ -149,7 +152,7 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
 
     def work(item: tuple[Question, System]) -> dict:
         q, s = item
-        if ledger is not None:
+        if ledger is not None and not dry_run:
             ledger.check(0.0)
         try:
             res = s.answer(q)
@@ -186,7 +189,7 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
                 stats["written"] += 1
                 if row.get("status") == "error":
                     stats["errors"] += 1
-                if ledger is not None and ledger.remaining <= 0.0:
+                if ledger is not None and not dry_run and ledger.remaining <= 0.0:
                     stop = True
                     stats["stopped"] = "budget"
 
@@ -232,6 +235,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--ledger", help="ledger path (default: <out>/ledger.jsonl)")
     ap.add_argument("--model", help="generator model (default: the config's draft model)")
     ap.add_argument("--time-aware", action="store_true", help="baselines 2-6 search as of the question date")
+    ap.add_argument("--time-aware-variants", action="store_true",
+                    help="also build time-aware copies of bm25, vector, hybrid, hybrid_rerank and "
+                         "agentic, named with the suffix +asof (exploratory in the report)")
+    ap.add_argument("--agent-rerank", action="store_true",
+                    help="the agentic search tool uses hybrid_rerank instead of hybrid")
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--agent-k", type=int, default=5)
     ap.add_argument("--max-actions", type=int, default=4)
@@ -255,7 +263,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     cfg = load_config()
     ds = _load_dataset(a.dataset)
     os.makedirs(a.out, exist_ok=True)
-    ledger = Ledger(a.ledger or os.path.join(a.out, "ledger.jsonl"), a.cap_usd, a.margin_usd)
+    # A dry run costs nothing: no safety margin, and the ledger never stops it.
+    ledger = Ledger(a.ledger or os.path.join(a.out, "ledger.jsonl"), a.cap_usd,
+                    a.margin_usd, dry_run=a.dry_run)
     if a.dry_run:
         llm, emb, rr, ent = EchoLLM(), HashEmbedder(), OverlapReranker(), RuleEntailer()
     else:
@@ -270,7 +280,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                         estimate_usd=a.estimate_usd)
     systems = build_systems(ctx, [s for s in a.systems.split(",") if s], k=a.k,
                             agent_k=a.agent_k, max_actions=a.max_actions,
-                            time_aware=a.time_aware, long_context_limit=a.long_context_limit)
+                            time_aware=a.time_aware, long_context_limit=a.long_context_limit,
+                            agent_rerank=a.agent_rerank,
+                            time_aware_variants=a.time_aware_variants)
     stats = run(ds, a.split, systems, a.out, ledger, limit=a.limit, workers=a.workers,
                 seed=a.seed, dry_run=a.dry_run, params=vars(a))
     print(json.dumps({**stats, "spent_usd": ledger.spent}))

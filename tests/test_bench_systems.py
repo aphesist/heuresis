@@ -34,7 +34,7 @@ def test_every_system_returns_wellformed_result(tmp_path):
             assert r.calls >= 0 and r.searches >= 0
             assert isinstance(r.cited_units, tuple)
     # the extractive fake answers from the passage, so retrieval systems answer q01
-    for name in ("bm25", "vector", "hybrid_rerank", "long_context", "oracle"):
+    for name in ("bm25", "vector", "hybrid", "hybrid_rerank", "long_context", "oracle"):
         s = next(x for x in systems if x.name == name)
         r = s.answer(questions()[0])
         assert r.status == "answered" and r.calls == 1, name
@@ -46,7 +46,7 @@ def test_prompts_share_format_and_cap(tmp_path):
     rec = Recorder(lambda s, p: "ok\nCONFIDENCE: 70")
     ctx = build_context(ds, str(tmp_path / "s.sqlite"), llm=rec)
     seen = {}
-    for s in build_systems(ctx, ["closed_book", "bm25", "vector", "hybrid_rerank", "long_context", "oracle"]):
+    for s in build_systems(ctx, ["closed_book", "bm25", "vector", "hybrid", "hybrid_rerank", "long_context", "oracle"]):
         s.answer(questions()[0])
         seen[s.name] = rec.systems[-1]
     for name, system in seen.items():
@@ -146,3 +146,59 @@ def test_engine_config_copy_sets_max_sentences(tmp_path):
     assert eff.draft.max_sentences == 2 and eff is not ctx.config
     assert ctx.config.draft.max_sentences == 0
     assert ctx.engine().config.draft.max_sentences == 2
+
+
+class CountingReranker:
+    id = "counting"
+
+    def __init__(self):
+        self.calls = 0
+
+    def score(self, query, texts):
+        self.calls += 1
+        return [float(len(t)) for t in texts]
+
+
+def test_system_order_and_hybrid_has_no_reranker(tmp_path):
+    assert SYSTEM_NAMES == ("closed_book", "bm25", "vector", "hybrid", "hybrid_rerank",
+                            "agentic", "long_context", "engine", "oracle")
+    ds = make_dataset(tmp_path)
+    rr = CountingReranker()
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"), reranker=rr)
+    h, hr = build_systems(ctx, ["hybrid", "hybrid_rerank"])
+    a = h.retrieve("Beta river length", questions()[0])
+    assert rr.calls == 0 and a and {p.stage for p in a} == {"fused"}
+    b = hr.retrieve("Beta river length", questions()[0])
+    assert rr.calls == 1 and {p.stage for p in b} == {"rerank"}
+
+
+def test_agentic_retriever_follows_agent_rerank(tmp_path):
+    ds = make_dataset(tmp_path)
+    rr = CountingReranker()
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"), reranker=rr)
+    plain, with_rr = (build_systems(ctx, ["agentic"])[0],
+                      build_systems(ctx, ["agentic"], agent_rerank=True)[0])
+    plain.retrieve("Beta river", questions()[0])
+    assert rr.calls == 0 and plain.describe()["retriever"] == "hybrid"
+    with_rr.retrieve("Beta river", questions()[0])
+    assert rr.calls == 1 and with_rr.describe()["retriever"] == "hybrid_rerank"
+
+
+def test_time_aware_variants_are_extra_copies_with_suffix(tmp_path):
+    ds = make_dataset(tmp_path)
+    rec = Recorder(lambda s, p: "x\nCONFIDENCE: 50")
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"), llm=rec)
+    names = ["closed_book", "bm25", "vector", "hybrid", "hybrid_rerank", "agentic", "engine"]
+    systems = build_systems(ctx, names, time_aware_variants=True)
+    assert [s.name for s in systems] == names + [
+        "bm25+asof", "vector+asof", "hybrid+asof", "hybrid_rerank+asof", "agentic+asof"]
+    by = {s.name: s for s in systems}
+    assert not by["bm25"].time_aware and by["bm25+asof"].time_aware
+    assert by["bm25+asof"].describe()["exploratory"] and not by["bm25"].describe()["exploratory"]
+    assert not by["engine"].exploratory
+    q = questions()[6]  # as_of 2019: 500 euros
+    by["hybrid"].answer(q)
+    by["hybrid+asof"].answer(q)
+    assert "800 euros" in rec.prompts[0] and "As-of date" not in rec.prompts[0]
+    assert "500 euros" in rec.prompts[1] and "800 euros" not in rec.prompts[1]
+    assert build_systems(ctx, names)[0].name == "closed_book" and len(build_systems(ctx, names)) == 7

@@ -108,3 +108,39 @@ def test_failing_system_is_recorded_and_retried(tmp_path):
     assert st["written"] == 1  # only the failed one is retried
     _, rs, n_err = report.load(out)
     assert len(rs) == 4 and n_err == 0
+
+
+def test_dry_run_ledger_never_stops_a_free_run(tmp_path):
+    ds = make_dataset(tmp_path)
+    out = str(tmp_path / "out")
+    # cap 0 and the default margin 1.0: a paid run would stop at once
+    lg = Ledger(str(tmp_path / "l.jsonl"), cap_usd=0.0, margin_usd=1.0)
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"), ledger=lg, estimate_usd=0.02)
+    systems = build_systems(ctx, ["closed_book", "bm25", "engine"])
+    st = run(ds, "dev", systems, out, lg, workers=2, dry_run=True)
+    assert st["stopped"] is None and st["written"] == 36 and st["errors"] == 0
+    assert lg.spent == 0.0
+    assert lg.margin_usd == 0.0 and lg.dry_run
+    # a paid run keeps the margin: cap 0 with margin 1.0 stops at once
+    paid = Ledger(str(tmp_path / "l2.jsonl"), cap_usd=0.0, margin_usd=1.0)
+    ctx2 = build_context(ds, str(tmp_path / "s2.sqlite"), ledger=paid)
+    st2 = run(ds, "dev", build_systems(ctx2, ["closed_book"]), str(tmp_path / "out2"), paid,
+              workers=1)
+    assert st2["stopped"] == "budget" and st2["written"] == 0 and paid.margin_usd == 1.0
+
+
+def test_cli_dry_run_uses_margin_zero_and_variants(tmp_path, monkeypatch):
+    from heuresis.bench import run as R
+    ds = make_dataset(tmp_path)
+    monkeypatch.setattr(R, "_load_dataset", lambda name: ds)
+    out = str(tmp_path / "cli")
+    assert R.main(["--dataset", "tiny", "--out", out, "--cap", "0", "--workers", "2",
+                   "--systems", "bm25,hybrid,agentic,engine", "--time-aware-variants"]) == 0
+    man = json.load(open(os.path.join(out, "manifest.json")))
+    assert man["ledger"]["margin_usd"] == 0.0 and man["last_run"]["stopped"] is None
+    names = [s["name"] for s in man["systems"]]
+    assert names == ["bm25", "hybrid", "agentic", "engine", "bm25+asof", "hybrid+asof", "agentic+asof"]
+    assert len(rows(out)) == 7 * 12
+    res = report.write(out, iters=100)
+    assert set(res["paired"]) == {"bm25", "hybrid", "agentic"}
+    assert set(res["exploratory_paired"]) == {"bm25+asof", "hybrid+asof", "agentic+asof"}

@@ -8,6 +8,8 @@ not confident the router asks one short question instead of guessing.
 Date conventions (the contract does not say; these are the choices made here):
 
 * An explicit day (``2024-03-15``, ``15/03/2024``) maps to that day.
+* A full day with a month name ("4th February 1928", "February 4, 1928",
+  "4 de fevereiro de 1928", "1º de março de 2024") maps to that exact day.
 * A month ("March 2024", "em março de 2024", "março/2024") maps to the LAST
   day of that month. "As of March 2024" is read as "the state of the corpus at
   the end of that month", which is the latest state a person naming the month
@@ -82,6 +84,14 @@ _RE_DMY = re.compile(r"(?<![\d/.-])(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})(?![\d])
 _RE_MONTH_YEAR = re.compile(
     rf"\b({_MONTH_ALT})(?:\s+de|\s*[/,-]|\s)\s*(\d{{4}})\b"
 )
+_ORD = r"(?:st|nd|rd|th|\u00ba|\u00b0|o)?"
+_RE_DAY_MONTH_YEAR = re.compile(
+    rf"(?<![\d/.-])(\d{{1,2}}){_ORD}\s+(?:de\s+|of\s+)?({_MONTH_ALT})"
+    rf"(?:\s+de\s+|\s*,\s*|\s+)(\d{{4}})\b"
+)
+_RE_MONTH_DAY_YEAR = re.compile(
+    rf"\b({_MONTH_ALT})\s+(\d{{1,2}}){_ORD}\s*,?\s*(\d{{4}})\b"
+)
 _RE_BARE_YEAR = re.compile(r"\b(?:in|em|during|durante)\s+((?:19|20)\d{2})\b")
 _RE_TODAY = re.compile(r"\b(today|hoje)\b")
 
@@ -104,7 +114,18 @@ def _extract_date(text: str, today: str) -> str | None:
         iso = _valid_date(int(m[3]), int(m[2]), int(m[1]))
         if iso:
             found.append((m.start(), iso))
+    day_spans: list[tuple[int, int]] = []
+    for rx, order in ((_RE_DAY_MONTH_YEAR, (3, 2, 1)), (_RE_MONTH_DAY_YEAR, (3, 1, 2))):
+        for m in rx.finditer(folded):
+            y_i, mo_i, d_i = order
+            mo = _MONTHS[m[mo_i]]
+            iso = _valid_date(int(m[y_i]), mo, int(m[d_i]))
+            if iso:
+                found.append((m.start(), iso))
+                day_spans.append(m.span())
     for m in _RE_MONTH_YEAR.finditer(folded):
+        if any(a <= m.start() < b for a, b in day_spans):
+            continue  # the month and year belong to a full date already found
         y, mo = int(m[2]), _MONTHS[m[1]]
         if 1 <= y <= 9999:
             last = calendar.monthrange(y, mo)[1]

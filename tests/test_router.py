@@ -246,3 +246,23 @@ def test_determinism():
     assert a == b
     nn2 = NearestIntent(HashEmbedder(), EXAMPLES)
     assert nn("some text here") == nn2("some text here")
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("When did the person who launched X on 4th february 1928 die?", "1928-02-04"),
+        ("When did it happen on 4th February 1928?", "1928-02-04"),
+        ("What changed on February 4, 1928?", "1928-02-04"),
+        ("What changed on February 4th 1928?", "1928-02-04"),
+        ("What changed on 2 March 2021?", "2021-03-02"),
+        ("O que mudou em 4 de fevereiro de 1928?", "1928-02-04"),
+        ("O que mudou em 1º de março de 2024?", "2024-03-01"),
+        ("O que mudou em 1o de março de 2024?", "2024-03-01"),
+        ("O que mudou em 21 de dezembro de 2023?", "2023-12-21"),
+        ("Rate for February 2024", "2024-02-29"),  # a month alone is still the month end
+    ],
+)
+def test_day_month_year_forms_parse_to_the_exact_day(text, expected):
+    q = run(text)
+    assert q.as_of.valid == expected and q.dated is True

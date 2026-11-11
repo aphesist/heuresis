@@ -25,7 +25,7 @@ class RetrieveCfg:
     dense: bool = True
     expand: bool = False
     expand_hops: int = 1
-    rerank: bool = True
+    rerank: bool = False
     rewrite: bool = False
     second_round: bool = False
 

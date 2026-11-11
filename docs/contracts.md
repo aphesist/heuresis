@@ -48,7 +48,7 @@ class Config:            # nested dataclasses, one per stage; every field has a 
     router: RouterCfg    # ask_threshold=0.6, default_intent="lookup"
     retrieve: RetrieveCfg  # k_lexical=50, k_dense=50, rrf_k=60, rerank_in=50, rerank_out=8,
                            # early_stop=True, early_stop_margin=0.35,
-                           # dense=True, expand=False, expand_hops=1, rerank=True,
+                           # dense=True, expand=False, expand_hops=1, rerank=False,
                            # rewrite=False, second_round=False
     draft: DraftCfg      # model="claude-haiku-5-5", max_tokens=600, max_context_chars=24000
     verify: VerifyCfg    # support_threshold=0.5, partial_threshold=0.3, atomic_claims=False
