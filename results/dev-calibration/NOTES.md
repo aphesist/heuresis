@@ -51,7 +51,7 @@ Store used by every paid run: the real-embedder store `runs/pilot-dev/<dataset>/
 
 **Discordance engine vs hybrid (correctness, dev, n=100 each; hybrid is the non-time-aware baseline):** musique 0.18 (engine-only correct 1, hybrid-only 17, both 7); multihoprag 0.23 (0, 23, both 12); hoh 0.41 (28, 13, both 27). For hoh the time-aware copy `hybrid+asof` (exploratory) scores 84 correct, so against it the engine would be behind; see `main/hoh/results.json` (`exploratory_paired`).
 
-**Branch / commit:** see the last line of this file after the push (filled in by the commit step). Nothing was pushed to main; no pull request.
+**Branch / commit:** branch `dev-calibration`, commit 75f15954ea8571b2996db0db5860f28251eec28c (last line of this file). Nothing was pushed to main; no pull request.
 
 **Could not do:** agent-k12 (budget); full hoh dry run; the examples in (i) are drawn from abstentions whose draft contains a gold-answer string and none of whose claims is truncated (string match, so not necessarily a correct answer).
 
@@ -170,3 +170,6 @@ Total $2.6068 over 8466 calls (includes smoke tests).
 | hybrid | 0.113 (90c/56w) | 0.120 (99c/63w) | 0.147 (109c/65w) | [300, 300, 300] |
 | hybrid_rerank | 0.073 (83c/61w) | 0.117 (97c/62w) | 0.147 (104c/60w) | [300, 300, 300] |
 | agentic | 0.240 (148c/76w) | 0.220 (150c/84w) | not run | [300, 300, 0] |
+
+
+Results commit on branch `dev-calibration`: 75f15954ea8571b2996db0db5860f28251eec28c (this line added in a following commit).
