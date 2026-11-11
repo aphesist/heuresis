@@ -312,8 +312,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         paid_llm = AnthropicLLM(a.model or cfg.draft.model, key_env=a.key_env,
                                 temperature=BENCH_TEMPERATURE)
         print(f"paid run: the API key is read from the environment variable {a.key_env} "
-              f"(value not shown); requests go to {paid_llm.base_url}; temperature "
-              f"{BENCH_TEMPERATURE}", file=sys.stderr)
+              f"(value not shown); requests go to {paid_llm.base_url}; no temperature "
+              f"is sent", file=sys.stderr)
     ds = _load_dataset(a.dataset)
     os.makedirs(a.out, exist_ok=True)
     # A dry run costs nothing: no safety margin, and the ledger never stops it.

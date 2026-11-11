@@ -315,14 +315,15 @@ def test_paid_run_reads_the_default_key_variable_and_prints_only_its_name(tmp_pa
     assert R.main(["--dataset", "tiny", "--split", "test", "--paid", "--cap", "5", "--ledger", ledger,
                    "--out", out, "--systems", "closed_book", "--workers", "1"]) == 0
     cap = capsys.readouterr()
-    assert made[0].key_env == "PROJECTS_ANTHROPIC_KEY" and made[0].temperature == 0.0
+    assert made[0].key_env == "PROJECTS_ANTHROPIC_KEY" and made[0].temperature is None
     assert "PROJECTS_ANTHROPIC_KEY" in cap.err and "https://api.anthropic.com" in cap.err
     assert "sk-secret-value" not in cap.out + cap.err
     man = json.load(open(os.path.join(out, "manifest.json")))
     assert "sk-secret-value" not in json.dumps(man)
     assert man["ledger"]["path"] == ledger and man["dry_run"] is False
-    assert man["model_provenance"]["generator"] == {"id": "claude-haiku-5-5", "temperature": 0.0,
-                                                    "max_tokens": 600}
+    assert man["model_provenance"]["generator"] == {
+        "id": "claude-haiku-5-5", "temperature": None, "max_tokens": 600,
+        "note": "not sent: the model rejects the parameter; sampling is the API default"}
     assert os.path.getsize(ledger) > 0
 
 

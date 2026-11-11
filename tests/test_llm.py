@@ -177,14 +177,41 @@ def test_price_unknown_and_unverified():
     assert "anthropic-2026-11" in PRICES
 
 
-def test_temperature_is_sent_when_set_and_defaults_to_zero():
+def http_400(text):
+    return urllib.error.HTTPError("u", 400, "x", {}, io.BytesIO(text.encode()))
+
+
+def test_temperature_default_sends_none_and_explicit_is_sent():
     calls = []
-    llm, _ = make([OK, OK, OK], calls)
+    llm, _ = make([OK], calls)
     llm.complete("s", "p")
-    assert llm.temperature == 0.0 and json.loads(calls[0].data)["temperature"] == 0.0
-    llm2, _ = make([OK], calls, temperature=0.7)
+    assert llm.temperature is None and llm.temperature_sent is False
+    assert "temperature" not in json.loads(calls[0].data)
+    llm2, _ = make([OK], calls, temperature=0.0)
     llm2.complete("s", "p")
-    assert json.loads(calls[-1].data)["temperature"] == 0.7
-    llm3, _ = make([OK], calls, temperature=None)
+    assert llm2.temperature_sent is True
+    assert json.loads(calls[-1].data)["temperature"] == 0.0
+    llm3, _ = make([OK], calls, temperature=0.7)
     llm3.complete("s", "p")
-    assert "temperature" not in json.loads(calls[-1].data)
+    assert json.loads(calls[-1].data)["temperature"] == 0.7
+
+
+def test_temperature_400_falls_back_once_and_is_remembered():
+    calls = []
+    err = http_400('{"error":{"message":"`temperature` is deprecated for this model."}}')
+    llm, sleeps = make([err, OK, OK], calls, temperature=0.0)
+    text, _ = llm.complete("s", "p")
+    assert text == "hello [t1]." and llm.temperature_sent is False
+    assert "temperature" in json.loads(calls[0].data)
+    assert "temperature" not in json.loads(calls[1].data)
+    assert sleeps == []
+    llm.complete("s", "p")
+    assert len(calls) == 3 and "temperature" not in json.loads(calls[2].data)
+
+
+def test_other_400_is_not_retried():
+    calls = []
+    llm, _ = make([http_400('{"error":"max_tokens too large"}'), OK], calls, temperature=0.0)
+    with pytest.raises(LLMError):
+        llm.complete("s", "p")
+    assert len(calls) == 1 and llm.temperature_sent is True

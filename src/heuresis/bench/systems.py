@@ -33,7 +33,7 @@ from .types import Dataset, Question
 __all__ = [
     "ANSWER_FORMAT", "SYSTEM_NAMES", "Result", "System", "BenchContext", "build_context",
     "build_systems", "parse_reply", "prompts_hash", "surface_hash", "effective_engine_config",
-    "prepare_corpus", "BENCH_TEMPERATURE",
+    "prepare_corpus", "BENCH_TEMPERATURE", "BENCH_TEMPERATURE_NOTE",
 ]
 
 ANSWER_FORMAT = (
@@ -66,8 +66,10 @@ _CONF = re.compile(r"^\s*CONFIDENCE\s*:\s*(\d+(?:\.\d+)?)\s*%?\s*$", re.I | re.M
 _SEARCH = re.compile(r"^\s*SEARCH\s*:\s*(.+?)\s*$", re.I)
 
 ENGINE_MAX_SENTENCES = 2
-#: The generator is sampled at temperature 0 in the benchmark (every system).
-BENCH_TEMPERATURE = 0.0
+#: The benchmark sends no temperature: the model rejects the parameter (HTTP 400), so
+#: sampling is the API default.
+BENCH_TEMPERATURE = None
+BENCH_TEMPERATURE_NOTE = "not sent: the model rejects the parameter; sampling is the API default"
 
 
 def effective_engine_config(config: Config) -> Config:
@@ -233,12 +235,14 @@ class BenchContext:
     def provenance(self) -> dict:
         """Model provenance for the manifest: for each local model its id and the sha256
         of the ONNX file and the tokenizer file on disk (an offline fake reports its id
-        and "offline fake"); for the generator its id, temperature and output cap."""
+        and "offline fake"); for the generator its id, temperature (null: not sent) and output cap."""
         gen = {"id": getattr(self.llm, "id", ""),
                "temperature": getattr(self.llm, "temperature", None),
                "max_tokens": self.max_tokens}
         if not hasattr(self.llm, "temperature"):
             gen["note"] = "offline fake"
+        elif gen["temperature"] is None:
+            gen["note"] = BENCH_TEMPERATURE_NOTE
         return {"generator": gen,
                 "embedder": fingerprint_of(self.embedder),
                 "reranker": fingerprint_of(self.reranker),

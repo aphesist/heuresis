@@ -35,11 +35,13 @@ class AnthropicLLM:
         *,
         urlopen: Callable[..., Any] | None = None,
         sleep: Callable[[float], None] | None = None,
-        temperature: float | None = 0.0,
+        temperature: float | None = None,
     ):
         self.id = model
-        #: Sampling temperature sent in every request; ``None`` leaves the API default.
+        #: Sampling temperature sent in every request; ``None`` (the default) sends none.
         self.temperature = temperature
+        #: Whether requests carry ``temperature``; turns False if the API rejects it.
+        self.temperature_sent = temperature is not None
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
@@ -85,12 +87,15 @@ class AnthropicLLM:
             "system": system,
             "messages": [{"role": "user", "content": prompt}],
         }
-        if self.temperature is not None:
+        base = dict(payload)
+        if self.temperature_sent:
             payload["temperature"] = float(self.temperature)
         body = json.dumps(payload).encode("utf-8")
         t0 = time.perf_counter()
         last = "unknown error"
-        for attempt in range(self.max_retries + 1):
+        attempt = -1
+        while attempt < self.max_retries:
+            attempt += 1
             req = urllib.request.Request(
                 self.base_url + "/v1/messages",
                 data=body,
@@ -113,6 +118,13 @@ class AnthropicLLM:
                 except Exception:
                     detail = ""
                 last = f"HTTP {e.code}: {detail}"
+                if (e.code == 400 and self.temperature_sent
+                        and "temperature" in detail.lower()):
+                    # The model rejects the parameter: drop it for good and retry once.
+                    self.temperature_sent = False
+                    body = json.dumps(base).encode("utf-8")
+                    attempt -= 1
+                    continue
                 if e.code not in _RETRY_STATUS:
                     raise LLMError(last) from None
             except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
