@@ -312,3 +312,20 @@ def test_store_additions(tmp_path):
     assert {p.unit_id for p in found} == {ART3}
     assert all(p.unit_id.startswith(ART2) for p in st.lexical_any_date("texto", Scope(unit_prefix=ART2), 9))
     e.close()
+
+
+def test_open_domain_default_uses_stored(tmp_path):
+    p = str(tmp_path / "d.db")
+    e = Engine.open(p)
+    assert e.domain.name == "text"
+    e.close()
+    e = Engine.open(p, "legal_br")  # empty database: any domain may be chosen
+    assert e.domain.name == "legal_br"
+    e.ingest(str(FIX))
+    e.close()
+    e = Engine.open(p)
+    assert e.domain.name == "legal_br"
+    e.close()
+    Engine.open(p, "legal_br").close()
+    with pytest.raises(ValueError, match="legal_br.*text|text.*legal_br"):
+        Engine.open(p, "text")

@@ -91,16 +91,14 @@ def _models(local: bool) -> dict[str, Any]:
 
 def _open(db: str, domain: str | None, *, create: bool = False, local: bool = False, llm: Any = None):
     from .engine import Engine
-    from .mcp_edge import resolve_domain
 
     if not create:
         _existing_db(db)
-    name = resolve_domain(db, domain)
     kw = _models(local)
     if llm is not None:
         kw["llm"] = llm
     try:
-        return Engine.open(db, name, **kw)
+        return Engine.open(db, domain, **kw)
     except ValueError as e:
         raise CliError(str(e)) from None
 

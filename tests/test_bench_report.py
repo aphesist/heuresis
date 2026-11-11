@@ -110,3 +110,14 @@ def test_end_to_end_dry_run(tmp_path):
         "closed_book", "bm25", "vector", "hybrid_rerank", "agentic", "long_context", "engine", "oracle"}
     assert all(m["n"] == 12 for m in res["systems"].values())
     assert "engine" in open(os.path.join(out, "results.md")).read()
+
+
+def test_mean_answer_chars(tmp_path):
+    out = str(tmp_path)
+    rs = [row("engine", "q1", "answered", "correct", .9, 0.1, 10, text="abcd"),
+          row("engine", "q2", "answered", "wrong", .8, 0.1, 10, text="abcdef"),
+          row("engine", "q3", "abstained", "abstained", .1, 0.1, 10, text="long abstention text")]
+    write(out, rs, systems=("engine",))
+    res = report.write(out, iters=50)
+    assert res["systems"]["engine"]["mean_answer_chars"] == pytest.approx(5.0)
+    assert "mean answer chars" in report.render(res)

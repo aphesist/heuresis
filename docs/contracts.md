@@ -81,6 +81,7 @@ class Store:
     def text_at(self, unit_id: str, as_of: AsOf) -> Version | None
     def lexical(self, text: str, as_of: AsOf, scope: Scope, k: int) -> list[Passage]
     def put_vectors(self, embedder_id: str, rows: list[tuple[str, int, np.ndarray]]) -> None
+        # raises ValueError on an unknown (unit_id, seq); seq is 0-based, in replay order
     def missing_vectors(self, embedder_id: str) -> list[tuple[str, int, str]]  # unit_id, seq, text
     def dense(self, vec: np.ndarray, embedder_id: str, as_of: AsOf, scope: Scope, k: int) -> list[Passage]
     def neighbours(self, unit_ids: list[str], as_of: AsOf, types: tuple[str, ...] = ()) -> list[Passage]
@@ -157,8 +158,10 @@ The tax due is {k1} [t2][k1].                # {k1} is replaced by the tool resu
 ABSTAIN no_source: nothing covers this.      # instead of an answer
 ```
 
-`llm.AnthropicLLM(model, api_key=None)` uses the standard library HTTP client,
-reads the key from `ANTHROPIC_API_KEY` only when first called, and prices usage
+`llm.AnthropicLLM(model, api_key=None, key_env="PROJECTS_ANTHROPIC_KEY", ...)` uses
+the standard library HTTP client, reads the key from `PROJECTS_ANTHROPIC_KEY`
+(never `ANTHROPIC_API_KEY`) only when first called, sends it only to the base URL
+`https://api.anthropic.com` (no environment variable changes it), and prices usage
 with `pricing.price(model, tokens_in, tokens_out, cached=0, batch=False)`.
 
 ### locked (`heuresis/locked/verify.py`, `decide.py`, `scoring.py`, `guard.py`)
@@ -183,7 +186,13 @@ precision and recall.
 
 ### engine (`heuresis/engine.py`)
 
-`Engine.open(path, domain="text", *, config=None, llm=None, embedder=None, reranker=None, entailer=None)`,
+`Engine.open(path, domain=None, *, config=None, llm=None, embedder=None, reranker=None, entailer=None)`,
 `.ingest(path)`, `.index()` (embeds missing vectors), `.ask(question, as_of=None, scope=None, budget_usd=None) -> Answer`,
 `.search(question, as_of=None, scope=None, k=10) -> list[Passage]`,
-`.verify(text, passages) -> list[Claim]`, `.unit(unit_id, as_of=None) -> Version | None`.
+`.verify(text, passages, as_of=None) -> list[Claim]`, `.unit(unit_id, as_of=None) -> Version | None`.
+
+`domain=None` means the domain stored in the database, or `text` for a new one; an
+explicit domain that differs from the stored one raises `ValueError` naming both,
+unless the database has no units. `Answer.trace` stage names: `understand`,
+`lexical`, `dense`, `expand`, `rerank`, `retrieve`, `draft`, `tools`,
+`draft_followup`, `verify`, `decide`, `assemble`.

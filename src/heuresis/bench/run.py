@@ -138,6 +138,7 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
     }
     if ctx is not None:
         manifest["config"] = config_to_dict(ctx.config)
+        manifest["engine_config"] = config_to_dict(ctx.engine_config())
         manifest["surface_hash"] = surface_hash(ctx)
         manifest["models"] = ctx.models()
 

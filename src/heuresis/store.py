@@ -457,10 +457,7 @@ class Store:
         if not q or k <= 0:
             return []
         self._ensure_built()
-        _, params = self._filters(AsOf(), scope)
-        params.pop("d")
-        # _filters puts the two validity clauses first; keep only the scope ones.
-        clauses = self._filters(AsOf(), scope)[0].split(" AND ")[2:]
+        clauses, params = self._scope_filters(scope)
         where = " AND ".join(clauses) or "1=1"
         sql = (
             f"SELECT {_PASSAGE_COLS}, bm25(fts, 2.0, 1.0) AS rank "
@@ -563,12 +560,10 @@ class Store:
             con.commit()
 
     @staticmethod
-    def _filters(as_of: AsOf, scope: Scope) -> tuple[str, dict[str, Any]]:
-        params: dict[str, Any] = {"d": as_of.valid or _today()}
-        parts = [
-            "(v.valid_from IS NULL OR v.valid_from <= :d)",
-            "(v.valid_to IS NULL OR :d < v.valid_to)",
-        ]
+    def _scope_filters(scope: Scope) -> tuple[list[str], dict[str, Any]]:
+        """SQL clauses and parameters that restrict a query to ``scope``."""
+        params: dict[str, Any] = {}
+        parts: list[str] = []
         if scope.source_ids:
             names = []
             for i, s in enumerate(scope.source_ids):
@@ -585,6 +580,18 @@ class Store:
             params["pfx"] = scope.unit_prefix
             params["pfxlen"] = len(scope.unit_prefix)
             parts.append("substr(v.unit_id, 1, :pfxlen) = :pfx")
+        return parts, params
+
+    @staticmethod
+    def _filters(as_of: AsOf, scope: Scope) -> tuple[str, dict[str, Any]]:
+        params: dict[str, Any] = {"d": as_of.valid or _today()}
+        parts = [
+            "(v.valid_from IS NULL OR v.valid_from <= :d)",
+            "(v.valid_to IS NULL OR :d < v.valid_to)",
+        ]
+        scope_parts, scope_params = Store._scope_filters(scope)
+        parts.extend(scope_parts)
+        params.update(scope_params)
         return " AND ".join(parts), params
 
     @staticmethod

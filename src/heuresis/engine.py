@@ -90,11 +90,24 @@ class Engine:
     # -- lifecycle -----------------------------------------------------------
 
     @classmethod
-    def open(cls, path: str, domain: Any = "text", *, config: Config | None = None,
+    def open(cls, path: str, domain: Any = None, *, config: Config | None = None,
              llm: Any = None, embedder: Any = None, reranker: Any = None,
              entailer: Any = None, classifier: Any = None) -> "Engine":
-        dom = get_domain(domain) if isinstance(domain, str) else domain
-        eng = cls(Store(str(path)), dom, config or load_config(),
+        store = Store(str(path))
+        try:
+            stored = store.meta_get("domain")
+            if domain is None:
+                dom = get_domain(stored or "text")
+            else:
+                dom = get_domain(domain) if isinstance(domain, str) else domain
+                if stored and stored != dom.name and store.stats().get("units", 0) > 0:
+                    raise ValueError(
+                        f"database {path} holds domain {stored!r}, not {dom.name!r}"
+                    )
+        except Exception:
+            store.close()
+            raise
+        eng = cls(store, dom, config or load_config(),
                   llm if llm is not None else EchoLLM(), embedder, reranker,
                   entailer if entailer is not None else RuleEntailer(), classifier)
         eng.store.meta_set("domain", dom.name)

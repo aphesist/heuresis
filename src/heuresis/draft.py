@@ -7,27 +7,17 @@ import re
 from typing import Any
 
 from .interfaces import LLM, Tool
+from .textutil import split_sentences
 from .model import ABSTENTIONS, Draft, Passage, Query, Sentence, ToolResult
 
 NOT_CHECKED = "[not checked]"
 
 _MARK_RE = re.compile(r"\[\s*([tkTK]\d+(?:\s*[,;]?\s*[tkTK]\d+)*)\s*\]")
 _ITEM_RE = re.compile(r"[tkTK]\d+")
-_END_RE = re.compile(r"[.!?]+(?:\s*\[\s*[tkTK]\d+(?:\s*[,;]?\s*[tkTK]\d+)*\s*\])*(?=\s|$)")
 _CALL_RE = re.compile(r"^CALL\s+(\S+)\s+(\S+)\s*(.*)$", re.IGNORECASE)
 _ABSTAIN_RE = re.compile(r"^ABSTAIN\b\s*([A-Za-z_]*)\s*[:\-]?\s*(.*)$", re.IGNORECASE)
 _BULLET_RE = re.compile(r"^\s*(?:[-*•]+|\d+[.)])\s+")
 _PLACEHOLDER_RE = re.compile(r"\{(k\d+)\}")
-
-
-def _split_sentences(line: str) -> list[str]:
-    parts, pos = [], 0
-    for m in _END_RE.finditer(line):
-        parts.append(line[pos : m.end()])
-        pos = m.end()
-    if pos < len(line):
-        parts.append(line[pos:])
-    return [p for p in parts if p.strip()]
 
 
 def _extract_marks(chunk: str) -> tuple[str, list[str], list[str]]:
@@ -72,7 +62,7 @@ def parse_draft(raw: str) -> Draft:
                 kind = m.group(1).lower()
                 d.declined = kind if kind in ABSTENTIONS else "unsupported"
                 continue
-            for chunk in _split_sentences(line):
+            for chunk in split_sentences(line):
                 text, tm, km = _extract_marks(chunk)
                 if not re.search(r"\w", text):
                     # marks (or stray punctuation) alone: attach to the previous sentence
@@ -108,14 +98,15 @@ def render(draft: Draft, tool_results: list[ToolResult]) -> str:
 def draft(llm: LLM, query: Query, passages: list[Passage], tools: list[Tool], cfg) -> Draft:
     from .surface.prompts import DRAFT_SYSTEM, draft_prompt
 
+    max_sentences = int(getattr(cfg, "max_sentences", 0) or 0)
     kept = []
     for i, p in enumerate(passages, 1):
         kept.append(p if p.mark else dataclasses.replace(p, mark=f"t{i}"))
-    prompt = draft_prompt(query.text, query.as_of.valid, kept, tools)
+    prompt = draft_prompt(query.text, query.as_of.valid, kept, tools, max_sentences)
     # Drop the lowest-ranked passages (the tail) until the prompt fits; never cut one.
     while kept and len(prompt) > cfg.max_context_chars:
         kept.pop()
-        prompt = draft_prompt(query.text, query.as_of.valid, kept, tools)
+        prompt = draft_prompt(query.text, query.as_of.valid, kept, tools, max_sentences)
     raw, usage = llm.complete(DRAFT_SYSTEM, prompt, max_tokens=cfg.max_tokens)
     d = parse_draft(raw)
     d.raw = raw

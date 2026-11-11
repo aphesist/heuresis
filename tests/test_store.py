@@ -498,3 +498,20 @@ def test_invariant_nothing_outside_validity(events, day, rec_day):
         assert p.unit_id in expected
         assert expected[p.unit_id] == (p.text, p.valid_from, p.valid_to)
     s.close()
+
+
+def test_scope_filters_and_lexical_any_date():
+    s = make([
+        ev("a", "doc/a", "create", "2020-01-01", "tariff alpha rate"),
+        ev("b", "other/b", "create", "2020-01-01", "tariff beta rate"),
+        ev("c", "doc/c", "create", "2999-01-01", "tariff gamma rate"),  # not yet in force
+    ])
+    parts, params = Store._scope_filters(Scope(unit_prefix="doc/"))
+    assert parts == ["substr(v.unit_id, 1, :pfxlen) = :pfx"] and params == {"pfx": "doc/", "pfxlen": 4}
+    assert Store._scope_filters(ALL) == ([], {})
+    where, fparams = Store._filters(AsOf(valid="2024-01-01"), Scope(unit_prefix="doc/"))
+    assert where.endswith(parts[0]) and fparams["pfx"] == "doc/"
+    ids = sorted(p.unit_id for p in s.lexical_any_date("tariff", ALL, 10))
+    assert ids == ["doc/a", "doc/c", "other/b"]
+    ids = sorted(p.unit_id for p in s.lexical_any_date("tariff", Scope(unit_prefix="doc/"), 10))
+    assert ids == ["doc/a", "doc/c"]

@@ -9,6 +9,7 @@ from typing import Sequence
 import numpy as np
 
 from .model import Usage
+from .textutil import split_sentences
 
 _TOKEN = re.compile(r"\w+", re.UNICODE)
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
@@ -104,7 +105,6 @@ class RuleEntailer:
 
 
 _PASSAGE_LINE = re.compile(r"^\[(t\d+)\] \(([^)]*)\) (.*)$")
-_SENTENCE = re.compile(r"(?<=[.!?])\s+")
 
 
 class EchoLLM:
@@ -135,7 +135,7 @@ class EchoLLM:
             m = _PASSAGE_LINE.match(line)
             if m:
                 mark, body = m.group(1), m.group(3).strip()
-                sents = [s for s in _SENTENCE.split(body) if s]
+                sents = split_sentences(body)
                 first = sents[0] if sents else body
                 if first and first[-1] not in ".!?":
                     first += "."

@@ -37,3 +37,14 @@ def test_prompt_contents():
     for kw in ("ONLY", "CALL k1 calc", "{k1}", "ABSTAIN <type>"):
         assert kw in DRAFT_SYSTEM
     assert all(a in DRAFT_SYSTEM for a in ABSTENTIONS)
+
+
+def test_max_sentences_instruction():
+    from heuresis.surface.config import DraftCfg
+
+    ps = [Passage("u1", 0, "The limit is 5.", title="Art 1", mark="t1")]
+    assert DraftCfg().max_sentences == 0
+    assert "at most" not in draft_prompt("Q?", None, ps, [])
+    assert "at most" not in draft_prompt("Q?", None, ps, [], max_sentences=0)
+    out = draft_prompt("Q?", None, ps, [], max_sentences=2)
+    assert out.splitlines()[-1] == "Answer in at most 2 short sentences."

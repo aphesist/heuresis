@@ -35,6 +35,7 @@ class DraftCfg:
     model: str = "claude-haiku-5-5"
     max_tokens: int = 600
     max_context_chars: int = 24000
+    max_sentences: int = 0
 
 
 @dataclass

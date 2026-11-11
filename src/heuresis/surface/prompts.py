@@ -29,6 +29,7 @@ def draft_prompt(
     as_of: str | None,
     passages: Sequence[Passage],
     tools: Sequence[Any] = (),
+    max_sentences: int = 0,
 ) -> str:
     lines = [f"As-of date: {as_of or 'today'}"]
     if tools:
@@ -42,4 +43,6 @@ def draft_prompt(
     else:
         lines.append("(none)")
     lines.append(f"Question: {question}")
+    if max_sentences > 0:
+        lines.append(f"Answer in at most {max_sentences} short sentences.")
     return "\n".join(lines)

@@ -120,6 +120,7 @@ def system_metrics(rows: list[dict], iters: int, seed: int) -> dict:
         usd, corr, iters=iters, seed=seed, clusters=cl)) if n else _ci((math.nan,) * 3)
     out["latency_ms"] = {"median": float(np.median(ms)) if n else None,
                          "p95": float(np.percentile(ms, 95)) if n else None}
+    out["mean_answer_chars"] = float(np.mean([len(r.get("text") or "") for r in answered])) if n_ans else None
     out["mean_calls"] = float(np.mean([r["calls"] for r in rows])) if n else None
     out["mean_searches"] = float(np.mean([r["searches"] for r in rows])) if n else None
     out["time_aware"] = bool(rows[0].get("time_aware")) if rows else None
@@ -222,13 +223,13 @@ def render(res: dict) -> str:
         L.append(f"| {s} | {m['n']} | {cell('correct')} | {cell('wrong')} | {cell('abstained')} | "
                  f"{_ci_s(m['penalised_score'])} |")
     L += ["", f"## Table 2. Selective answering ({sp}; AURC over answered questions, lower is better)",
-          "", "| system | n | accuracy | coverage | selective accuracy | AURC | abstains on unanswerable |",
-          "|---|---|---|---|---|---|---|"]
+          "", "| system | n | accuracy | coverage | selective accuracy | AURC | abstains on unanswerable | mean answer chars |",
+          "|---|---|---|---|---|---|---|---|"]
     for s, m in sysm.items():
         u = m["unanswerable"]
         L.append(f"| {s} | {m['n']} | {_pct(m['accuracy'])} | {_pct(m['coverage'])} | "
                  f"{_pct(m['selective_accuracy'])} | {_f(m['aurc'])} | "
-                 f"{_pct(u['abstain_rate'])} (n={u['n']}) |")
+                 f"{_pct(u['abstain_rate'])} (n={u['n']}) | {_f(m['mean_answer_chars'], 1)} |")
     L += ["", f"## Table 3. Cost and latency ({sp})", "",
           "| system | n | mean cost | total cost | cost per correct | median ms | p95 ms | calls | searches |",
           "|---|---|---|---|---|---|---|---|---|"]

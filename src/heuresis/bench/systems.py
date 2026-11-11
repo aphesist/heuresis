@@ -10,6 +10,7 @@ connection to the same database file (``BenchContext.store`` / ``.engine``).
 """
 from __future__ import annotations
 
+import copy
 import dataclasses
 import hashlib
 import re
@@ -58,6 +59,8 @@ SYSTEM_NAMES = ("closed_book", "bm25", "vector", "hybrid_rerank", "agentic",
 
 _CONF = re.compile(r"^\s*CONFIDENCE\s*:\s*(\d+(?:\.\d+)?)\s*%?\s*$", re.I | re.M)
 _SEARCH = re.compile(r"^\s*SEARCH\s*:\s*(.+?)\s*$", re.I)
+
+ENGINE_MAX_SENTENCES = 2
 
 
 def prompts_hash() -> str:
@@ -130,6 +133,13 @@ class BenchContext:
         self._open_lock = threading.Lock()
         self._llms: dict[str, Any] = {}
 
+    def engine_config(self) -> Config:
+        """The configuration the engine system runs with: a copy of ``config`` that asks
+        for the same answer length as the baselines. ``config`` itself is not changed."""
+        cfg = copy.deepcopy(self.config)
+        cfg.draft.max_sentences = ENGINE_MAX_SENTENCES
+        return cfg
+
     @property
     def max_tokens(self) -> int:
         return self.config.draft.max_tokens
@@ -155,7 +165,7 @@ class BenchContext:
         if eng is None:
             from ..engine import Engine  # imported late: the engine is optional for baselines
             with self._open_lock:
-                eng = Engine.open(self.db_path, "jsonl", config=self.config,
+                eng = Engine.open(self.db_path, "jsonl", config=self.engine_config(),
                                   llm=self.llm_for("engine"), embedder=self.embedder,
                                   reranker=self.reranker, entailer=self.entailer)
             self._tls.engine = eng

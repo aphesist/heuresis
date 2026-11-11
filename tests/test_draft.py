@@ -110,3 +110,17 @@ def test_echo_default_output_parses():
     q = Query("limit?")
     d = draft(EchoLLM(), q, passages(2), [], DraftCfg())
     assert d.sentences and d.sentences[0].passage_marks
+
+
+def test_draft_passes_max_sentences():
+    class Rec:
+        id = "rec"
+
+        def complete(self, system, prompt, *, max_tokens=600):
+            self.prompt = prompt
+            return "ABSTAIN no_source: x.", None
+
+    for n, expect in ((0, False), (3, True)):
+        llm = Rec()
+        draft(llm, Query("limit?"), passages(1), [], DraftCfg(max_sentences=n))
+        assert ("Answer in at most 3 short sentences." in llm.prompt) is expect

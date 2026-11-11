@@ -136,3 +136,13 @@ def test_ledger_meters_each_system(tmp_path):
     for s in build_systems(ctx, ["closed_book", "bm25"]):
         s.answer(questions()[0])
     assert lg.by_tag() == pytest.approx({"closed_book": 0.01, "bm25": 0.01})
+
+
+def test_engine_config_copy_sets_max_sentences(tmp_path):
+    ds = make_dataset(tmp_path)
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"))
+    assert ctx.config.draft.max_sentences == 0
+    eff = ctx.engine_config()
+    assert eff.draft.max_sentences == 2 and eff is not ctx.config
+    assert ctx.config.draft.max_sentences == 0
+    assert ctx.engine().config.draft.max_sentences == 2

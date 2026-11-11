@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any, BinaryIO, Callable, Mapping
 
 from . import __version__
+from .textutil import split_sentences
 
 # ------------------------------------------------------------------ protocol constants
 
@@ -334,24 +335,6 @@ def version_dict(v: Any) -> dict[str, Any]:
             "certainty": v.certainty, "recorded_at": v.recorded_at, "axes": dict(v.axes)}
 
 
-def resolve_domain(db: str | Path, explicit: str | None) -> str:
-    """The domain to open ``db`` with: the explicit name, else the one stored in the
-    database, else ``text``. (Opening an engine records its domain in the database,
-    so reading it must happen first.)"""
-    if explicit:
-        return explicit
-    p = Path(db)
-    if p.is_file():
-        from .store import Store
-
-        st = Store(str(p))
-        try:
-            return st.meta_get("domain") or "text"
-        finally:
-            st.close()
-    return "text"
-
-
 def verify_units(engine: Any, text: str, unit_ids: list[str], as_of: str | None) -> dict[str, Any]:
     """Verify ``text`` against the named units as they read at ``as_of``.
 
@@ -374,7 +357,7 @@ def verify_units(engine: Any, text: str, unit_ids: list[str], as_of: str | None)
         return {"claims": [], "missing": missing}
     if not _MARK_RE.search(text):
         marks = "".join(f"[{p.mark}]" for p in passages)
-        parts = [s for s in re.split(r"(?<=[.!?])\s+", text.strip()) if s]
+        parts = split_sentences(text)
         text = " ".join(f"{s} {marks}" for s in parts)
     claims = engine.verify(text, passages, asof)
     by_mark = {p.mark: p for p in passages}
@@ -416,10 +399,10 @@ class McpEdge:
 
     def _get_engine(self) -> Any:
         if self._engine is None:
-            self._engine = self._open_engine(resolve_domain(self.db_path, self.domain))
+            self._engine = self._open_engine(self.domain)
         return self._engine
 
-    def _open_engine(self, domain: str) -> Any:
+    def _open_engine(self, domain: str | None) -> Any:
         from .engine import Engine
         from .fakes import EchoLLM, HashEmbedder, OverlapReranker, RuleEntailer
 
@@ -650,8 +633,8 @@ class McpEdge:
         path = _check_text("path", args["path"], MAX_PATH_CHARS, min_chars=1)
         from .domains import available
 
-        domain = _check_text("domain", args["domain"] if "domain" in args else resolve_domain(self.db_path, self.domain), 64, min_chars=1)
-        if domain not in available():
+        domain = _check_text("domain", args["domain"], 64, min_chars=1) if "domain" in args else self.domain
+        if domain is not None and domain not in available():
             raise ToolInputError(f"domain must be one of {', '.join(available())}")
         p = Path(path).expanduser()
         if not p.exists():
