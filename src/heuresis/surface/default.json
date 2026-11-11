@@ -1,0 +1,36 @@
+{
+  "router": {
+    "ask_threshold": 0.6,
+    "default_intent": "lookup"
+  },
+  "retrieve": {
+    "k_lexical": 50,
+    "k_dense": 50,
+    "rrf_k": 60,
+    "rerank_in": 50,
+    "rerank_out": 8,
+    "early_stop": true,
+    "early_stop_margin": 0.35,
+    "dense": true,
+    "expand": false,
+    "expand_hops": 1,
+    "rerank": true,
+    "rewrite": false,
+    "second_round": false
+  },
+  "draft": {
+    "model": "claude-haiku-5-5",
+    "max_tokens": 600,
+    "max_context_chars": 24000
+  },
+  "verify": {
+    "support_threshold": 0.5,
+    "partial_threshold": 0.3,
+    "atomic_claims": false
+  },
+  "decide": {
+    "min_supported_fraction": 1.0,
+    "partial_fraction": 0.5,
+    "conflict_margin": 0.1
+  }
+}
