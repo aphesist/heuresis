@@ -435,6 +435,46 @@ class Store:
         )
         return [(r["unit_id"], r["seq"], r["text"]) for r in cur]
 
+    def meta_get(self, key: str) -> str | None:
+        """Read a caller-owned value from the small key-value table."""
+        self._con.execute(
+            "CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+        )
+        r = self._con.execute("SELECT value FROM kv WHERE key=?", (key,)).fetchone()
+        return None if r is None else r["value"]
+
+    def meta_set(self, key: str, value: str) -> None:
+        self._con.execute(
+            "CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+        )
+        with self._con:
+            self._con.execute("INSERT OR REPLACE INTO kv VALUES (?,?)", (key, value))
+
+    def lexical_any_date(self, text: str, scope: Scope, k: int) -> list[Passage]:
+        """Lexical search that ignores validity. For diagnosing an abstention
+        only (is there text that is just not in force?); never use it to answer."""
+        q = fts_query(text)
+        if not q or k <= 0:
+            return []
+        self._ensure_built()
+        _, params = self._filters(AsOf(), scope)
+        params.pop("d")
+        # _filters puts the two validity clauses first; keep only the scope ones.
+        clauses = self._filters(AsOf(), scope)[0].split(" AND ")[2:]
+        where = " AND ".join(clauses) or "1=1"
+        sql = (
+            f"SELECT {_PASSAGE_COLS}, bm25(fts, 2.0, 1.0) AS rank "
+            "FROM fts JOIN versions v ON v.id = fts.rowid "
+            "LEFT JOIN sources s ON s.id = v.source_id "
+            f"WHERE fts MATCH :q AND {where} "
+            "ORDER BY rank, v.unit_id, v.seq LIMIT :k"
+        )
+        try:
+            rows = self._con.execute(sql, {**params, "q": q, "k": k}).fetchall()
+        except sqlite3.OperationalError:
+            return []
+        return [self._row_to_passage(r, -r["rank"], "lexical") for r in rows]
+
     def get_source(self, source_id: str) -> Source | None:
         r = self._con.execute("SELECT * FROM sources WHERE id=?", (source_id,)).fetchone()
         if r is None:

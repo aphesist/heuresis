@@ -1,0 +1,280 @@
+"""Resumable benchmark runner.
+
+Output folder: ``results.jsonl`` (one row per (system, question id)) and
+``manifest.json``. Rows are graded at write time with ``heuresis.locked.scoring``.
+
+Grading rule: an answerable question is answered correctly when any gold answer,
+normalised (SQuAD rules plus accent folding), occurs in the normalised answer text
+on token boundaries. Citation marks such as ``[t1]`` are removed first. Token F1
+against the best gold answer is stored alongside.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import random
+import re
+import sys
+import threading
+import time
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from typing import Any, Sequence
+
+from ..locked import scoring
+from ..locked.guard import locked_hash
+from ..surface.config import config_to_dict
+from .ledger import BudgetExceeded, Ledger
+from .systems import SYSTEM_NAMES, BenchContext, System, prompts_hash
+from .types import Dataset, Question
+
+import hashlib
+
+PRICE_TABLE = "anthropic-2026-11"
+_MARK = re.compile(r"\[[tk]\d+\]")
+
+
+def _norm(s: str) -> str:
+    return scoring.normalize_answer(s, fold_accents=True)
+
+
+def is_correct(text: str, golds: Sequence[str]) -> bool:
+    """True when any gold answer is contained (on token boundaries) in the text."""
+    hay = f" {_norm(_MARK.sub(' ', text))} "
+    return any(g and f" {g} " in hay for g in map(_norm, golds))
+
+
+def grade(q: Question, status: str, text: str) -> dict:
+    clean = _MARK.sub(" ", text)
+    if q.answerable and status == "answered":
+        ok: bool | None = is_correct(text, q.answers)
+    else:
+        ok = None
+    out = scoring.outcome(status, ok, q.answerable)
+    f1 = scoring.best_over_golds(scoring.token_f1, clean, q.answers, fold_accents=True) \
+        if (q.answerable and status == "answered") else None
+    return {"outcome": out, "correct": out == "correct", "score": scoring.penalised_score(out),
+            "f1": f1}
+
+
+def surface_hash(ctx: BenchContext) -> str:
+    blob = json.dumps(config_to_dict(ctx.config), sort_keys=True)
+    from ..surface.prompts import DRAFT_SYSTEM
+    return hashlib.sha256((blob + "\x00" + DRAFT_SYSTEM).encode("utf-8")).hexdigest()
+
+
+def select_questions(questions: Sequence[Question], limit: int | None, seed: int) -> list[Question]:
+    qs = sorted(questions, key=lambda q: q.id)
+    if limit is not None and limit < len(qs):
+        qs = random.Random(seed).sample(qs, limit)
+        qs.sort(key=lambda q: q.id)
+    return qs
+
+
+def _read_rows(path: str) -> list[dict]:
+    rows = []
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    r = json.loads(line)
+                    if isinstance(r, dict):
+                        rows.append(r)
+                except ValueError:
+                    continue
+    return rows
+
+
+def _row(q: Question, split: str, s: System, res: Any) -> dict:
+    g = grade(q, res.status, res.text)
+    return {
+        "system": s.name, "qid": q.id, "split": split, "status": res.status, "text": res.text,
+        "confidence": res.confidence, "cited_units": list(res.cited_units),
+        "retrieved_units": list(res.retrieved_units), "tokens_in": res.usage.tokens_in,
+        "tokens_out": res.usage.tokens_out, "usd": res.usage.usd, "ms": res.ms,
+        "calls": res.calls, "searches": res.searches, "note": res.note,
+        "answerable": q.answerable, "as_of": q.as_of, "kind": q.kind, "cluster": q.cluster,
+        "gold_units": list(q.gold_units), "time_aware": s.time_aware, **g,
+    }
+
+
+def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
+        ledger: Ledger | None, *, limit: int | None = None, workers: int = 4, seed: int = 0,
+        dry_run: bool = False, params: dict | None = None) -> dict:
+    if split not in dataset.questions:
+        raise ValueError(f"unknown split {split!r}; have {sorted(dataset.questions)}")
+    os.makedirs(out_dir, exist_ok=True)
+    results_path = os.path.join(out_dir, "results.jsonl")
+    manifest_path = os.path.join(out_dir, "manifest.json")
+    active = [s for s in systems if s.available]
+    qs = select_questions(dataset.questions[split], limit, seed)
+
+    if os.path.exists(results_path):
+        with open(results_path, "rb") as fh:
+            data = fh.read()
+        if data and not data.endswith(b"\n"):
+            with open(results_path, "ab") as fh:
+                fh.write(b"\n")
+    done = {(r["system"], r["qid"]) for r in _read_rows(results_path) if r.get("status") != "error"}
+
+    ctx = systems[0].ctx if systems else None
+    prior = {}
+    if os.path.exists(manifest_path):
+        try:
+            with open(manifest_path, encoding="utf-8") as fh:
+                prior = json.load(fh)
+        except ValueError:
+            prior = {}
+    manifest = {
+        "dataset": dataset.name, "licence": dataset.licence, "corpus_tokens": dataset.corpus_tokens,
+        "split": split, "n_questions": len(qs), "question_ids": [q.id for q in qs],
+        "limit": limit, "seed": seed, "workers": workers, "dry_run": dry_run,
+        "systems": [s.describe() for s in systems], "locked_hash": locked_hash(),
+        "prompts_hash": prompts_hash(), "price_table": PRICE_TABLE, "params": params or {},
+        "first_started": prior.get("first_started") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "last_started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "ledger": None if ledger is None else {"path": ledger.path, "cap_usd": ledger.cap_usd,
+                                               "margin_usd": ledger.margin_usd},
+    }
+    if ctx is not None:
+        manifest["config"] = config_to_dict(ctx.config)
+        manifest["surface_hash"] = surface_hash(ctx)
+        manifest["models"] = ctx.models()
+
+    pending = [(q, s) for q in qs for s in active if (s.name, q.id) not in done]
+    stats = {"written": 0, "skipped": len(qs) * len(active) - len(pending), "errors": 0,
+             "stopped": None}
+    wlock = threading.Lock()
+
+    def work(item: tuple[Question, System]) -> dict:
+        q, s = item
+        if ledger is not None:
+            ledger.check(0.0)
+        try:
+            res = s.answer(q)
+        except BudgetExceeded:
+            raise
+        except Exception as e:  # recorded; retried on the next start
+            return {"system": s.name, "qid": q.id, "split": split, "status": "error",
+                    "outcome": "error", "error": f"{type(e).__name__}: {e}"[:500]}
+        return _row(q, split, s, res)
+
+    with open(results_path, "a", encoding="utf-8") as out, ThreadPoolExecutor(max(1, workers)) as ex:
+        it = iter(pending)
+        inflight: set = set()
+        stop = False
+        while True:
+            while not stop and len(inflight) < max(1, workers) * 2:
+                item = next(it, None)
+                if item is None:
+                    break
+                inflight.add(ex.submit(work, item))
+            if not inflight:
+                break
+            finished, inflight = wait(inflight, return_when=FIRST_COMPLETED)
+            for f in finished:
+                try:
+                    row = f.result()
+                except BudgetExceeded:
+                    stop = True
+                    stats["stopped"] = "budget"
+                    continue
+                with wlock:
+                    out.write(json.dumps(row, sort_keys=True) + "\n")
+                    out.flush()
+                stats["written"] += 1
+                if row.get("status") == "error":
+                    stats["errors"] += 1
+                if ledger is not None and ledger.remaining <= 0.0:
+                    stop = True
+                    stats["stopped"] = "budget"
+
+    manifest["last_run"] = dict(stats)
+    manifest["spent_usd"] = None if ledger is None else ledger.spent
+    tmp = manifest_path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(manifest, fh, indent=2, sort_keys=True)
+    os.replace(tmp, manifest_path)
+    return stats
+
+
+# ----------------------------------------------------------------------------
+# Command line
+# ----------------------------------------------------------------------------
+
+
+def _load_dataset(name: str) -> Dataset:
+    from . import datasets  # owned by another package; imported only when needed
+    for fn in ("load_dataset", "load", "get_dataset"):
+        if hasattr(datasets, fn):
+            return getattr(datasets, fn)(name)
+    raise SystemExit("heuresis.bench.datasets offers no loader (load_dataset/load/get_dataset)")
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    from ..fakes import EchoLLM, HashEmbedder, OverlapReranker, RuleEntailer
+    from .systems import build_context, build_systems
+    ap = argparse.ArgumentParser(prog="python -m heuresis.bench.run")
+    ap.add_argument("--dataset", help="dataset name, resolved by heuresis.bench.datasets")
+    ap.add_argument("--split", default="dev")
+    ap.add_argument("--systems", default=",".join(SYSTEM_NAMES))
+    ap.add_argument("--out", help="output folder (default: bench_out/<dataset>-<split>)")
+    ap.add_argument("--limit", type=int)
+    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--dry-run", action="store_true", help="offline fakes, costs nothing (the default)")
+    ap.add_argument("--paid", action="store_true", help="call the paid model; needs --cap")
+    ap.add_argument("--cap", "--cap-usd", dest="cap_usd", type=float, default=None,
+                    help="spend cap in USD")
+    ap.add_argument("--margin-usd", type=float, default=1.0)
+    ap.add_argument("--estimate-usd", type=float, default=0.02)
+    ap.add_argument("--ledger", help="ledger path (default: <out>/ledger.jsonl)")
+    ap.add_argument("--model", help="generator model (default: the config's draft model)")
+    ap.add_argument("--time-aware", action="store_true", help="baselines 2-6 search as of the question date")
+    ap.add_argument("--k", type=int, default=8)
+    ap.add_argument("--agent-k", type=int, default=5)
+    ap.add_argument("--max-actions", type=int, default=4)
+    ap.add_argument("--long-context-limit", type=int, default=90_000)
+    ap.add_argument("--embedder")
+    ap.add_argument("--reranker")
+    ap.add_argument("--entailer")
+    a = ap.parse_args(argv)
+    if not a.dataset:
+        print("error: --dataset is required", file=sys.stderr)
+        return 2
+    if a.paid and a.cap_usd is None:
+        print("error: --paid requires --cap USD", file=sys.stderr)
+        return 2
+    a.dry_run = a.dry_run or not a.paid  # a paid run is never the default
+    if a.cap_usd is None:
+        a.cap_usd = 10.0
+    a.out = a.out or os.path.join("bench_out", f"{a.dataset}-{a.split}")
+
+    from ..surface.config import load_config
+    cfg = load_config()
+    ds = _load_dataset(a.dataset)
+    os.makedirs(a.out, exist_ok=True)
+    ledger = Ledger(a.ledger or os.path.join(a.out, "ledger.jsonl"), a.cap_usd, a.margin_usd)
+    if a.dry_run:
+        llm, emb, rr, ent = EchoLLM(), HashEmbedder(), OverlapReranker(), RuleEntailer()
+    else:
+        from .. import models_local
+        from ..llm import AnthropicLLM
+        llm = AnthropicLLM(a.model or cfg.draft.model)
+        emb = models_local.load_embedder(a.embedder) if a.embedder else models_local.load_embedder()
+        rr = models_local.load_reranker(a.reranker) if a.reranker else models_local.load_reranker()
+        ent = models_local.load_entailer(a.entailer) if a.entailer else models_local.load_entailer()
+    ctx = build_context(ds, os.path.join(a.out, "store.sqlite"), llm=llm, embedder=emb,
+                        reranker=rr, entailer=ent, config=cfg, ledger=ledger,
+                        estimate_usd=a.estimate_usd)
+    systems = build_systems(ctx, [s for s in a.systems.split(",") if s], k=a.k,
+                            agent_k=a.agent_k, max_actions=a.max_actions,
+                            time_aware=a.time_aware, long_context_limit=a.long_context_limit)
+    stats = run(ds, a.split, systems, a.out, ledger, limit=a.limit, workers=a.workers,
+                seed=a.seed, dry_run=a.dry_run, params=vars(a))
+    print(json.dumps({**stats, "spent_usd": ledger.spent}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
