@@ -137,3 +137,60 @@ def test_asof_variants_are_exploratory_not_in_the_family(tmp_path):
     assert res["paired"]["bm25"]["mcnemar_p_holm"] == pytest.approx(0.5)  # family of one
     md = open(os.path.join(out, "results.md")).read()
     assert "| bm25+asof (exploratory) |" in md and "Table 6. Exploratory" in md
+
+
+def test_primary_permutation_test_and_holm_by_hand(tmp_path):
+    out = str(tmp_path)
+    rs = hand_rows() + [dict(r, system="vector", usd=0.02) for r in hand_rows() if r["system"] == "bm25"]
+    write(out, rs, systems=("engine", "bm25", "vector"))
+    res = report.write(out, iters=500)
+    # engine scores 1, 1, 1, -1; bm25 scores 1, -1, -1, 0: differences 0, 2, 2, -1.
+    # Of the 8 sign assignments of (2, 2, 1), four reach |sum| >= 3, so p = 0.5.
+    p = res["paired"]["bm25"]
+    assert p["perm_p"] == pytest.approx(0.5)
+    assert p["perm_p_holm"] == pytest.approx(1.0)  # family of two
+    assert p["score_diff"]["est"] == pytest.approx(0.75)
+    assert "cost_per_correct_diff" not in p  # only agentic and hybrid are compared on cost
+    md = open(os.path.join(out, "results.md")).read()
+    assert "permutation p" in md and "McNemar p" in md
+
+
+def test_cost_per_correct_difference_for_agentic_and_hybrid(tmp_path):
+    out = str(tmp_path)
+    rs = hand_rows()
+    for name, usd in (("agentic", 0.04), ("hybrid", 0.01)):
+        rs += [dict(r, system=name, usd=usd) for r in hand_rows() if r["system"] == "bm25"]
+    write(out, rs, systems=("engine", "bm25", "agentic", "hybrid"))
+    res = report.write(out, iters=300)
+    # engine: 0.4 usd over 3 correct = 0.1333; agentic: 0.16 over 1 correct = 0.16;
+    # hybrid: 0.04 over 1 correct = 0.04
+    assert res["paired"]["agentic"]["cost_per_correct_diff"]["est"] == pytest.approx(0.4 / 3 - 0.16)
+    assert res["paired"]["hybrid"]["cost_per_correct_diff"]["est"] == pytest.approx(0.4 / 3 - 0.04)
+    assert "bm25" in res["paired"] and "cost_per_correct_diff" not in res["paired"]["bm25"]
+    md = open(os.path.join(out, "results.md")).read()
+    assert "Table 5b" in md and "Table 7" in md
+
+
+def test_pareto_flags(tmp_path):
+    out = str(tmp_path)
+    write(out, hand_rows())
+    res = report.build(out, iters=50)
+    # engine costs 0.1 per question and scores 0.5; bm25 costs 0.01 and scores -0.25: neither dominates
+    assert res["pareto"]["engine"]["pareto_penalised_score"] is True
+    assert res["pareto"]["bm25"]["pareto_penalised_score"] is True
+    assert res["pareto"]["engine"]["mean_usd"] == pytest.approx(0.1)
+
+
+def test_family_holm_across_datasets(tmp_path):
+    results = []
+    for i in (1, 2):
+        out = str(tmp_path / f"d{i}")
+        write(out, hand_rows())
+        r = report.build(out, iters=100)
+        r["dataset"] = f"d{i}"
+        results.append(r)
+    rows = report.family(results)
+    assert [x["dataset"] for x in rows] == ["d1", "d2"]
+    assert all(x["perm_p"] == pytest.approx(0.5) and x["perm_p_holm_family"] == pytest.approx(1.0)
+               for x in rows)
+    assert "Holm p (family)" in report.render_family(rows)

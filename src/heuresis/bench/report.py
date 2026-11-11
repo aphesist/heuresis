@@ -12,8 +12,16 @@ Definitions
 * cost per correct answer = total usd / number of correct outcomes, with a
   bootstrap interval that resamples questions (or clusters).
 * paired comparisons use the questions both systems finished; the engine is the
-  first system in each pair; the McNemar family (Holm) is every compared baseline.
-  The oracle is a ceiling and is excluded from comparisons.
+  first system in each pair. The oracle is a ceiling and is excluded from comparisons.
+* primary confirmatory test, on the penalised score: the mean per-question difference
+  (engine minus baseline) with a paired bootstrap interval, a two-sided paired sign-flip
+  permutation test (cluster-level flips when clusters exist) and its Holm-adjusted
+  p-value across every compared baseline of the report. ``family`` repeats the Holm
+  adjustment across several reports (datasets). The exact McNemar test on correctness
+  is secondary and is kept, with its own Holm adjustment.
+* cost per correct answer is also compared as a difference, engine minus baseline, for
+  the baselines in ``COST_COMPARE``, with a bootstrap interval that resamples
+  questions (or clusters) and keeps each pair together.
 * the confirmatory family is the engine against every available system except the
   oracle and except the time-aware variants (suffix ``+asof``). The variants are
   exploratory: they are compared separately, with their own Holm correction, and
@@ -36,6 +44,7 @@ from . import stats
 BANNER = "DRY RUN — offline fakes, not a measurement"
 REFERENCE = "engine"
 EXCLUDED = ("oracle",)
+COST_COMPARE = ("agentic", "hybrid")
 EXPLORATORY_SUFFIX = "+asof"
 
 
@@ -136,7 +145,8 @@ def system_metrics(rows: list[dict], iters: int, seed: int) -> dict:
     return out
 
 
-def paired(ref_rows: list[dict], other_rows: list[dict], iters: int, seed: int) -> dict | None:
+def paired(ref_rows: list[dict], other_rows: list[dict], iters: int, seed: int,
+           cost: bool = False) -> dict | None:
     a = {r["qid"]: r for r in ref_rows}
     b = {r["qid"]: r for r in other_rows}
     ids = sorted(set(a) & set(b))
@@ -148,13 +158,39 @@ def paired(ref_rows: list[dict], other_rows: list[dict], iters: int, seed: int) 
     only_a, only_b = stats.discordant(ca, cb)
     n = len(ids)
     disc = (only_a + only_b) / n
-    return {
+    out = {
         "n": n,
         "score_diff": _ci(stats.paired_bootstrap_ci(sa, sb, iters=iters, seed=seed, clusters=_cl(ra))),
+        "perm_p": stats.paired_permutation_test(sa, sb, iters=iters, seed=seed, clusters=_cl(ra)),
         "reference_only_correct": only_a, "other_only_correct": only_b,
         "discordance": disc, "mcnemar_p": stats.mcnemar_exact(only_a, only_b),
         "min_detectable_diff": _num(stats.min_detectable_diff(n, disc)) if disc > 0 else None,
     }
+    if cost:
+        out["cost_per_correct_diff"] = _ci(stats.paired_ratio_diff_ci(
+            [float(r["usd"]) for r in ra], [1.0 if c else 0.0 for c in ca],
+            [float(r["usd"]) for r in rb], [1.0 if c else 0.0 for c in cb],
+            iters=iters, seed=seed, clusters=_cl(ra)))
+    return out
+
+
+def pareto(res: dict) -> dict:
+    """Accuracy-cost table: mean cost per question against accuracy and penalised score,
+    with a flag for the systems no other system beats on both cost and the measure.
+    The oracle (a ceiling) and the exploratory variants are left out."""
+    names = [s for s in res["systems"] if s not in EXCLUDED and not is_exploratory(s)]
+    rows = {}
+    for s in names:
+        m = res["systems"][s]
+        rows[s] = {"mean_usd": m["cost"]["mean_usd"], "accuracy": m["accuracy"],
+                   "penalised_score": m["penalised_score"]["est"]}
+    ok = [s for s in names if rows[s]["mean_usd"] is not None and rows[s]["accuracy"] is not None
+          and rows[s]["penalised_score"] is not None]
+    for key in ("accuracy", "penalised_score"):
+        flags = stats.pareto_front([(rows[s]["mean_usd"], rows[s][key]) for s in ok])
+        for s in names:
+            rows[s][f"pareto_{key}"] = bool(flags[ok.index(s)]) if s in ok else None
+    return rows
 
 
 def build(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
@@ -184,14 +220,18 @@ def build(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
             for s in order:
                 if s == REFERENCE or s in EXCLUDED or is_exploratory(s) != want:
                     continue
-                p = paired(by[REFERENCE], by[s], iters, seed)
+                p = paired(by[REFERENCE], by[s], iters, seed,
+                           cost=(not want and s in COST_COMPARE))
                 if p:
                     names.append(s)
                     ps.append(p)
             adj = stats.holm([p["mcnemar_p"] for p in ps])
-            for s, p, q in zip(names, ps, adj):
+            adj_perm = stats.holm([p["perm_p"] for p in ps])
+            for s, p, q, qp in zip(names, ps, adj, adj_perm):
                 p["mcnemar_p_holm"] = q
+                p["perm_p_holm"] = qp
                 res[key][s] = p
+    res["pareto"] = pareto(res)
     return res
 
 
@@ -263,26 +303,56 @@ def render(res: dict) -> str:
     L += ["", "Only the engine cites units itself; baselines show retrieval recall only.", ""]
     if res["paired"]:
         L += [f"## Table 5. `{res['reference']}` against each baseline ({sp}; paired on shared questions)",
-              "", "Score difference = engine minus baseline (penalised score). McNemar is exact, "
-              "two-sided, on correct outcomes; Holm adjusts across the rows below. The oracle is excluded. Time-aware variants are in Table 6.",
-              "", "| baseline | n | score diff | engine only | baseline only | McNemar p | Holm p | min detectable diff |",
-              "|---|---|---|---|---|---|---|---|"]
+              "", "Primary test. Score difference = engine minus baseline on the penalised score "
+              "(+1 correct, 0 abstained, -1 wrong), with a paired bootstrap 95% interval. The permutation p is a "
+              "two-sided paired sign-flip test; Holm adjusts across the rows below (and across datasets in the "
+              "family table). The oracle is excluded. Time-aware variants are in Table 6.",
+              "", "| baseline | n | score diff | permutation p | Holm p |",
+              "|---|---|---|---|---|"]
         for s, p in res["paired"].items():
-            L.append(f"| {s} | {p['n']} | {_ci_s(p['score_diff'])} | {p['reference_only_correct']} | "
+            L.append(f"| {s} | {p['n']} | {_ci_s(p['score_diff'])} | {_f(p['perm_p'], 4)} | "
+                     f"{_f(p['perm_p_holm'], 4)} |")
+        L += ["", "Secondary: McNemar is exact, two-sided, on correct outcomes; Holm adjusts across the rows.",
+              "", "| baseline | n | engine only | baseline only | McNemar p | Holm p | min detectable diff |",
+              "|---|---|---|---|---|---|---|"]
+        for s, p in res["paired"].items():
+            L.append(f"| {s} | {p['n']} | {p['reference_only_correct']} | "
                      f"{p['other_only_correct']} | {_f(p['mcnemar_p'], 4)} | {_f(p['mcnemar_p_holm'], 4)} | "
                      f"{_f(p['min_detectable_diff'])} |")
         L.append("")
+        cc = {s: p["cost_per_correct_diff"] for s, p in res["paired"].items() if "cost_per_correct_diff" in p}
+        if cc:
+            L += [f"## Table 5b. Cost per correct answer, `{res['reference']}` minus baseline ({sp})", "",
+                  "Bootstrap 95% interval, questions resampled with each pair kept together. Negative means the "
+                  "engine costs less per correct answer.", "",
+                  "| baseline | difference in cost per correct |", "|---|---|"]
+            for s, c in cc.items():
+                L.append(f"| {s} | {_usd(c['est'])} [{_usd(c['lo'])}, {_usd(c['hi'])}] |")
+            L.append("")
     if res.get("exploratory_paired"):
         L += [f"## Table 6. Exploratory: `{res['reference']}` against the time-aware variants "
               f"({sp}; paired on shared questions)",
               "", "The `+asof` systems search as of the question date. They are exploratory: not part "
               "of the confirmatory family of Table 5, and Holm here adjusts only across the rows below.",
-              "", "| variant | n | score diff | engine only | variant only | McNemar p | Holm p | min detectable diff |",
-              "|---|---|---|---|---|---|---|---|"]
+              "", "| variant | n | score diff | permutation p | Holm p | engine only | variant only | McNemar p | min detectable diff |",
+              "|---|---|---|---|---|---|---|---|---|"]
         for s, p in res["exploratory_paired"].items():
-            L.append(f"| {s} | {p['n']} | {_ci_s(p['score_diff'])} | {p['reference_only_correct']} | "
-                     f"{p['other_only_correct']} | {_f(p['mcnemar_p'], 4)} | {_f(p['mcnemar_p_holm'], 4)} | "
+            L.append(f"| {s} | {p['n']} | {_ci_s(p['score_diff'])} | {_f(p['perm_p'], 4)} | "
+                     f"{_f(p['perm_p_holm'], 4)} | {p['reference_only_correct']} | "
+                     f"{p['other_only_correct']} | {_f(p['mcnemar_p'], 4)} | "
                      f"{_f(p['min_detectable_diff'])} |")
+        L.append("")
+    if res.get("pareto"):
+        L += [f"## Table 7. Accuracy against cost ({sp})", "",
+              "A system is on the frontier for a measure when no other system (oracle and exploratory variants "
+              "excluded) costs no more and scores no less on it, with one strict. Costs are per question at the dated "
+              "price table.", "",
+              "| system | mean cost | accuracy | on frontier (accuracy) | penalised score | on frontier (penalised) |",
+              "|---|---|---|---|---|---|"]
+        yn = lambda v: "n/a" if v is None else ("yes" if v else "no")
+        for s, r in res["pareto"].items():
+            L.append(f"| {s} | {_usd(r['mean_usd'])} | {_pct(r['accuracy'])} | {yn(r['pareto_accuracy'])} | "
+                     f"{_f(r['penalised_score'])} | {yn(r['pareto_penalised_score'])} |")
         L.append("")
     if res["dry_run"]:
         L += [BANNER, ""]
@@ -298,14 +368,48 @@ def write(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
     return res
 
 
+def family(results: Sequence[dict]) -> list[dict]:
+    """Holm adjustment of the permutation p-values across several reports (one per
+    dataset). Returns one row per (dataset, baseline) of the confirmatory family, each
+    with the penalised-score difference, its interval, the permutation p and the
+    family-wide Holm p. Time-aware variants are not part of it."""
+    rows = [{"dataset": r["dataset"], "baseline": s, "n": p["n"], "score_diff": p["score_diff"],
+             "perm_p": p["perm_p"]}
+            for r in results for s, p in r["paired"].items()]
+    adj = stats.holm([x["perm_p"] for x in rows])
+    for x, q in zip(rows, adj):
+        x["perm_p_holm_family"] = q
+    return rows
+
+
+def render_family(rows: Sequence[dict]) -> str:
+    L = [f"# Confirmatory family: {len(rows)} comparisons, Holm across all", "",
+         "Penalised score, engine minus baseline; two-sided paired sign-flip permutation test.", "",
+         "| dataset | baseline | n | score diff | permutation p | Holm p (family) |",
+         "|---|---|---|---|---|---|"]
+    for x in rows:
+        L.append(f"| {x['dataset']} | {x['baseline']} | {x['n']} | {_ci_s(x['score_diff'])} | "
+                 f"{_f(x['perm_p'], 4)} | {_f(x['perm_p_holm_family'], 4)} |")
+    return "\n".join(L) + "\n"
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m heuresis.bench.report")
-    ap.add_argument("out_dir")
+    ap.add_argument("out_dir", nargs="+", help="one run folder per dataset; with several, a "
+                                               "family table with Holm across all is also written")
     ap.add_argument("--iters", type=int, default=10_000)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--family-out", default="family.md", help="where the family table goes")
     a = ap.parse_args(argv)
-    write(a.out_dir, a.iters, a.seed)
-    print(os.path.join(a.out_dir, "results.md"))
+    results = []
+    for d in a.out_dir:
+        results.append(write(d, a.iters, a.seed))
+        print(os.path.join(d, "results.md"))
+    if len(results) > 1:
+        rows = family(results)
+        with open(a.family_out, "w", encoding="utf-8") as fh:
+            fh.write(render_family(rows))
+        print(a.family_out)
     return 0
 
 

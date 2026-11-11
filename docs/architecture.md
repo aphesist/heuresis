@@ -1,0 +1,127 @@
+# Architecture
+
+How `heuresis` is built, stage by stage. Shared types are in `src/heuresis/model.py`; function
+signatures are in `docs/contracts.md`. This page describes what the code does; it makes no claim
+about how well it does it (see the README's honesty table).
+
+## Data model
+
+Five kinds of object, all frozen dataclasses (`model.py`):
+
+| Object | What it is |
+|---|---|
+| `Source` | Where units come from. Has a `coverage` grade (0 to 4) that caps the grade of any answer relying on it, and an `authority` that orders sources when they conflict. |
+| `Unit` | A stable identity whose text changes: a provision, a note, a file, a schema card. Has a kind, an optional parent and a title. |
+| `Event` | One change to one unit: `create`, `replace`, `repeal`, `restore` or `correct`, with a date, a `recorded_at` stamp, evidence, a certainty (`low`, `medium`, `high`) and optional extra dates in `axes`. |
+| `Version` | One text of one unit over one validity interval `[valid_from, valid_to)`, computed by replaying events. Never stored by a domain; always derived. |
+| `Edge` | A typed link that exists in the corpus (never extracted by a model), valid over an interval. |
+
+Events are the source of truth. `Store.rebuild()` replays them per unit, in the order
+`(date, recorded_at, id)`, into a `versions` table and an FTS5 index. Ingesting twice changes
+nothing: ids are deterministic and `add` is idempotent (an event id seen before with different
+content is an error).
+
+## Time axes
+
+- **Valid time** (`AsOf.valid`): when the content is in force. A version is in force on date `d`
+  when `valid_from <= d < valid_to`; `None` is unbounded. `valid = None` means today (UTC).
+- **Transaction time** (`AsOf.recorded`): what the corpus knew by a timestamp. A `correct` event
+  rewrites the text of a past interval without changing the interval, and is visible only to
+  queries whose `recorded` is at or after its `recorded_at`.
+- **Domain axes** (`Domain.axes`, `Event.axes`): extra named dates a plug-in declares, for example
+  `published` and `effects` in `legal_br`. They are carried with each version and shown in
+  citations. Only valid and recorded time filter retrieval.
+
+## Stages of `Engine.ask`
+
+Cost-ordered: the cheap, local stages run first, the model is called once, and everything after it
+is local again.
+
+1. **Understand** (`router.py`, zero cost). Rules extract an explicit date from the question into
+   `as_of.valid` (ISO, `15/03/2024`, "March 2024", "em março de 2024", a bare year) and set an
+   intent (`lookup`, `multi_hop`, `compute`, `table`, `out_of_scope`). A caller-supplied `as_of`
+   always wins. Domain rules may add a scope (for example the norm named in a question). An optional
+   classifier is consulted only when no rule fired or rules disagree; below `ask_threshold` the
+   router sets `clarify` and the engine returns `needs_input` instead of guessing. `Engine` then
+   drops a question-extracted date when the corpus has no version history or the date precedes
+   the first version, and searches as of today.
+2. **Retrieve** (`retrieve.cascade`). Lexical search first (SQLite FTS5 with the as-of and scope
+   filters inside the SQL, before ranking). An early-stop test compares the score at rank 1 with the
+   score at rank `rerank_out`; if the margin reaches `early_stop_margin` (never for `multi_hop`),
+   the dense and expand stages are skipped. Otherwise dense search runs with the same filters and the
+   two lists are fused by reciprocal rank fusion. Optional stages, off by default: expansion along
+   explicit edges (`expand`) and a cross-encoder rerank (`rerank`). At most `rerank_out` passages
+   go on, numbered `t1..tn`, each with its source coverage and version certainty.
+3. **Draft** (`draft.py`). One model call. The prompt holds the as-of date, the passages with their
+   validity spans, the question and an optional length limit. The model writes short sentences each
+   ending in citation marks, may request deterministic tool calls (`CALL k1 calc {...}`), or may
+   write `ABSTAIN <type>: <reason>`. Low-ranked passages are dropped, never cut, to fit
+   `max_context_chars`.
+4. **Tools** (`tools/`). `calc` (arithmetic by AST whitelist and `Decimal`), `dates` (differences,
+   additions, weekday checks) and `sql` (one read-only `SELECT` with a row cap and a time limit). The
+   engine binds `sql` to the database the `tables` domain read; a model-written `db` argument is
+   overwritten. After a `sql` call there is one follow-up draft with the results in the prompt.
+5. **Verify** (`locked/verify.py`, local). Four checks per sentence: every cited mark exists; every
+   cited version is in force at the date (checked against the store, not the passage copy); the cited
+   passages entail the sentence (local NLI model, thresholds `support_threshold` and
+   `partial_threshold`); every number in the sentence appears in a cited passage or is a cited tool
+   value. A sentence with no marks is unsupported. A sentence that fails exists, valid or numbers is
+   unsupported whatever its entailment score.
+6. **Decide** (`locked/decide.py`). All claims supported (fraction `min_supported_fraction`):
+   `answered`. At least `partial_fraction` supported: `partial`, with the unsupported sentences
+   removed. Otherwise an abstention. The grade is the minimum of the lowest claim support, the lowest
+   cited certainty and the lowest cited source coverage, mapped to 0..1.
+7. **Assemble.** The answer text with tool values filled in, the claims with their labels and
+   citations (`unit_id @ valid_from..valid_to`), the grade and a trace of every stage with time,
+   tokens and cost.
+
+## Abstention types
+
+An abstention names why, so the caller can act on it (`model.ABSTENTIONS`):
+
+| Type | When |
+|---|---|
+| `no_source` | nothing relevant was found |
+| `not_valid_at_date` | the topic exists but no version is in force at the date (also when all cited versions failed the date check) |
+| `outside_coverage` | every retrieved passage comes from a source with coverage 0 |
+| `unsupported` | a draft was written but did not pass verification, or the model call failed |
+| `needs_input` | the router wants one datum from the user |
+| `out_of_scope` | the router judged it not a question for this corpus |
+| `budget` | the cost budget ran out before a verified answer |
+| `tool_failed` | a required computation could not be done |
+| `false_premise` | the question assumes something the sources contradict |
+| `conflict` | sources of equal authority disagree. **Not built** as a check: the decision rule has a `divergent` branch, but nothing in the engine produces the conflict flag it reads. |
+
+The drafter can declare any of these types itself with `ABSTAIN <type>: <reason>`; an unknown type
+becomes `unsupported`. In practice `tool_failed`, `false_premise` and `conflict` come only from
+that route.
+
+## Domains
+
+A domain plug-in (`domains/`) turns a path into sources, units, events and edges, and may add router
+rules, tools and abstention wording. Registered: `text` (Markdown folder, one unit per section, dated by the front-matter date or the file's
+modification date), `git` (read-only git commands, commits as events), `tables` (a SQLite file, one
+schema-card unit per table, with the `sql` tool), `jsonl` (the exchange format used by the benchmark)
+and `legal_br` (an example for Brazilian legislation on synthetic data; not a legal product).
+
+## What is locked
+
+`src/heuresis/locked/` (`verify.py`, `decide.py`, `scoring.py`, `guard.py`) is the part an outside
+optimiser must not change. `locked_hash()` is the sha256 over the names and bytes of its `*.py`
+files. It holds the verifier, the decision rule, the scoring used by the benchmark and the guard
+itself.
+
+`src/heuresis/surface/` is the mutable part: `default.json` (one dataclass per stage), `config.py`
+and `prompts.py`. `check_diff(paths)` returns every changed path outside `src/heuresis/surface/`;
+a diff with any such path is rejected. Everything else (store, router, retrieval code, tools,
+benchmark) is outside both folders and is changed by hand, in review.
+
+The split is a contract, not a sandbox: the guard checks paths in a diff, and the hash lets a
+benchmark record which locked code it ran. It does not stop code in the surface from doing what
+Python allows.
+
+## Cost accounting
+
+Every model call returns a `Usage` priced by `pricing.price` from a dated table. The engine's trace
+sums per stage; the benchmark's ledger (`bench/ledger.py`) appends every charge to a file and stops
+at a cap. Local models (embedder, reranker, entailer) are not priced.
