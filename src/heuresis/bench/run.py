@@ -25,12 +25,14 @@ from ..locked import scoring
 from ..locked.guard import locked_hash
 from ..surface.config import config_to_dict
 from .ledger import BudgetExceeded, Ledger
-from .systems import SYSTEM_NAMES, BenchContext, System, prompts_hash
+from .systems import (
+    BENCH_TEMPERATURE, SYSTEM_NAMES, BenchContext, System, prompts_hash,
+)
+from .systems import surface_hash as _surface_hash
 from .types import Dataset, Question
 
-import hashlib
-
 PRICE_TABLE = "anthropic-2026-11"
+DEFAULT_KEY_ENV = "PROJECTS_ANTHROPIC_KEY"
 _MARK = re.compile(r"\[[tk]\d+\]")
 
 
@@ -58,9 +60,9 @@ def grade(q: Question, status: str, text: str) -> dict:
 
 
 def surface_hash(ctx: BenchContext) -> str:
-    blob = json.dumps(config_to_dict(ctx.config), sort_keys=True)
-    from ..surface.prompts import DRAFT_SYSTEM
-    return hashlib.sha256((blob + "\x00" + DRAFT_SYSTEM).encode("utf-8")).hexdigest()
+    """The run's surface hash: the one implementation in ``systems.surface_hash`` (also
+    printed by ``heuresis hash``), over the context's configuration."""
+    return _surface_hash(ctx.config)
 
 
 def select_questions(questions: Sequence[Question], limit: int | None, seed: int) -> list[Question]:
@@ -85,9 +87,29 @@ def _read_rows(path: str) -> list[dict]:
     return rows
 
 
+def _meta(q: Question, split: str, s: System) -> dict:
+    return {"system": s.name, "qid": q.id, "split": split, "answerable": q.answerable,
+            "as_of": q.as_of, "kind": q.kind, "cluster": q.cluster,
+            "gold_units": list(q.gold_units), "time_aware": s.time_aware,
+            "exploratory": s.exploratory}
+
+
+def _error_row(q: Question, split: str, s: System, error: str, ms: float,
+               res: Any = None) -> dict:
+    """The row for an API or model failure after retries, the same for every system. The
+    report counts it as outcome "wrong"; a restart retries it."""
+    row = {**_meta(q, split, s), "status": "error", "outcome": "error", "error": error[:500],
+           "ms": ms}
+    if res is not None:
+        row.update({"tokens_in": res.usage.tokens_in, "tokens_out": res.usage.tokens_out,
+                    "usd": res.usage.usd, "calls": res.calls, "searches": res.searches,
+                    "stage_ms": res.stage_ms, "note": res.note})
+    return row
+
+
 def _row(q: Question, split: str, s: System, res: Any) -> dict:
     g = grade(q, res.status, res.text)
-    return {
+    row = {
         "system": s.name, "qid": q.id, "split": split, "status": res.status, "text": res.text,
         "confidence": res.confidence, "cited_units": list(res.cited_units),
         "retrieved_units": list(res.retrieved_units), "tokens_in": res.usage.tokens_in,
@@ -95,8 +117,11 @@ def _row(q: Question, split: str, s: System, res: Any) -> dict:
         "calls": res.calls, "searches": res.searches, "note": res.note,
         "answerable": q.answerable, "as_of": q.as_of, "kind": q.kind, "cluster": q.cluster,
         "gold_units": list(q.gold_units), "time_aware": s.time_aware,
-        "exploratory": s.exploratory, **g,
+        "exploratory": s.exploratory, "stage_ms": res.stage_ms, **g,
     }
+    if res.replay is not None:
+        row["replay"] = res.replay
+    return row
 
 
 def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
@@ -134,6 +159,9 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
         "limit": limit, "seed": seed, "workers": workers, "dry_run": dry_run,
         "systems": [s.describe() for s in systems], "locked_hash": locked_hash(),
         "prompts_hash": prompts_hash(), "price_table": PRICE_TABLE, "params": params or {},
+        "latency_note": (f"ms is wall-clock around System.answer, measured the same way for every "
+                         f"system, with {workers} concurrent workers; stage_ms (engine only) is "
+                         f"the sum of the engine's stage timings"),
         "first_started": prior.get("first_started") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "last_started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "ledger": None if ledger is None else {"path": ledger.path, "cap_usd": ledger.cap_usd,
@@ -144,6 +172,7 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
         manifest["engine_config"] = config_to_dict(ctx.engine_config())
         manifest["surface_hash"] = surface_hash(ctx)
         manifest["models"] = ctx.models()
+        manifest["model_provenance"] = ctx.provenance()
 
     pending = [(q, s) for q in qs for s in active if (s.name, q.id) not in done]
     stats = {"written": 0, "skipped": len(qs) * len(active) - len(pending), "errors": 0,
@@ -154,13 +183,17 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
         q, s = item
         if ledger is not None and not dry_run:
             ledger.check(0.0)
+        t0 = time.perf_counter()
         try:
             res = s.answer(q)
         except BudgetExceeded:
             raise
         except Exception as e:  # recorded; retried on the next start
-            return {"system": s.name, "qid": q.id, "split": split, "status": "error",
-                    "outcome": "error", "error": f"{type(e).__name__}: {e}"[:500]}
+            return _error_row(q, split, s, f"{type(e).__name__}: {e}",
+                              (time.perf_counter() - t0) * 1000.0)
+        res.ms = (time.perf_counter() - t0) * 1000.0  # the same clock for every system
+        if res.error:  # a model failure the system could detect but not raise
+            return _error_row(q, split, s, res.error, res.ms, res)
         return _row(q, split, s, res)
 
     with open(results_path, "a", encoding="utf-8") as out, ThreadPoolExecutor(max(1, workers)) as ex:
@@ -232,7 +265,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                     help="spend cap in USD")
     ap.add_argument("--margin-usd", type=float, default=1.0)
     ap.add_argument("--estimate-usd", type=float, default=0.02)
-    ap.add_argument("--ledger", help="ledger path (default: <out>/ledger.jsonl)")
+    ap.add_argument("--ledger", help="ledger path (default for a dry run: <out>/ledger.jsonl); "
+                                     "REQUIRED with --paid, so that every paid run shares one ledger")
+    ap.add_argument("--key-env", default=DEFAULT_KEY_ENV, metavar="NAME",
+                    help=f"name of the environment variable that holds the API key "
+                         f"(default: {DEFAULT_KEY_ENV}); only the name is ever printed")
     ap.add_argument("--model", help="generator model (default: the config's draft model)")
     ap.add_argument("--time-aware", action="store_true", help="baselines 2-6 search as of the question date")
     ap.add_argument("--time-aware-variants", action="store_true",
@@ -254,6 +291,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     if a.paid and a.cap_usd is None:
         print("error: --paid requires --cap USD", file=sys.stderr)
         return 2
+    if a.paid and not a.ledger:
+        print("error: --paid requires --ledger PATH: one ledger shared by every paid run, so two "
+              "runs can never each believe they have the whole cap", file=sys.stderr)
+        return 2
+    if a.paid and not os.environ.get(a.key_env):
+        print(f"error: environment variable {a.key_env} is not set; nothing was run "
+              f"(use --key-env NAME to read another variable)", file=sys.stderr)
+        return 2
     a.dry_run = a.dry_run or not a.paid  # a paid run is never the default
     if a.cap_usd is None:
         a.cap_usd = 10.0
@@ -261,6 +306,14 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     from ..surface.config import load_config
     cfg = load_config()
+    paid_llm = None
+    if a.paid:  # built, and announced, before any work: only the variable NAME is shown
+        from ..llm import AnthropicLLM
+        paid_llm = AnthropicLLM(a.model or cfg.draft.model, key_env=a.key_env,
+                                temperature=BENCH_TEMPERATURE)
+        print(f"paid run: the API key is read from the environment variable {a.key_env} "
+              f"(value not shown); requests go to {paid_llm.base_url}; temperature "
+              f"{BENCH_TEMPERATURE}", file=sys.stderr)
     ds = _load_dataset(a.dataset)
     os.makedirs(a.out, exist_ok=True)
     # A dry run costs nothing: no safety margin, and the ledger never stops it.
@@ -270,8 +323,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         llm, emb, rr, ent = EchoLLM(), HashEmbedder(), OverlapReranker(), RuleEntailer()
     else:
         from .. import models_local
-        from ..llm import AnthropicLLM
-        llm = AnthropicLLM(a.model or cfg.draft.model)
+        llm = paid_llm
         emb = models_local.load_embedder(a.embedder) if a.embedder else models_local.load_embedder()
         rr = models_local.load_reranker(a.reranker) if a.reranker else models_local.load_reranker()
         ent = models_local.load_entailer(a.entailer) if a.entailer else models_local.load_entailer()

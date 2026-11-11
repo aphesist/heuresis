@@ -35,8 +35,11 @@ class AnthropicLLM:
         *,
         urlopen: Callable[..., Any] | None = None,
         sleep: Callable[[float], None] | None = None,
+        temperature: float | None = 0.0,
     ):
         self.id = model
+        #: Sampling temperature sent in every request; ``None`` leaves the API default.
+        self.temperature = temperature
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
@@ -76,14 +79,15 @@ class AnthropicLLM:
         self, system: str, prompt: str, *, max_tokens: int = 600
     ) -> tuple[str, Usage]:
         key = self._key()
-        body = json.dumps(
-            {
-                "model": self.model,
-                "max_tokens": max_tokens,
-                "system": system,
-                "messages": [{"role": "user", "content": prompt}],
-            }
-        ).encode("utf-8")
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "max_tokens": max_tokens,
+            "system": system,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        if self.temperature is not None:
+            payload["temperature"] = float(self.temperature)
+        body = json.dumps(payload).encode("utf-8")
         t0 = time.perf_counter()
         last = "unknown error"
         for attempt in range(self.max_retries + 1):

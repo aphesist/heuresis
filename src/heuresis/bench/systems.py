@@ -13,9 +13,10 @@ from __future__ import annotations
 import copy
 import dataclasses
 import hashlib
+import inspect
+import json
 import re
 import threading
-import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -25,13 +26,14 @@ from ..ingest import ingest
 from ..model import Answer, AsOf, Passage, Query, Scope, StageTrace, Usage
 from ..retrieve import cascade
 from ..store import Store
-from ..surface.config import Config, load_config
-from .ledger import Ledger, LedgerLLM
+from ..surface.config import Config, config_to_dict, load_config
+from .ledger import BudgetExceeded, Ledger, LedgerLLM
 from .types import Dataset, Question
 
 __all__ = [
     "ANSWER_FORMAT", "SYSTEM_NAMES", "Result", "System", "BenchContext", "build_context",
-    "build_systems", "parse_reply", "prompts_hash", "prepare_corpus",
+    "build_systems", "parse_reply", "prompts_hash", "surface_hash", "effective_engine_config",
+    "prepare_corpus", "BENCH_TEMPERATURE",
 ]
 
 ANSWER_FORMAT = (
@@ -64,11 +66,41 @@ _CONF = re.compile(r"^\s*CONFIDENCE\s*:\s*(\d+(?:\.\d+)?)\s*%?\s*$", re.I | re.M
 _SEARCH = re.compile(r"^\s*SEARCH\s*:\s*(.+?)\s*$", re.I)
 
 ENGINE_MAX_SENTENCES = 2
+#: The generator is sampled at temperature 0 in the benchmark (every system).
+BENCH_TEMPERATURE = 0.0
+
+
+def effective_engine_config(config: Config) -> Config:
+    """The configuration the engine system runs with: a copy of ``config`` that asks for
+    the same answer length as the baselines. ``config`` itself is not changed."""
+    cfg = copy.deepcopy(config)
+    cfg.draft.max_sentences = ENGINE_MAX_SENTENCES
+    return cfg
+
+
+def surface_hash(config: Config | None = None) -> str:
+    """The one hash of everything the engine's behaviour depends on outside ``locked/``:
+    the effective engine configuration, ``DRAFT_SYSTEM`` and the SOURCE of
+    ``surface/prompts.py`` (so ``draft_prompt`` is covered). ``heuresis hash`` and every
+    run manifest use this function."""
+    from ..surface import prompts as prompts_mod
+    cfg = effective_engine_config(config if config is not None else load_config())
+    blob = json.dumps(config_to_dict(cfg), sort_keys=True)
+    with open(prompts_mod.__file__, "rb") as fh:
+        source = fh.read().decode("utf-8")
+    parts = [blob, prompts_mod.DRAFT_SYSTEM, source]
+    return hashlib.sha256("\x00".join(parts).encode("utf-8")).hexdigest()
 
 
 def prompts_hash() -> str:
+    """Hash of the baseline prompt constants and of the source of the functions that
+    build the baselines' prompts (shared helpers, the single-shot, closed-book, oracle,
+    long-context and agentic ``_answer`` methods)."""
+    sources = [inspect.getsource(f) for f in (
+        _span, _passage_line, passages_prompt, ClosedBook._answer, _Retrieving._answer,
+        Agentic._answer, LongContext._answer, Oracle._answer)]
     parts = [ANSWER_FORMAT, CLOSED_SYSTEM, PASSAGES_SYSTEM, LONG_SYSTEM, AGENT_SYSTEM,
-             AGENT_MORE, AGENT_LAST]
+             AGENT_MORE, AGENT_LAST] + sources
     return hashlib.sha256("\n\x00".join(parts).encode("utf-8")).hexdigest()
 
 
@@ -79,11 +111,17 @@ class Result:
     confidence: float = 0.5           # 0..1
     cited_units: tuple[str, ...] = ()  # units the system itself cited (engine only)
     usage: Usage = field(default_factory=Usage)   # tokens in/out and usd, summed
-    ms: float = 0.0
+    ms: float = 0.0                   # wall-clock around System.answer, set by the runner
     calls: int = 0                    # model calls
     searches: int = 0
     retrieved_units: tuple[str, ...] = ()  # units shown to the generator, in order
     note: str = ""
+    #: Set when the model (or verifier) failed: the runner writes an error row.
+    error: str = ""
+    #: Engine only: the sum of its stage timings, kept apart from the wall-clock ``ms``.
+    stage_ms: float | None = None
+    #: Engine only: what is needed to replay verification offline (``bench.calibrate``).
+    replay: dict | None = None
 
 
 def parse_reply(raw: str) -> tuple[str, bool, float]:
@@ -135,13 +173,21 @@ class BenchContext:
         self._tls = threading.local()
         self._open_lock = threading.Lock()
         self._llms: dict[str, Any] = {}
+        self._tap: _Tap | None = None
 
     def engine_config(self) -> Config:
         """The configuration the engine system runs with: a copy of ``config`` that asks
         for the same answer length as the baselines. ``config`` itself is not changed."""
-        cfg = copy.deepcopy(self.config)
-        cfg.draft.max_sentences = ENGINE_MAX_SENTENCES
-        return cfg
+        return effective_engine_config(self.config)
+
+    @property
+    def engine_tap(self) -> "_Tap":
+        """Keeps the raw replies of the engine's model calls (per thread). Exists once
+        ``engine()`` has been called."""
+        if self._tap is None:
+            self.engine()
+        assert self._tap is not None
+        return self._tap
 
     @property
     def max_tokens(self) -> int:
@@ -168,8 +214,10 @@ class BenchContext:
         if eng is None:
             from ..engine import Engine  # imported late: the engine is optional for baselines
             with self._open_lock:
+                if self._tap is None:
+                    self._tap = _Tap(self.llm_for("engine"))
                 eng = Engine.open(self.db_path, "jsonl", config=self.engine_config(),
-                                  llm=self.llm_for("engine"), embedder=self.embedder,
+                                  llm=self._tap, embedder=self.embedder,
                                   reranker=self.reranker, entailer=self.entailer)
             self._tls.engine = eng
         return eng
@@ -181,6 +229,56 @@ class BenchContext:
             "reranker": getattr(self.reranker, "id", None),
             "entailer": getattr(self.entailer, "id", None),
         }
+
+    def provenance(self) -> dict:
+        """Model provenance for the manifest: for each local model its id and the sha256
+        of the ONNX file and the tokenizer file on disk (an offline fake reports its id
+        and "offline fake"); for the generator its id, temperature and output cap."""
+        gen = {"id": getattr(self.llm, "id", ""),
+               "temperature": getattr(self.llm, "temperature", None),
+               "max_tokens": self.max_tokens}
+        if not hasattr(self.llm, "temperature"):
+            gen["note"] = "offline fake"
+        return {"generator": gen,
+                "embedder": fingerprint_of(self.embedder),
+                "reranker": fingerprint_of(self.reranker),
+                "entailer": fingerprint_of(self.entailer)}
+
+
+def fingerprint_of(model: Any) -> dict:
+    """``model.fingerprint()`` for a local ONNX model; an offline fake reports its id."""
+    if model is None:
+        return {"id": None, "note": "not used"}
+    fp = getattr(model, "fingerprint", None)
+    if callable(fp):
+        return fp()
+    return {"id": getattr(model, "id", type(model).__name__), "onnx_sha256": None,
+            "tokenizer_sha256": None, "note": "offline fake"}
+
+
+class _Tap:
+    """Wraps an LLM and keeps, per thread, the raw replies of the calls made since
+    ``reset()``. Used to store the engine's drafts for offline replay."""
+
+    def __init__(self, inner: Any):
+        self.inner = inner
+        self.id = getattr(inner, "id", "")
+        self.offline = bool(getattr(inner, "offline", False))
+        self._tls = threading.local()
+
+    def reset(self) -> None:
+        self._tls.raws = []
+
+    @property
+    def raws(self) -> list[str]:
+        return list(getattr(self._tls, "raws", []))
+
+    def complete(self, system: str, prompt: str, *, max_tokens: int = 600):
+        text, usage = self.inner.complete(system, prompt, max_tokens=max_tokens)
+        if not hasattr(self._tls, "raws"):
+            self._tls.raws = []
+        self._tls.raws.append(text)
+        return text, usage
 
 
 def build_context(dataset: Dataset, db_path: str, *, llm: Any = None, embedder: Any = None,
@@ -291,11 +389,7 @@ class System:
     def answer(self, question: Question) -> Result:
         if not self.available:
             raise RuntimeError(f"system {self.name} is not available: {self.reason}")
-        t0 = time.perf_counter()
-        res = self._answer(question)
-        if self.name != "engine":
-            res.ms = (time.perf_counter() - t0) * 1000.0
-        return res
+        return self._answer(question)  # wall-clock is measured by the runner (bench.run)
 
     def _answer(self, q: Question) -> Result:  # pragma: no cover - abstract
         raise NotImplementedError
@@ -504,6 +598,35 @@ class Oracle(System):
         return self._generate(PASSAGES_SYSTEM, prompt, ps)
 
 
+def _replay_payload(q: Question, ans: Answer, raws: list[str], cfg: Config) -> dict:
+    """Everything needed to redo labelling and the decision offline, with no model call:
+    the raw draft, the passages shown, the tool results and, per claim, the entailment
+    score BEFORE thresholding together with the checks that do not depend on it."""
+    verified = any(t.stage == "verify" for t in ans.trace)
+    return {
+        "version": 1, "verified": verified,
+        "engine_status": ans.status, "grade": float(ans.grade),
+        "abstention": ans.abstention.type if ans.abstention else None,
+        "thresholds": {"support": cfg.verify.support_threshold,
+                       "partial": cfg.verify.partial_threshold},
+        "answers": list(q.answers),
+        "draft_raw": raws[-1] if (verified and raws) else "",
+        "draft_raws": raws,
+        "passages": [{"unit_id": p.unit_id, "seq": p.seq, "mark": p.mark, "text": p.text,
+                      "title": p.title, "source_id": p.source_id, "coverage": p.coverage,
+                      "certainty": p.certainty, "valid_from": p.valid_from,
+                      "valid_to": p.valid_to} for p in ans.passages],
+        "tool_results": [{"mark": r.mark, "tool": r.tool, "args": r.args, "ok": r.ok,
+                          "value_text": "" if r.value is None else str(r.value),
+                          "error": r.error} for r in ans.tool_results],
+        "claims": [{"text": c.text, "passage_marks": list(c.passage_marks),
+                    "tool_marks": list(c.tool_marks), "support": float(c.support),
+                    "checks": {k: bool(c.checks.get(k, True))
+                               for k in ("exists", "valid_at_date", "numbers_traced")}}
+                   for c in ans.claims],
+    }
+
+
 class EngineSystem(System):
     name = "engine"
     cites = True
@@ -512,8 +635,16 @@ class EngineSystem(System):
         super().__init__(ctx, time_aware=True)
 
     def _answer(self, q: Question) -> Result:
-        ans: Answer = self.ctx.engine().ask(q.text, as_of=AsOf(valid=q.as_of) if q.as_of else None)
+        from ..engine import trace_failure
+        eng = self.ctx.engine()
+        tap = self.ctx.engine_tap
+        tap.reset()
+        ans: Answer = eng.ask(q.text, as_of=AsOf(valid=q.as_of) if q.as_of else None)
         tr: list[StageTrace] = ans.trace
+        fail = trace_failure(tr)
+        if fail is not None and fail[0] == "budget":
+            # Same as a baseline whose call is refused: the run stops and no row is written.
+            raise BudgetExceeded(f"engine: {fail[1]}")
         usage = Usage(model=getattr(self.ctx.llm, "id", ""),
                       tokens_in=sum(t.tokens_in for t in tr),
                       tokens_out=sum(t.tokens_out for t in tr), usd=ans.usd, ms=ans.ms)
@@ -522,12 +653,14 @@ class EngineSystem(System):
             status="answered" if ans.status in ("answered", "partial") else "abstained",
             text=ans.text, confidence=min(1.0, max(0.0, float(ans.grade))),
             cited_units=tuple(dict.fromkeys(u for u, _ in ans.citations)),
-            usage=usage, ms=ans.ms,
+            usage=usage, stage_ms=ans.ms,
             calls=sum(1 for t in tr if t.tokens_in > 0 or t.tokens_out > 0),
             searches=searches,
             retrieved_units=tuple(dict.fromkeys(p.unit_id for p in ans.passages)),
             note=f"engine status={ans.status}"
-                 + (f"; abstention={ans.abstention.type}" if ans.abstention else ""))
+                 + (f"; abstention={ans.abstention.type}" if ans.abstention else ""),
+            error=("" if fail is None else f"{fail[0]} failure: {fail[1]}"),
+            replay=_replay_payload(q, ans, tap.raws, self.ctx.engine_config()))
 
 
 _CLASSES: dict[str, Callable[..., System]] = {

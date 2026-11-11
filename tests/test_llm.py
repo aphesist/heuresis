@@ -175,3 +175,16 @@ def test_price_unknown_and_unverified():
     with pytest.raises(KeyError):
         price("claude-opus-5-5", 1, 1)
     assert "anthropic-2026-11" in PRICES
+
+
+def test_temperature_is_sent_when_set_and_defaults_to_zero():
+    calls = []
+    llm, _ = make([OK, OK, OK], calls)
+    llm.complete("s", "p")
+    assert llm.temperature == 0.0 and json.loads(calls[0].data)["temperature"] == 0.0
+    llm2, _ = make([OK], calls, temperature=0.7)
+    llm2.complete("s", "p")
+    assert json.loads(calls[-1].data)["temperature"] == 0.7
+    llm3, _ = make([OK], calls, temperature=None)
+    llm3.complete("s", "p")
+    assert "temperature" not in json.loads(calls[-1].data)

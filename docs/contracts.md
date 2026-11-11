@@ -158,7 +158,7 @@ The tax due is {k1} [t2][k1].                # {k1} is replaced by the tool resu
 ABSTAIN no_source: nothing covers this.      # instead of an answer
 ```
 
-`llm.AnthropicLLM(model, api_key=None, key_env="PROJECTS_ANTHROPIC_KEY", ...)` uses
+`llm.AnthropicLLM(model, api_key=None, key_env="PROJECTS_ANTHROPIC_KEY", ..., temperature=0.0)` (sent in the request body unless `None`) uses
 the standard library HTTP client, reads the key from `PROJECTS_ANTHROPIC_KEY`
 (never `ANTHROPIC_API_KEY`) only when first called, sends it only to the base URL
 `https://api.anthropic.com` (no environment variable changes it), and prices usage

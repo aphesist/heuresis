@@ -11,8 +11,15 @@ Definitions
   each system's own confidence; risk = wrong / answered so far.
 * cost per correct answer = total usd / number of correct outcomes, with a
   bootstrap interval that resamples questions (or clusters).
-* paired comparisons use the questions both systems finished; the engine is the
-  first system in each pair. The oracle is a ceiling and is excluded from comparisons.
+* an error row (an API or model failure after retries, ``status == "error"``) is read as
+  outcome "wrong", score -1, for that system, and the error count is printed per system.
+  A restart of the runner retries error rows, so only the ones that remain are counted.
+* complete-case analysis: the confirmatory comparisons and the family table use only the
+  question ids completed (any row, an error row included) by ALL systems of the
+  confirmatory family for that dataset; the report prints that n and the per-system
+  completed counts. The per-system tables (1 to 4, 7) use every row of the system.
+* paired comparisons pair on those common ids; the engine is the first system in each
+  pair. The oracle is a ceiling and is excluded from comparisons.
 * primary confirmatory test, on the penalised score: the mean per-question difference
   (engine minus baseline) with a paired bootstrap interval, a two-sided paired sign-flip
   permutation test (cluster-level flips when clusters exist) and its Holm-adjusted
@@ -52,7 +59,23 @@ def is_exploratory(name: str) -> bool:
     return name.endswith(EXPLORATORY_SUFFIX)
 
 
+def _as_error_outcome(r: dict) -> dict:
+    """An error row read as a wrong answer, with every field the metrics need."""
+    row = dict(r)
+    row.update({"outcome": "wrong", "correct": False, "score": -1.0, "f1": None})
+    row.setdefault("answerable", True)
+    row.setdefault("text", "")
+    row.setdefault("confidence", 0.0)
+    for k in ("usd", "ms", "tokens_in", "tokens_out", "calls", "searches"):
+        if row.get(k) is None:
+            row[k] = 0
+    return row
+
+
 def load(out_dir: str) -> tuple[dict, list[dict], int]:
+    """(manifest, rows, number of error rows). The last row of each (system, question) wins,
+    so a retried error is replaced. A remaining error row is kept, as outcome "wrong"
+    with ``status == "error"``."""
     manifest: dict = {}
     mp = os.path.join(out_dir, "manifest.json")
     if os.path.exists(mp):
@@ -66,8 +89,27 @@ def load(out_dir: str) -> tuple[dict, list[dict], int]:
                 last[(r["system"], r["qid"])] = r
             except (ValueError, KeyError, TypeError):
                 continue
-    rows = [r for r in last.values() if r.get("status") != "error"]
-    return manifest, rows, len(last) - len(rows)
+    n_err = sum(1 for r in last.values() if r.get("status") == "error")
+    rows = [_as_error_outcome(r) if r.get("status") == "error" else r for r in last.values()]
+    return manifest, rows, n_err
+
+
+def in_family(name: str) -> bool:
+    """A system of the confirmatory family (the engine and its baselines)."""
+    return name not in EXCLUDED and not is_exploratory(name)
+
+
+def complete_case(manifest: dict, by: dict[str, list[dict]]) -> dict:
+    """The question ids completed by every system of the confirmatory family, and how many
+    each system completed. A system the manifest lists as available but that has no row
+    counts as having completed none, so the common set is then empty."""
+    names = [s["name"] for s in manifest.get("systems", [])
+             if s.get("available", True) and in_family(s["name"])]
+    names += [s for s in by if in_family(s) and s not in names]
+    ids = {s: {r["qid"] for r in by.get(s, [])} for s in names}
+    common = set.intersection(*ids.values()) if ids else set()
+    return {"systems": names, "common_ids": sorted(common), "n_common": len(common),
+            "completed": {s: len(v) for s, v in ids.items()}}
 
 
 def _cl(rows: Sequence[dict]) -> list[str]:
@@ -93,6 +135,7 @@ def system_metrics(rows: list[dict], iters: int, seed: int) -> dict:
     n = len(rows)
     cnt = {k: sum(1 for r in rows if r["outcome"] == k) for k in ("correct", "wrong", "abstained")}
     out: dict[str, Any] = {"n": n, "counts": cnt, "wilson": {}}
+    out["errors"] = sum(1 for r in rows if r.get("status") == "error")
     for k, c in cnt.items():
         lo, hi = stats.wilson_interval(c, n)
         out["wilson"][k] = {"p": c / n if n else None, "lo": lo, "hi": hi}
@@ -138,6 +181,8 @@ def system_metrics(rows: list[dict], iters: int, seed: int) -> dict:
         usd, corr, iters=iters, seed=seed, clusters=cl)) if n else _ci((math.nan,) * 3)
     out["latency_ms"] = {"median": float(np.median(ms)) if n else None,
                          "p95": float(np.percentile(ms, 95)) if n else None}
+    stage = [float(r["stage_ms"]) for r in rows if r.get("stage_ms") is not None]
+    out["stage_ms_median"] = float(np.median(stage)) if stage else None
     out["mean_answer_chars"] = float(np.mean([len(r.get("text") or "") for r in answered])) if n_ans else None
     out["mean_calls"] = float(np.mean([r["calls"] for r in rows])) if n else None
     out["mean_searches"] = float(np.mean([r["searches"] for r in rows])) if n else None
@@ -200,11 +245,15 @@ def build(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
         by.setdefault(r["system"], []).append(r)
     order = [s["name"] for s in manifest.get("systems", []) if s["name"] in by]
     order += sorted(set(by) - set(order))
+    cc = complete_case(manifest, by)
+    common = set(cc["common_ids"])
     res: dict[str, Any] = {
         "banner": BANNER if manifest.get("dry_run") else None,
         "dry_run": bool(manifest.get("dry_run")),
         "dataset": manifest.get("dataset"), "split": manifest.get("split"),
         "n_questions_planned": manifest.get("n_questions"), "error_rows": n_err,
+        "complete_case": {k: v for k, v in cc.items() if k != "common_ids"},
+        "workers": manifest.get("workers"),
         "locked_hash": manifest.get("locked_hash"), "surface_hash": manifest.get("surface_hash"),
         "prompts_hash": manifest.get("prompts_hash"), "price_table": manifest.get("price_table"),
         "models": manifest.get("models"), "bootstrap_iters": iters, "seed": seed,
@@ -220,7 +269,8 @@ def build(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
             for s in order:
                 if s == REFERENCE or s in EXCLUDED or is_exploratory(s) != want:
                     continue
-                p = paired(by[REFERENCE], by[s], iters, seed,
+                p = paired([r for r in by[REFERENCE] if r["qid"] in common],
+                           [r for r in by[s] if r["qid"] in common], iters, seed,
                            cost=(not want and s in COST_COMPARE))
                 if p:
                     names.append(s)
@@ -260,7 +310,16 @@ def render(res: dict) -> str:
     L.append(f"Questions planned: {res['n_questions_planned']}. Bootstrap: {res['bootstrap_iters']} "
              f"resamples, seed {res['seed']}, 95% intervals. Price table: {res['price_table']}.")
     if res["error_rows"]:
-        L.append(f"Rows with errors (excluded, retried on restart): {res['error_rows']}.")
+        per = ", ".join(f"{s}: {m['errors']}" for s, m in res["systems"].items() if m["errors"])
+        L.append(f"Rows with errors (an API or model failure after retries; counted as wrong, "
+                 f"retried when the runner restarts): {res['error_rows']} ({per}).")
+    cc = res.get("complete_case")
+    if cc:
+        L.append(f"Complete-case analysis: the confirmatory comparisons (Tables 5, 5b, 6 and the "
+                 f"family table) use the {cc['n_common']} questions completed by all of "
+                 f"{', '.join(f'`{s}`' for s in cc['systems'])}. Completed per system: "
+                 f"{', '.join(f'{s} {n}' for s, n in cc['completed'].items())}. Tables 1 to 4 and 7 "
+                 f"use every question a system completed (column n).")
     for s, why in res["unavailable"].items():
         L.append(f"Not run: `{s}` ({why}).")
     L.append("")
@@ -282,7 +341,18 @@ def render(res: dict) -> str:
         L.append(f"| {s} | {m['n']} | {_pct(m['accuracy'])} | {_pct(m['coverage'])} | "
                  f"{_pct(m['selective_accuracy'])} | {_f(m['aurc'])} | "
                  f"{_pct(u['abstain_rate'])} (n={u['n']}) | {_f(m['mean_answer_chars'], 1)} |")
+    L += ["", f"## Table 2b. Errors ({sp})", "",
+          "An error is an API or model failure after the client's retries. It is counted as a wrong answer "
+          "in Table 1 and in every score.", "",
+          "| system | n | error rows | of which counted as wrong |", "|---|---|---|---|"]
+    for s, m in sysm.items():
+        L.append(f"| {s} | {m['n']} | {m['errors']} | {m['errors']} |")
+    wk = res.get("workers")
     L += ["", f"## Table 3. Cost and latency ({sp})", "",
+          "Latency is wall-clock time around `System.answer`, measured the same way for every system, "
+          f"with {wk if wk is not None else 'an unrecorded number of'} concurrent workers: it includes "
+          "waiting for the shared model client and for the other workers, so it is indicative only. "
+          "The engine's own stage-timing sum is stored separately in each row (`stage_ms`).", "",
           "| system | n | mean cost | total cost | cost per correct | median ms | p95 ms | calls | searches |",
           "|---|---|---|---|---|---|---|---|---|"]
     for s, m in sysm.items():
@@ -382,9 +452,18 @@ def family(results: Sequence[dict]) -> list[dict]:
     return rows
 
 
-def render_family(rows: Sequence[dict]) -> str:
+def render_family(rows: Sequence[dict], results: Sequence[dict] | None = None) -> str:
     L = [f"# Confirmatory family: {len(rows)} comparisons, Holm across all", "",
-         "Penalised score, engine minus baseline; two-sided paired sign-flip permutation test.", "",
+         "Penalised score, engine minus baseline; two-sided paired sign-flip permutation test. "
+         "Complete-case: each dataset uses only the questions completed by all systems of its "
+         "confirmatory family (column n).", ""]
+    for r in results or []:
+        cc = r.get("complete_case") or {}
+        L.append(f"- `{r['dataset']}`: n = {cc.get('n_common')} common questions; completed per system: "
+                 f"{', '.join(f'{s} {n}' for s, n in (cc.get('completed') or {}).items())}.")
+    if results:
+        L.append("")
+    L += [
          "| dataset | baseline | n | score diff | permutation p | Holm p (family) |",
          "|---|---|---|---|---|---|"]
     for x in rows:
@@ -408,7 +487,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if len(results) > 1:
         rows = family(results)
         with open(a.family_out, "w", encoding="utf-8") as fh:
-            fh.write(render_family(rows))
+            fh.write(render_family(rows, results))
         print(a.family_out)
     return 0
 

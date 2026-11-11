@@ -27,6 +27,7 @@ returns a `Dataset`. Building is idempotent (a corpus whose file hashes match it
 - Unit ids are `<dataset>:<doc id>#<n>`. Passages of long articles are cut at
   paragraph boundaries into about 150 to 250 words; the article title is kept in
   `Unit.title` of every passage.
+- Prior contact with the test split (see PREREGISTRATION.md, prior contact): retrieval-only checks read part of it. BM25 at k = 50 on the first 20 answerable test questions of each of `musique`, `multihoprag` and `hoh` found the gold units for 20 of 20 each, and the `hoh` "Sanity" row below was computed on 100 test questions. No model was called and no system answered. The sealed split has not been read by any script that computes or prints anything.
 
 ## Confirmatory sets
 
@@ -80,7 +81,7 @@ whose answer depends on the date.
 | Corpus | One unit per record, `hoh:<wiki page id>#<n>` (n counts records of the same page), title = page title. Versions come from the record's evidence at each monthly snapshot (2024-06-01 to 2024-12-01): the earliest observed is a `create` event, each later one a `replace` event dated by its snapshot (`axes["observed"]`). 111,972 units, 230,746 versions, ~29.2 M characters, ~7.30 M tokens. 95 % of units have two versions, the rest up to six. |
 | Questions | One per record whose chosen version's answer differs from every other version's answer: 110,721 in the pool (1,251 records dropped because the answers were equal). The version is chosen by a fixed hash (`sha256("hoh-asof\n"+unit id)`) among the record's versions; `as_of` = that snapshot date; `answers` = that version's answer; `gold_units` = the unit; `kind` = `current` (latest snapshot) or `outdated`; stratified by `kind`; `cluster` = Wikipedia page. All answerable. |
 | Date semantics | A snapshot date is when the text was first observed. The real change happened up to one month earlier, so `valid_from` is late by up to a month, and the first version is only known from its first snapshot (no question is asked before 2024-06-01). Using the snapshot date itself as `as_of` keeps every question inside a validity interval. The "current" answer is current for the data's horizon (2024-12-01), not today. |
-| Sanity | With the date filter, the retrieved gold unit holds the question's gold answer in 86 of 100 test questions; with no date (today) only 41, so the date does matter. |
+| Sanity | On the test split (see PREREGISTRATION.md, prior contact): with the date filter, the retrieved gold unit holds the question's gold answer in 86 of 100 test questions; with no date (today) only 41, so the date does matter. Retrieval only; no model was called. |
 | Manifest | `data/corpora/hoh/MANIFEST.json` |
 
 Recommendation: use HoH as the temporal set, with the stated weaknesses: single

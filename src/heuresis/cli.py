@@ -258,18 +258,20 @@ def cmd_verify(args: argparse.Namespace) -> int:
 
 
 def surface_hash() -> str:
-    """sha256 of the canonical JSON of the default surface configuration."""
-    from .surface import config_to_dict, load_config
+    """The surface hash exactly as a benchmark run manifest records it: one implementation,
+    ``heuresis.bench.systems.surface_hash`` (effective engine config, ``DRAFT_SYSTEM`` and
+    the source of ``surface/prompts.py``), over the packaged default configuration."""
+    from .bench.systems import surface_hash as _surface_hash
 
-    blob = json.dumps(config_to_dict(load_config()), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+    return _surface_hash()
 
 
 def cmd_hash(args: argparse.Namespace) -> int:
+    from .bench.systems import prompts_hash
     from .locked import locked_hash
 
-    d = {"locked": locked_hash(), "surface": surface_hash()}
-    _out(args, d, f"locked:  {d['locked']}\nsurface: {d['surface']}")
+    d = {"locked": locked_hash(), "surface": surface_hash(), "prompts": prompts_hash()}
+    _out(args, d, f"locked:  {d['locked']}\nsurface: {d['surface']}\nprompts: {d['prompts']}")
     return 0
 
 
@@ -351,7 +353,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--unit", action="append", required=True, metavar="UNIT_ID")
     p.add_argument("--as-of", type=_date, default=None, metavar="DATE")
 
-    p = add("hash", cmd_hash, "print the locked-folder hash and the surface config hash")
+    p = add("hash", cmd_hash, "print the locked-folder hash, the surface hash and the baseline prompts hash")
 
     p = add("bench", cmd_bench, "run or report the benchmark (dry run by default)")
     p.add_argument("bench_cmd", choices=["run", "report"])

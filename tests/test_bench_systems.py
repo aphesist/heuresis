@@ -202,3 +202,61 @@ def test_time_aware_variants_are_extra_copies_with_suffix(tmp_path):
     assert "800 euros" in rec.prompts[0] and "As-of date" not in rec.prompts[0]
     assert "500 euros" in rec.prompts[1] and "800 euros" not in rec.prompts[1]
     assert build_systems(ctx, names)[0].name == "closed_book" and len(build_systems(ctx, names)) == 7
+
+
+# ----------------------------------------------------------------------------
+# Hashes, provenance
+# ----------------------------------------------------------------------------
+
+
+def test_surface_hash_covers_config_draft_system_and_prompts_source(tmp_path, monkeypatch):
+    from heuresis.surface import prompts as P
+    from heuresis.surface.config import load_config
+    base = S.surface_hash()
+    assert base == S.surface_hash(load_config()) and len(base) == 64
+    # the effective engine config: the benchmark's max_sentences is part of it
+    assert S.effective_engine_config(load_config()).draft.max_sentences == S.ENGINE_MAX_SENTENCES
+    cfg = load_config()
+    cfg.verify.support_threshold = 0.6
+    assert S.surface_hash(cfg) != base
+    # DRAFT_SYSTEM
+    monkeypatch.setattr(P, "DRAFT_SYSTEM", P.DRAFT_SYSTEM + " Be brief.")
+    assert S.surface_hash() != base
+    monkeypatch.undo()
+    # the source of prompts.py, so draft_prompt is covered
+    edited = tmp_path / "prompts.py"
+    edited.write_text(open(P.__file__).read().replace('"Passages:"', '"Documents:"'))
+    assert 'Documents:' in edited.read_text()
+    monkeypatch.setattr(P, "__file__", str(edited))
+    assert S.surface_hash() != base
+
+
+def test_prompts_hash_covers_constants_and_the_builder_functions(monkeypatch):
+    base = S.prompts_hash()
+    monkeypatch.setattr(S, "AGENT_MORE", S.AGENT_MORE + " Hurry.")
+    assert S.prompts_hash() != base
+    monkeypatch.undo()
+    assert S.prompts_hash() == base
+
+    def passages_prompt(question, passages, as_of=None, header="Passages:"):  # a different builder
+        return question
+
+    monkeypatch.setattr(S, "passages_prompt", passages_prompt)
+    assert S.prompts_hash() != base
+
+
+def test_fingerprint_hashes_the_files_on_disk(tmp_path):
+    import hashlib
+    from heuresis.models_local import LocalEntailer
+    onnx, tok = tmp_path / "model.onnx", tmp_path / "tokenizer.json"
+    onnx.write_bytes(b"onnx bytes")
+    tok.write_bytes(b"{}")
+    m = object.__new__(LocalEntailer)  # no model is loaded: only the fingerprint is under test
+    m.id, m.name, m._onnx_path, m._tok_path, m._fingerprint = "onnx:x/y", "x/y", str(onnx), str(tok), None
+    assert m.fingerprint() == {"id": "onnx:x/y",
+                               "onnx_sha256": hashlib.sha256(b"onnx bytes").hexdigest(),
+                               "tokenizer_sha256": hashlib.sha256(b"{}").hexdigest()}
+    onnx.write_bytes(b"other")  # cached after the first call
+    assert m.fingerprint()["onnx_sha256"] == hashlib.sha256(b"onnx bytes").hexdigest()
+    assert S.fingerprint_of(m)["id"] == "onnx:x/y"
+    assert S.fingerprint_of(None)["note"] == "not used"

@@ -9,8 +9,11 @@ answer in which every sentence is checked against the passages it cites, or a ty
 says why it did not answer. Law and accounting were its first intended domain and are one example
 plug-in among several; the core knows nothing about any of them.
 
-> **Status: built and tested offline; nothing has been measured on a test split; no paid model call
-> has been made.** The one measurement that exists is a retrieval-only pilot on the dev split
+> **Status: built and tested offline; no system has been run and no answer graded on a test split;
+> no paid model call has been made.** Two retrieval-only sanity checks did read part of the test
+> split (no model, no system answer); they are disclosed in
+> [PREREGISTRATION.md, section 2a](PREREGISTRATION.md#2a-prior-contact-with-the-test-split). The
+> main measurement is a retrieval-only pilot on the dev split
 > ([below](#what-the-dev-pilot-showed)). The benchmark is pre-registered as a draft in
 > [PREREGISTRATION.md](PREREGISTRATION.md) and has not been run.
 
@@ -60,7 +63,7 @@ heuresis ingest demo.db $F
 heuresis ask demo.db "Qual o texto do art. 2º?" --as-of 2021-01-01     # the original wording
 heuresis ask demo.db "Qual o texto do art. 2º?" --as-of 2023-01-01     # the corrected rewording
 heuresis ask demo.db "Qual o texto do art. 2º?" --as-of 2023-01-01 --recorded 2022-12-31   # before the correction was recorded
-heuresis hash                                                           # locked-folder and surface hashes
+heuresis hash                                                           # locked-folder, surface and baseline-prompt hashes
 ```
 
 Offline, `ask` uses built-in fakes: an extractive "model" and a rule-based verifier. It shows the

@@ -42,6 +42,7 @@ Notes.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from typing import Sequence
@@ -64,6 +65,14 @@ def cache_dir() -> str:
         os.path.expanduser("~"), ".cache", "heuresis"
     )
     return d
+
+
+def _sha256_file(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def _import_deps():
@@ -90,6 +99,9 @@ class _OnnxModel:
         onnx_path = hub.hf_hub_download(name, "onnx/model.onnx", cache_dir=root)
         tok_path = hub.hf_hub_download(name, "tokenizer.json", cache_dir=root)
         cfg_path = hub.hf_hub_download(name, "config.json", cache_dir=root)
+        self._onnx_path = onnx_path
+        self._tok_path = tok_path
+        self._fingerprint: dict | None = None
         with open(cfg_path, encoding="utf-8") as f:
             self.config = json.load(f)
         so = ort.SessionOptions()
@@ -105,6 +117,18 @@ class _OnnxModel:
             pad_id = 0
         self.tokenizer.enable_padding(pad_id=pad_id, pad_token="<pad>")
         self.tokenizer.enable_truncation(max_length=max_length)
+
+    def fingerprint(self) -> dict:
+        """Model id and the sha256 of the ONNX file and the tokenizer file on disk.
+
+        Hashed on first call (the ONNX files are hundreds of MB) and then cached."""
+        if self._fingerprint is None:
+            self._fingerprint = {
+                "id": getattr(self, "id", f"onnx:{self.name}"),
+                "onnx_sha256": _sha256_file(self._onnx_path),
+                "tokenizer_sha256": _sha256_file(self._tok_path),
+            }
+        return dict(self._fingerprint)
 
     def _run(self, encodings) -> tuple[list[np.ndarray], np.ndarray]:
         ids = np.array([e.ids for e in encodings], dtype=np.int64)

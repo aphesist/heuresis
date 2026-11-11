@@ -38,6 +38,12 @@ from .model import (
 from .store import Store
 from .surface.config import Config, load_config
 
+#: Trace notes that mark why a stage failed. ``Engine.ask`` turns a model failure into
+#: an "unsupported" abstention (library behaviour); these prefixes make it detectable.
+NOTE_BUDGET = "budget exceeded"
+NOTE_MODEL_ERROR = "model error"
+NOTE_VERIFY_ERROR = "error"
+
 _DEFAULT_CALL_USD = 0.002
 _STATEFUL_DOMAINS = ("tables", "legal_br")
 
@@ -64,6 +70,22 @@ class _Appender:
 
     def complete(self, system: str, prompt: str, *, max_tokens: int = 600):
         return self.inner.complete(system, prompt + self.extra, max_tokens=max_tokens)
+
+
+def trace_failure(trace: list[StageTrace]) -> tuple[str, str] | None:
+    """Why an answer's trace shows a failed stage: ``("budget", note)`` for a budget
+    stop, ``("model", note)`` for a failed model call (the generator) and
+    ``("verifier", note)`` for a failed verification (the local entailer). ``None`` when
+    every stage ran. A budget stop is not a failure of the model."""
+    for t in trace:
+        if t.stage in ("draft", "draft_followup"):
+            if t.note == NOTE_BUDGET:
+                return "budget", f"{t.stage}: {t.note}"
+            if t.note.startswith(NOTE_MODEL_ERROR):
+                return "model", f"{t.stage}: {t.note}"
+        elif t.stage == "verify" and t.note.startswith(NOTE_VERIFY_ERROR):
+            return "verifier", f"verify: {t.note}"
+    return None
 
 
 def _ms(t0: float) -> float:
@@ -336,7 +358,7 @@ class Engine:
             claims = _verify(d, passages, results, self.store, query.as_of, self.entailer,
                              self.config.verify)
         except Exception as e:
-            trace.append(StageTrace("verify", _ms(t0), note=f"error: {type(e).__name__}"))
+            trace.append(StageTrace("verify", _ms(t0), note=f"{NOTE_VERIFY_ERROR}: {type(e).__name__}"))
             return finish("abstained", "unsupported", "The draft could not be verified.",
                           query=query)
         trace.append(StageTrace("verify", _ms(t0), n_out=len(claims)))
@@ -369,10 +391,10 @@ class Engine:
         try:
             d = draft_mod.draft(llm, query, passages, tools, self.config.draft)
         except BudgetExceeded:
-            trace.append(StageTrace(stage, _ms(t0), note="budget exceeded"))
+            trace.append(StageTrace(stage, _ms(t0), note=NOTE_BUDGET))
             return None, ("abstained", "budget")
         except Exception as e:  # model misbehaviour never propagates
-            trace.append(StageTrace(stage, _ms(t0), note=f"model error: {type(e).__name__}"))
+            trace.append(StageTrace(stage, _ms(t0), note=f"{NOTE_MODEL_ERROR}: {type(e).__name__}"))
             return None, ("abstained", "unsupported", "The model call failed.")
         u = d.usage
         note = "declined" if d.declined else ("no sentences" if not d.sentences else "")

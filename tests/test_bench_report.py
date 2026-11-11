@@ -194,3 +194,44 @@ def test_family_holm_across_datasets(tmp_path):
     assert all(x["perm_p"] == pytest.approx(0.5) and x["perm_p_holm_family"] == pytest.approx(1.0)
                for x in rows)
     assert "Holm p (family)" in report.render_family(rows)
+
+
+def test_complete_case_uses_only_ids_finished_by_all_family_systems(tmp_path):
+    out = str(tmp_path)
+    eng = [row("engine", f"q{i}", "answered", "correct", .9, 0.1, 10) for i in range(1, 5)]
+    bm = [row("bm25", f"q{i}", "answered", "wrong", .9, 0.01, 5) for i in range(1, 4)]  # q4 never ran
+    hy = [row("hybrid", f"q{i}", "answered", "wrong", .9, 0.01, 5) for i in (1, 2, 3, 4)]
+    orc = [row("oracle", "q1", "answered", "correct", .9, 0.01, 5)]
+    var = [row("bm25+asof", f"q{i}", "answered", "correct", .9, 0.01, 5) for i in range(1, 5)]
+    write(out, eng + bm + hy + orc + var, systems=("engine", "bm25", "hybrid", "oracle", "bm25+asof"))
+    res = report.build(out, iters=200)
+    cc = res["complete_case"]
+    assert cc["n_common"] == 3 and cc["systems"] == ["engine", "bm25", "hybrid"]
+    assert cc["completed"] == {"engine": 4, "bm25": 3, "hybrid": 4}  # oracle and +asof are not in it
+    assert res["paired"]["bm25"]["n"] == 3 and res["paired"]["hybrid"]["n"] == 3
+    assert res["exploratory_paired"]["bm25+asof"]["n"] == 3
+    assert res["systems"]["engine"]["n"] == 4  # the per-system tables keep every completed row
+    md = report.render(res)
+    assert "3 questions completed by all of" in md and "engine 4, bm25 3, hybrid 4" in md
+    fam = report.render_family(report.family([res]), [res])
+    assert "n = 3 common questions" in fam and "engine 4, bm25 3, hybrid 4" in fam
+
+
+def test_complete_case_is_empty_when_an_available_system_has_no_rows(tmp_path):
+    out = str(tmp_path)
+    write(out, [row("engine", "q1", "answered", "correct", .9, 0.1, 10)], systems=("engine", "bm25"))
+    res = report.build(out, iters=100)
+    assert res["complete_case"]["n_common"] == 0 and res["paired"] == {}
+
+
+def test_error_rows_are_complete_case_members_and_wrong(tmp_path):
+    out = str(tmp_path)
+    eng = [row("engine", f"q{i}", "answered", "correct", .9, 0.1, 10) for i in (1, 2)]
+    bm = [row("bm25", "q1", "answered", "correct", .9, 0.01, 5),
+          {"system": "bm25", "qid": "q2", "split": "dev", "status": "error", "outcome": "error",
+           "error": "RuntimeError: x"}]
+    write(out, eng + bm)
+    res = report.build(out, iters=200)
+    assert res["complete_case"]["n_common"] == 2
+    assert res["paired"]["bm25"]["score_diff"]["est"] == 1.0  # engine +1 vs bm25 (+1, -1) mean 0
+    assert res["systems"]["bm25"]["errors"] == 1

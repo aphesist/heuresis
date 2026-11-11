@@ -13,7 +13,7 @@ on stderr), 1 unexpected failure (one line, no traceback).
 | `search DB QUESTION [--as-of DATE] [-k N]` | passages in force at the date, no drafting |
 | `unit DB UNIT_ID [--as-of DATE]` | one unit as it read at the date, with its validity interval |
 | `verify DB --text TEXT --unit UNIT_ID ... [--as-of DATE]` | verify a text against the named units in force at the date |
-| `hash` | the locked-folder content hash and the surface (default config) hash |
+| `hash` | the locked-folder hash, the surface hash and the baseline prompts hash, exactly as a benchmark run manifest records them |
 | `bench run\|report [--dry-run] [--paid --cap USD] ...` | delegate to `heuresis.bench`, imported lazily |
 
 Dates are `YYYY-MM-DD`; `--recorded` is an ISO date or timestamp (only what the corpus knew by then).
@@ -53,6 +53,35 @@ the command fails.
 `--dry-run` is the default: no paid call is made. A paid run needs both `--paid` and `--cap USD`.
 If `heuresis.bench` is not installed, a one-line message is printed and the exit code is 2. Extra
 arguments are passed through to `heuresis.bench.run.main` / `report.main`.
+
+### Benchmark runner (`python -m heuresis.bench.run`)
+
+- **Paid runs.** `--paid` needs `--cap USD` and **`--ledger PATH`**. Without `--ledger` the runner
+  refuses (exit 2) and does nothing, so that every paid run, dev or test, shares one append-only ledger
+  and two runs can never each believe they have the whole cap. A dry run (the default) may omit it
+  (the ledger then defaults to `<out>/ledger.jsonl` and never stops the run).
+- **Key.** A paid run reads the API key from the environment variable `PROJECTS_ANTHROPIC_KEY`, or
+  from the variable named by `--key-env NAME`. Before any work it prints the variable NAME and the
+  base URL (`https://api.anthropic.com`), never the value, and exits 2 if the variable is unset.
+- **Sampling.** The generator is called with `temperature` 0.0 (`AnthropicLLM(temperature=0.0)`,
+  recorded in the manifest with the model id and the output cap).
+- **Errors.** An API or model failure after the client's retries is written as a row with
+  `status: "error"` for every system (the engine included), retried when the runner restarts, and
+  counted by the report as a wrong answer for that system. A budget stop is never an error: the run
+  stops and no row is written for the call that was refused.
+- **Latency.** `ms` is wall-clock time around `System.answer`, measured by the runner the same way for
+  every system, with `--workers N` concurrent workers (recorded in the manifest). The engine's stage
+  timings are summed into the separate field `stage_ms`.
+- **Replay data.** Each engine row stores the raw draft, the passages shown, the tool results and the
+  per-claim entailment scores before thresholding (`replay`), for `bench.calibrate`.
+
+### Threshold calibration (`python -m heuresis.bench.calibrate RUN_DIR [RUN_DIR ...]`)
+
+Prints the penalised score of the engine at each of the 45 pairs (`support_threshold`,
+`partial_threshold`) in 0.1 .. 0.9 with partial not above support, pooled over the run folders, and the
+argmax. It replays labelling and the decision from the stored scores: no model, no entailer, no cost.
+Ties go to the higher support threshold, then the higher partial threshold (the proposed tie-break of
+PREREGISTRATION.md section 8.1). It refuses any run folder whose manifest split is not `dev`.
 
 ## Verification status
 

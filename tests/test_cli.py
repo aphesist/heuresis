@@ -140,3 +140,28 @@ def test_bench_requires_cap_for_paid(capsys):
 def test_missing_database(tmp_path, capsys):
     assert main(["search", str(tmp_path / "none.db"), "x"]) == 2
     assert "does not exist" in capsys.readouterr().err
+
+
+def test_hash_prints_exactly_what_a_run_manifest_records(tmp_path, capsys, monkeypatch):
+    import json as _json
+    import os as _os
+
+    from heuresis.bench import run as R
+    from heuresis.bench.systems import prompts_hash
+    from heuresis.locked import locked_hash
+    from test_bench_common import make_dataset
+
+    ds = make_dataset(tmp_path)
+    monkeypatch.setattr(R, "_load_dataset", lambda name: ds)
+    out = str(tmp_path / "run")
+    assert R.main(["--dataset", "tiny", "--out", out, "--systems", "closed_book", "--workers", "1"]) == 0
+    man = _json.load(open(_os.path.join(out, "manifest.json")))
+    capsys.readouterr()
+    code, data, _ = run_json(capsys, "hash")
+    assert code == 0
+    assert data == {"locked": man["locked_hash"], "surface": man["surface_hash"],
+                    "prompts": man["prompts_hash"]}
+    assert data["locked"] == locked_hash() and data["prompts"] == prompts_hash()
+    assert main(["hash"]) == 0
+    text = capsys.readouterr().out
+    assert f"surface: {man['surface_hash']}" in text and f"prompts: {man['prompts_hash']}" in text

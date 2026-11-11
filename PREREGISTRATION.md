@@ -1,6 +1,6 @@
 # Pre-registration (DRAFT)
 
-> **Draft. Not yet registered: thresholds are not calibrated and no hash is frozen. Nothing on the test split has been run.**
+> **Draft. Not yet registered: thresholds are not calibrated and no hash is frozen. No system has been run and no answer has been graded on the test split, but two retrieval-only sanity checks did read part of it (section 2a, "Prior contact with the test split"): a contamination risk the reader should weigh.**
 
 Date of this draft: 2026-11-11. Every number below is copied from a file in this repository (named next to it), computed by running the repository's own function (stated), or marked **modelled**, **proposed** or **placeholder**. Where a value will only exist after calibration or freezing, it is written `[ ... ]`.
 
@@ -54,8 +54,19 @@ Built by `heuresis.bench.datasets` from pinned revisions; see `docs/datasets.md`
 **Splits.** Question ids are ordered by `sha256("<seed>:<id>")` and cut into dev, test and sealed per stratum (`docs/datasets.md`). `load` refuses to continue if the split hashes differ from the manifest.
 
 - **Dev, n = 100 per dataset.** Used for all tuning, and only for that (section 8).
-- **Test, n = 500 per dataset.** Each system answers each question once (section 6). Nothing on the test split has been run.
+- **Test, n = 500 per dataset.** Each system answers each question once (section 6). No system has been run on it and no answer graded; two retrieval-only checks read part of it (section 2a).
 - **Sealed, n = 300 per dataset.** Never used by this project. It is kept for outside replication. Only its id hash appears here.
+
+### 2a. Prior contact with the test split
+
+The earlier statement of this draft, that nothing on the test split had been run, was inaccurate. Two retrieval sanity checks read the test split before this draft was written. This is exactly what they did:
+
+1. **First 20 answerable test questions, BM25 at k = 50.** For each of `musique`, `multihoprag` and `hoh`, the first 20 answerable test questions were run through BM25 at k = 50 and the share of questions whose gold units were retrieved was noted: 20 of 20 on each dataset.
+2. **`hoh`, 100 test questions, gold-answer check.** For 100 `hoh` test questions it was checked whether the retrieved version of the gold unit contains the gold answer, with the date filter (86 of 100) and without it (41 of 100). This is the "Sanity" row of `docs/datasets.md`.
+
+What did not happen: no system produced an answer on a test question, no language model was called, and nothing was graded with `bench.run`. No design decision used these numbers; every tuning decision cites the dev pilot (`docs/pilot-dev.md`). The sealed split has not been read by any script that computes or prints anything about it; only its id hash appears in section 2.
+
+This is a contamination risk and is disclosed as one. The checks looked at gold answers and gold units of test questions, so the reader cannot take on trust that the test questions were never seen; they should weigh it. The risk is bounded by the facts that the checks were retrieval-only and that no setting was chosen from them, but that is the author's statement, not something the repository can prove. The same entry is in the deviations log (section 10).
 
 ### Known weaknesses of each dataset
 
@@ -82,7 +93,7 @@ Copied from `docs/datasets.md`.
 
 ## 3. Systems
 
-All systems share one generator (`claude-haiku-5-5`), one output cap (`draft.max_tokens` = 600), one SQLite corpus per dataset (built with the `jsonl` domain) and one local embedder. The generator is called with no temperature or seed parameter (`src/heuresis/llm.py` sends only model, max tokens, system and messages), so the API's default sampling applies and a repeat run would differ.
+All systems share one generator (`claude-haiku-5-5`), one output cap (`draft.max_tokens` = 600), one SQLite corpus per dataset (built with the `jsonl` domain) and one local embedder. The generator is called with `temperature` 0.0 for every system (`AnthropicLLM(temperature=0.0)` in `src/heuresis/llm.py`, set by `bench.run`; recorded in each run's manifest with the model id and the output cap). No seed parameter exists in the request, so a repeat run may still differ.
 
 ### 3.1 The list
 
@@ -121,7 +132,7 @@ To show how much of any gap is the date filter alone, a time-aware copy of each 
 
 ### 3.4 Prompts
 
-These are the exact strings in `src/heuresis/bench/systems.py`. Their combined hash, `prompts_hash()`, is `c82a56eba64a36982a8106c6a40f4b5c02c459de4cd981cd724cf72435dca6de` at the time of drafting (also the value recorded in `docs/pilot-dev.md`); the frozen value is `[prompts_hash at freeze]`.
+These are the exact strings in `src/heuresis/bench/systems.py`. Their combined hash, `prompts_hash()`, covers these constants and the source of the functions that build the baselines' prompts (`_span`, `_passage_line`, `passages_prompt` and the `_answer` methods of `closed_book`, the single-shot systems, `agentic`, `long_context` and `oracle`). It is `1498745bcecca370bd94caef482d685ab41c84890ab5a208320f2dcbacc2a462` at the time of drafting, as printed by `python -m heuresis.cli hash` (the value `c82a56eb...` in `docs/pilot-dev.md` was computed over the constants only and is not comparable); the frozen value is `[prompts_hash at freeze]`.
 
 Shared answer-format instruction (`ANSWER_FORMAT`):
 
@@ -145,7 +156,7 @@ Reply with exactly one line `SEARCH: <query>` to search again, or answer now.
 No searches remain. Answer now.
 ```
 
-The engine's system prompt is `DRAFT_SYSTEM` in `src/heuresis/surface/prompts.py`. It is part of the surface hash, not of `prompts_hash()`:
+The engine's system prompt is `DRAFT_SYSTEM` in `src/heuresis/surface/prompts.py`. It is part of the surface hash (which also covers the source of `surface/prompts.py`, so `draft_prompt` too), not of `prompts_hash()`:
 
 ```
 Answer ONLY from the numbered passages. Never use outside knowledge.
@@ -212,8 +223,8 @@ Primary: penalised score (section 4.1). Secondary, all in `src/heuresis/bench/re
 
 - **One run.** Each system runs on each test question once. There are no repeats in the confirmatory analysis. An optional repeat on a 100-question subset, to estimate run-to-run variance, is exploratory.
 - **No peeking.** No result on the test split is read before the runs are complete. The runner writes rows as they finish; nobody computes a report on a partial test run except to check that it is running.
-- **Stopping.** The shared ledger is a hard stop at the cap minus its margin (section 9). If the budget stops a run, only question ids completed by **all** systems in the family are analysed, and this is reported with the number of questions lost. The runner orders work question by question, so a stop cuts every system at about the same question.
-- **Errors and refusals.** An API error after the client's retries (up to 5 attempts) is recorded and counted as wrong for that system, and the count of such rows per system is reported. A model refusal or an empty reply is graded like any other reply: empty counts as an abstention.
+- **Stopping.** The shared ledger is a hard stop at the cap minus its margin (section 9). If the budget stops a run, only question ids completed by **all** systems in the family are analysed (an error row counts as completed), and the report prints that n and the per-system completed counts. The confirmatory comparisons and the family table use that common set; the per-system descriptive tables use every question a system completed. The runner orders work question by question, so a stop cuts every system at about the same question.
+- **Errors and refusals.** An API or model failure after the client's retries (up to 5 attempts) is handled the same for every system, the engine included (`Engine.ask` still turns it into an "unsupported" abstention as a library; the engine system detects that from the trace): the row is written with `status: "error"`, it is retried when the runner restarts, and the report counts a remaining error row as outcome "wrong" for that system and prints the error count per system. A budget stop is never an error: the run stops and no row is written for the refused call. A model refusal or an empty reply is graded like any other reply: empty counts as an abstention.
 - **Bootstrap and permutation.** 10,000 resamples or sign assignments, seed 0, clusters as in section 2.
 - **Commands.** One run folder per dataset, one shared ledger:
 
@@ -230,12 +241,12 @@ python -m heuresis.bench.report runs/test/hoh runs/test/multihoprag runs/test/mu
 
 | Item | How it is obtained | Value at drafting | Frozen value |
 |---|---|---|---|
-| `locked_hash()` | `heuresis hash`, or `heuresis.locked.guard.locked_hash()` | `3c23fecd42520db9a36c3208d285d6d96465f42e1c2ef8e31d2d2b2d79de1b71` | `[ ... ]` |
-| Surface config hash | `bench.run.surface_hash` (config JSON + `DRAFT_SYSTEM`), recorded in each run's `manifest.json` | `9de82a74a90b3cbbc01b0e4ea56e77affc39cda4eae06146a62bf537a9fb505a` (the pilot recorded `3e310d25...`; the default configuration has changed since) | `[ ... ]` |
+| `locked_hash()` | `heuresis hash`, or `heuresis.locked.guard.locked_hash()` | `3c23fecd42520db9a36c3208d285d6d96465f42e1c2ef8e31d2d2b2d79de1b71` (unchanged by the work of section 12) | `[ ... ]` |
+| Surface hash | `heuresis.bench.systems.surface_hash` (effective engine config JSON, `DRAFT_SYSTEM`, source of `surface/prompts.py`); `heuresis hash` prints it and each run's `manifest.json` records it | `b7e767ecd37764e19220985ea959a16c650a2aec104f7f3a867013de736ed58f` (the pilot recorded `3e310d25...` and the earlier draft `9de82a74...` under narrower definitions) | `[ ... ]` |
 | Full effective engine config | `manifest.json` key `engine_config` | see below | `[ ... ]` |
-| `prompts_hash()` | `heuresis.bench.systems.prompts_hash()` | `c82a56eba64a36982a8106c6a40f4b5c02c459de4cd981cd724cf72435dca6de` | `[ ... ]` |
+| `prompts_hash()` | `heuresis.bench.systems.prompts_hash()`; also printed by `heuresis hash` | `1498745bcecca370bd94caef482d685ab41c84890ab5a208320f2dcbacc2a462` | `[ ... ]` |
 | Dataset manifest hashes | sha256 of each `MANIFEST.json` | section 2 | `[ ... ]` |
-| Model ids | generator, embedder, reranker, entailer | `claude-haiku-5-5`; the three `onnx:` ids of section 3.1 | `[ ... ]`, plus `[ file hash or Hugging Face revision of each local model ]` |
+| Model ids and files | generator, embedder, reranker, entailer; `manifest.json` key `model_provenance` | `claude-haiku-5-5` at temperature 0.0 and `max_tokens` 600; the three `onnx:` ids of section 3.1; for each local model the sha256 of its ONNX file and tokenizer file on disk (`fingerprint()`) | `[ ... ]` (the file hashes exist only once a paid or local run has loaded the models) |
 | Baseline settings | passage count k per baseline (section 8.2) | 8 (agentic: 5 per search, 4 searches) | `[ ... ]` |
 | Price table | `PRICE_TABLE` in `bench/run.py` | `anthropic-2026-11` | `[ ... ]` |
 | Commit hash | repository `HEAD` at the tag | `[ ... ]` | `[ ... ]` |
@@ -262,7 +273,7 @@ Placeholder: to be filled after the run. Nothing in this section has been run.
 
 ### 8.1 Engine
 
-`verify.support_threshold` and `verify.partial_threshold` are set to maximise the dev penalised score over a fixed grid: each from 0.1 to 0.9 in steps of 0.1, with partial not above support (45 pairs), pooled over the three datasets, one setting for all. Ties are broken toward the higher support threshold, then the higher partial threshold (the more conservative setting; **proposed**). The drafts do not depend on the thresholds, so the intended way is to store each draft once and replay verification and the decision locally for each pair; whether the code supports that replay at the time of freezing is an open item (section 12).
+`verify.support_threshold` and `verify.partial_threshold` are set to maximise the dev penalised score over a fixed grid: each from 0.1 to 0.9 in steps of 0.1, with partial not above support (45 pairs), pooled over the three datasets, one setting for all. Ties are broken toward the higher support threshold, then the higher partial threshold (the more conservative setting; **proposed**). The drafts do not depend on the thresholds, so each draft is stored once (the engine's row keeps the raw draft, the passages shown, the tool results and the per-claim entailment scores before thresholding) and `python -m heuresis.bench.calibrate RUN_DIR...` replays labelling and the decision locally for each pair, with no model call; it refuses a run folder whose manifest split is not `dev`. The tie-break above is the one the code implements, and it is still **proposed**.
 
 | Quantity | Result |
 |---|---|
@@ -306,10 +317,11 @@ The pilot model has no row for `hybrid`, which was added later; it is not in the
 
 ## 10. Deviations log
 
-*(Empty. Nothing to log before the tag.)*
+*(Entries before the tag are disclosures; the first one corrects the draft's own banner.)*
 
 | Date | Change | Reason | Data seen at the time |
 |---|---|---|---|
+| 2026-11-11 | Banner and section 2 corrected, section 2a added: "nothing on the test split has been run" was inaccurate. | Two retrieval-only sanity checks read the test split: BM25 at k = 50 on the first 20 answerable test questions of each dataset (gold units found 20/20 each), and, on `hoh`, 100 test questions checked for the gold answer in the retrieved gold unit (86/100 with the date filter, 41/100 without). No system answered, no model was called, no design decision used the numbers; the sealed split was not read. A contamination risk for the reader to weigh. | Test split, as described in section 2a. |
 
 ## 11. Threats to validity
 
@@ -318,25 +330,26 @@ The pilot model has no row for `hybrid`, which was added later; it is not in the
 - **The engine is given the date; the baselines are not** (section 3.2). A `hoh` win says the date filter works end to end; it does not say the rest of the algorithm is better. The `+asof` copies are the control, and they are exploratory.
 - **Cover-exact-match favours longer answers.** An answer that contains the gold string is correct however much else it says. This is mitigated by the shared two-sentence instruction, and mean answer length is reported per system. It is not eliminated: the engine's draft format and the baselines' differ.
 - **Different kinds of confidence** (section 5): AURC compares the engine's verification grade with a model's stated number.
-- **One generator model, one run.** No claim extends to other models. Sampling is at the API default and a repeat would differ.
-- **Local compute is not priced.** The engine runs an entailer on CPU for every answer; the baselines run none. Latency is measured with four worker threads in parallel, the engine's from its stage timings and the baselines' by wall clock, so latency figures are indicative only.
+- **One generator model, one run.** No claim extends to other models. Sampling is at temperature 0.0, which does not make the API deterministic; a repeat may differ.
+- **Local compute is not priced.** The engine runs an entailer on CPU for every answer; the baselines run none. Latency is wall-clock time around `System.answer`, measured the same way for every system with the manifest's number of worker threads in parallel (the engine's stage-timing sum is kept in a separate field), so it includes waiting on the shared client and the other workers and is indicative only.
 - **Verifier training data.** The verification model is a multilingual NLI model reported to have been trained without Portuguese data (not verified in this repository). The three English datasets here do not exercise Portuguese, so nothing in this study says how the verifier behaves on Portuguese.
 - **The verifier may reject correct answers.** The dev proxy in `docs/pilot-dev.md` item 5 reports, at the packaged threshold, 0 of 100 matched pairs on `musique` and 3 of 88 on `multihoprag` scoring at or above 0.5, and 39 of 100 on `hoh`. It is built from gold answers rather than drafted ones, but it suggests the packaged threshold is strict; calibration (section 8) addresses it on dev.
 - **Divergence and conflict detection is not implemented.** The engine never returns `divergent` (a comment in `src/heuresis/engine.py` says so). Nothing here tests it, and none of the three datasets contains conflicting sources by design.
 - **The reranker choice was made on dev.** The cross-encoder is off in the engine because dev retrieval fell with it on two of three datasets (`docs/pilot-dev.md` side findings), and it is on in `hybrid_rerank`. Both choices were informed by the same 100 dev questions per dataset.
 - **The engine's default cascade was changed after the dev pilot.** See `docs/pilot-dev.md`, section "Cascade after the pilot's changes": the packaged default `retrieve.rerank` went from true to false. The pilot's dry-run prompt sizes (item 3) and cost model (item 6) were produced with the earlier default.
-- **Other changes after the pilot.** `Engine._settle_date` (a date named in a question is used as an as-of date only if the corpus holds history and the date is not earlier than its first version) and `draft.max_sentences = 2` for the benchmark postdate the pilot's text. `docs/pilot-dev.md` still lists the router date problem as "possible bug, not fixed". The behaviour was checked on 2026-11-11 on a one-unit in-memory corpus and the engine answered.
+- **Other changes after the pilot.** `Engine._settle_date` (a date named in a question is used as an as-of date only if the corpus holds history and the date is not earlier than its first version) and `draft.max_sentences = 2` for the benchmark postdate the pilot's text. `docs/pilot-dev.md` keeps the pilot's text on the router date problem ("possible bug, not fixed") with one dated line saying it was fixed afterwards in `Engine._settle_date`. The behaviour was checked on 2026-11-11 on a one-unit in-memory corpus and the engine answered.
 - **Unverified licences.** See section 2 and `docs/datasets.md`, "Not verified".
 - **Retrieval recall is unit-level** and uses the question text as the query. It says whether a gold unit was shown to the generator, not whether the answer was in it.
 
 ## 12. Open items before registration
 
-Gaps between this draft and the code, to be closed or logged as deviations before the tag.
+Gaps between the earlier draft and the code. Closed items say how; open ones remain to be closed or logged as deviations before the tag. The draft banner stays: thresholds are uncalibrated and no hash is frozen.
 
-1. **Error rows.** `src/heuresis/bench/report.py` (`load`) excludes rows with `status == "error"` from the analysis, and the runner retries them on restart. Section 6 says an error after retries counts as wrong. The report must be changed, or the section revised, before freezing. Also, the engine turns a failed model call into an abstention (`Engine._draft`), whereas a baseline's failure is an error row, so the two are not treated alike today.
-2. **Common question ids.** Section 6 restricts the analysis to ids completed by all systems. `report.paired` pairs on the ids shared by the engine and each baseline, so after a budget stop the 18 comparisons could have different n. A restriction to the common ids must be added.
-3. **Grid replay.** Section 8.1 needs stored drafts and local replay of verification. No such replay exists yet; without it the 45 pairs would need 45 engine runs.
-4. **Model revisions.** The harness records model ids (`BenchContext.models()`), not file hashes or Hugging Face revisions.
-5. **Two "surface hashes".** `heuresis hash` prints the hash of the default configuration alone; `bench.run.surface_hash` hashes the configuration and `DRAFT_SYSTEM`. The frozen one is the second (section 7).
-6. **`docs/datasets.md`, `hoh` "Sanity" row** mentions "100 test questions". If that was a test-split check, the banner of this draft is wrong; if it is loose wording for dev questions, the row should be corrected. Its numbers are not used here.
-7. **Decision rules** in section 1 and the tie-breaks in section 8 are proposals.
+1. **Error rows. Closed.** An API or model failure after retries is an `error` row for every system (`bench/run.py` writes it, `bench/systems.py` detects the engine's from its trace via `engine.trace_failure`; `Engine.ask` keeps its library behaviour), is retried on restart, and `bench/report.py` counts a remaining one as outcome "wrong" and prints the count per system. Budget stops are not errors: the engine system now raises the budget stop like a baseline, so no row is written (before this, the engine wrote an "abstained / budget" row that a restart would not retry).
+2. **Common question ids. Closed.** `report.build` restricts the confirmatory comparisons, the exploratory ones and the family table to the ids completed by all confirmatory-family systems and prints that n and the per-system completed counts.
+3. **Grid replay. Closed.** Engine rows store the replay data; `bench/calibrate.py` (`replay`, `grid`, command line) replays labelling and `decide` offline; a test shows replay at the run's thresholds reproduces every stored outcome and at other thresholds equals a fresh run. It has not been run on real drafts: the calibration itself (section 8) is still to be done.
+4. **Model revisions. Closed in code.** The manifest records, per local model, its id and the sha256 of the ONNX and tokenizer files on disk (`fingerprint()` in `models_local.py`), and for the generator its id, temperature and `max_tokens`. The values exist only after a run that loads the real models; the frozen values in section 7 are still `[ ... ]`. No Hugging Face revision is recorded; the file hashes identify the files.
+5. **Two "surface hashes". Closed.** One implementation, `bench.systems.surface_hash` (effective engine config, `DRAFT_SYSTEM`, source of `surface/prompts.py`), used by `run.py` and by `heuresis hash`, which also prints `prompts_hash()` and `locked_hash()`. `prompts_hash()` now also covers the source of the functions that build baseline prompts. Both hashes changed by this; section 7 holds the new values.
+6. **`docs/datasets.md`, `hoh` "Sanity" row. Closed.** It was a test-split check. The banner, section 2, the new section 2a, the deviations log (section 10), `README.md` and `docs/datasets.md` now say so; the numbers are unchanged and unused.
+7. **Decision rules** in section 1 and the tie-breaks in sections 8.1 and 8.2 are proposals. **Open.** The owner confirms them before the tag.
+8. **Further changes made while closing the items above.** `AnthropicLLM` sends `temperature` (0.0 in the benchmark; section 3); `bench.run --paid` requires `--ledger` and reads the key from `PROJECTS_ANTHROPIC_KEY` or `--key-env NAME`, printing only the name and the base URL and failing before any work if the variable is unset (`docs/cli.md`); latency is wall-clock around `System.answer` for every system. **Open caveat:** an error row of a baseline that failed mid-way (for example `agentic` on its third call) carries no usage, so the report's cost for that system omits the money the ledger did charge for the failed answer; the ledger total is the reference for spend.
