@@ -1,0 +1,469 @@
+{
+ "complete_cases": 120,
+ "systems": {
+  "agentic": {
+   "n": 120,
+   "answered": 48,
+   "abstained": 72,
+   "tainted_strict": [
+    2,
+    48,
+    [
+     0.0417,
+     0.0115,
+     0.1398
+    ]
+   ],
+   "tainted_covered_only": [
+    2,
+    48,
+    [
+     0.0417,
+     0.0115,
+     0.1398
+    ]
+   ],
+   "refs_per_answer": 3.35,
+   "refs": 161,
+   "container_not_found": [
+    0,
+    110
+   ],
+   "unit_not_found": [
+    1,
+    110
+   ],
+   "unit_not_found_incomplete_container": 0,
+   "resolved_not_in_force": [
+    1,
+    109
+   ],
+   "resolved_and_in_force": [
+    108,
+    110
+   ],
+   "norm_only": 51,
+   "no_reference": [
+    0,
+    48
+   ],
+   "usd_per_question": 0.00181,
+   "usd_total": 0.217,
+   "calls_mean": 3.52,
+   "searches_mean": 2.52,
+   "latency_ms_median": 9055,
+   "score_mean": [
+    -0.3,
+    -0.4083,
+    -0.1833
+   ],
+   "outcomes": {
+    "abstained": 60,
+    "correct": 12,
+    "wrong": 48
+   }
+  },
+  "agentic+asof": {
+   "n": 120,
+   "answered": 103,
+   "abstained": 17,
+   "tainted_strict": [
+    7,
+    103,
+    [
+     0.068,
+     0.0333,
+     0.1337
+    ]
+   ],
+   "tainted_covered_only": [
+    6,
+    103,
+    [
+     0.0583,
+     0.027,
+     0.1213
+    ]
+   ],
+   "refs_per_answer": 3.04,
+   "refs": 313,
+   "container_not_found": [
+    1,
+    246
+   ],
+   "unit_not_found": [
+    2,
+    246
+   ],
+   "unit_not_found_incomplete_container": 0,
+   "resolved_not_in_force": [
+    4,
+    243
+   ],
+   "resolved_and_in_force": [
+    239,
+    246
+   ],
+   "norm_only": 67,
+   "no_reference": [
+    0,
+    103
+   ],
+   "usd_per_question": 0.00124,
+   "usd_total": 0.1488,
+   "calls_mean": 2.5,
+   "searches_mean": 1.5,
+   "latency_ms_median": 3854,
+   "score_mean": [
+    -0.7833,
+    -0.875,
+    -0.6833
+   ],
+   "outcomes": {
+    "wrong": 103,
+    "correct": 9,
+    "abstained": 8
+   }
+  },
+  "closed_book": {
+   "n": 120,
+   "answered": 26,
+   "abstained": 94,
+   "tainted_strict": [
+    2,
+    26,
+    [
+     0.0769,
+     0.0214,
+     0.2414
+    ]
+   ],
+   "tainted_covered_only": [
+    2,
+    26,
+    [
+     0.0769,
+     0.0214,
+     0.2414
+    ]
+   ],
+   "refs_per_answer": 3.81,
+   "refs": 99,
+   "container_not_found": [
+    0,
+    50
+   ],
+   "unit_not_found": [
+    1,
+    50
+   ],
+   "unit_not_found_incomplete_container": 0,
+   "resolved_not_in_force": [
+    1,
+    49
+   ],
+   "resolved_and_in_force": [
+    48,
+    50
+   ],
+   "norm_only": 49,
+   "no_reference": [
+    0,
+    26
+   ],
+   "usd_per_question": 0.00047,
+   "usd_total": 0.0562,
+   "calls_mean": 1,
+   "searches_mean": 0,
+   "latency_ms_median": 4310,
+   "score_mean": [
+    -0.1167,
+    -0.2083,
+    -0.0167
+   ],
+   "outcomes": {
+    "abstained": 82,
+    "correct": 12,
+    "wrong": 26
+   }
+  },
+  "engine": {
+   "n": 120,
+   "answered": 95,
+   "abstained": 25,
+   "tainted_strict": [
+    0,
+    95,
+    [
+     0.0,
+     0,
+     0.0389
+    ]
+   ],
+   "tainted_covered_only": [
+    0,
+    95,
+    [
+     0.0,
+     0,
+     0.0389
+    ]
+   ],
+   "refs_per_answer": 1.88,
+   "refs": 179,
+   "container_not_found": [
+    0,
+    169
+   ],
+   "unit_not_found": [
+    0,
+    169
+   ],
+   "unit_not_found_incomplete_container": 0,
+   "resolved_not_in_force": [
+    0,
+    169
+   ],
+   "resolved_and_in_force": [
+    169,
+    169
+   ],
+   "norm_only": 10,
+   "no_reference": [
+    0,
+    95
+   ],
+   "usd_per_question": 0.00099,
+   "usd_total": 0.1188,
+   "calls_mean": 1.44,
+   "searches_mean": 1.44,
+   "latency_ms_median": 3884,
+   "score_mean": [
+    -0.725,
+    -0.825,
+    -0.625
+   ],
+   "outcomes": {
+    "abstained": 17,
+    "correct": 8,
+    "wrong": 95
+   }
+  },
+  "hybrid": {
+   "n": 120,
+   "answered": 43,
+   "abstained": 77,
+   "tainted_strict": [
+    1,
+    43,
+    [
+     0.0233,
+     0.0041,
+     0.1206
+    ]
+   ],
+   "tainted_covered_only": [
+    1,
+    43,
+    [
+     0.0233,
+     0.0041,
+     0.1206
+    ]
+   ],
+   "refs_per_answer": 3.14,
+   "refs": 135,
+   "container_not_found": [
+    0,
+    109
+   ],
+   "unit_not_found": [
+    1,
+    109
+   ],
+   "unit_not_found_incomplete_container": 0,
+   "resolved_not_in_force": [
+    0,
+    108
+   ],
+   "resolved_and_in_force": [
+    108,
+    109
+   ],
+   "norm_only": 26,
+   "no_reference": [
+    0,
+    43
+   ],
+   "usd_per_question": 0.00042,
+   "usd_total": 0.0502,
+   "calls_mean": 1,
+   "searches_mean": 1,
+   "latency_ms_median": 3243,
+   "score_mean": [
+    -0.25,
+    -0.3667,
+    -0.1333
+   ],
+   "outcomes": {
+    "wrong": 43,
+    "abstained": 64,
+    "correct": 13
+   }
+  }
+ },
+ "paired_vs_engine": {
+  "agentic": {
+   "tainted_rate_diff_per_question": [
+    -0.0167,
+    -0.0417,
+    0.0
+   ],
+   "score_diff": [
+    -0.425,
+    -0.5417,
+    -0.3083
+   ]
+  },
+  "agentic+asof": {
+   "tainted_rate_diff_per_question": [
+    -0.0583,
+    -0.1,
+    -0.0167
+   ],
+   "score_diff": [
+    0.0583,
+    -0.025,
+    0.1417
+   ]
+  },
+  "closed_book": {
+   "tainted_rate_diff_per_question": [
+    -0.0167,
+    -0.0417,
+    0.0
+   ],
+   "score_diff": [
+    -0.6083,
+    -0.7167,
+    -0.5
+   ]
+  },
+  "hybrid": {
+   "tainted_rate_diff_per_question": [
+    -0.0083,
+    -0.025,
+    0.0
+   ],
+   "score_diff": [
+    -0.475,
+    -0.5917,
+    -0.3583
+   ]
+  }
+ },
+ "engine_gate": {
+  "engine_rows": 111,
+  "sentences": 314,
+  "gate_failures": 42,
+  "gate_only_failures": 23,
+  "examples": [
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art314-before",
+    "sentence": "Ele excetuava do disposto no artigo anterior os favores da alínea c do art. 7º do regulamento aprovado pelo Decreto nº 3.590, de 11 de janeiro de 1939.",
+    "reference": "art. 7º do regulamento aprovado pelo Decreto nº 3.590, de 11 de janeiro de 1939",
+    "status": "container_not_found",
+    "why": "'art. 7º do regulamento aprovado pelo Decreto nº 3.590, de 11 de janeiro de 1939': no such source in the corpus",
+    "other_checks_pass": true
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art318-before",
+    "sentence": "A Lei nº 13.415/2017, art. 8º, deu nova redação ao art. 318 da CLT, permitindo lecionar em mais de um turno no mesmo estabelecimento, desde que não ultrapassada a jornada semanal legal.",
+    "reference": "art. 318 da CLT",
+    "status": "resolved",
+    "why": "'art. 318 da CLT': names a unit the sentence does not cite",
+    "other_checks_pass": true
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art322-before",
+    "sentence": "Na data de 30/03/1995, o art. 322 da CLT (Decreto-Lei nº 5.452, de 1º de maio de 1943) estava em vigor.",
+    "reference": "art. 322 da CLT",
+    "status": "resolved",
+    "why": "'art. 322 da CLT': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art376-after",
+    "sentence": "Em 28/06/2001, o art. 376 da CLT já não estava em vigor, pois o art. 1º da Lei nº 10.244/2001 o revogou.",
+    "reference": "art. 376 da CLT",
+    "status": "resolved",
+    "why": "'art. 376 da CLT': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art376-after",
+    "sentence": "Os textos disponíveis não trazem o conteúdo original do art. 376 do Decreto-Lei nº 5.452/1943, por isso não é possível dizer o que ele dispunha.",
+    "reference": "art. 376 do Decreto-Lei nº 5.452/1943",
+    "status": "resolved",
+    "why": "'art. 376 do Decreto-Lei nº 5.452/1943': names a unit the sentence does not cite",
+    "other_checks_pass": true
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art376-before",
+    "sentence": "A Lei nº 10.244/2001, art. 1º, revogou o art. 376 da CLT, com vigência a partir de 27/06/2001.",
+    "reference": "art. 376 da CLT",
+    "status": "resolved",
+    "why": "'art. 376 da CLT': names a unit the sentence does not cite",
+    "other_checks_pass": true
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art42-after",
+    "sentence": "Em 20/06/2001, o art. 42 da CLT já estava revogado.",
+    "reference": "art. 42 da CLT",
+    "status": "resolved",
+    "why": "'art. 42 da CLT': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art42-after",
+    "sentence": "A Lei nº 10.243, de 19/06/2001, art. 4º, revogou o art. 42 da Consolidação das Leis do Trabalho.",
+    "reference": "art. 42 da Consolidação das Leis do Trabalho",
+    "status": "resolved",
+    "why": "'art. 42 da Consolidação das Leis do Trabalho': names a unit the sentence does not cite",
+    "other_checks_pass": true
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art436-after",
+    "sentence": "Na data de 20/12/2000, o art. 436 da CLT já estava revogado.",
+    "reference": "art. 436 da CLT",
+    "status": "resolved",
+    "why": "'art. 436 da CLT': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art488-after",
+    "sentence": "O parágrafo único do mesmo art. 488 do Decreto-Lei nº 5.452/1943 permitia ao empregado trabalhar sem essa redução.",
+    "reference": "art. 488 do Decreto-Lei nº 5.452/1943",
+    "status": "resolved",
+    "why": "'art. 488 do Decreto-Lei nº 5.452/1943': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art508-after",
+    "sentence": "O art. 508 da CLT já estava revogado em 13/12/2010, pelo art. 1º da Lei nº 12.347/2010, de 10/12/2010.",
+    "reference": "art. 508 da CLT",
+    "status": "resolved",
+    "why": "'art. 508 da CLT': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art508-after",
+    "sentence": "Os trechos disponíveis não trazem o texto original do art. 508 do Decreto-Lei nº 5.452/1943, por isso não posso dizer o que ele previa.",
+    "reference": "art. 508 do Decreto-Lei nº 5.452/1943",
+    "status": "resolved",
+    "why": "'art. 508 do Decreto-Lei nº 5.452/1943': names a unit the sentence does not cite",
+    "other_checks_pass": true
+   }
+  ]
+ }
+}

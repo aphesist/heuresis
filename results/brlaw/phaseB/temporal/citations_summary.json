@@ -1,0 +1,190 @@
+{
+ "citations": {
+  "agentic": {
+   "abstained": 72,
+   "answered": 48,
+   "container_not_found_in_covered_share": 0.0,
+   "container_not_found_share": 0.0,
+   "counts": {
+    "container_not_found": 0,
+    "norm_only": 51,
+    "resolved": 109,
+    "unit_not_found": 1
+   },
+   "exist_share": 0.990909090909091,
+   "in_force_share": 0.9908256880733946,
+   "no_reference": 0,
+   "no_reference_share": 0.0,
+   "references": 161,
+   "references_free_text": 161,
+   "references_per_answer": 3.3541666666666665,
+   "rows": 120,
+   "support_judged": 89,
+   "support_share": 0.8426966292134831,
+   "tainted": 2,
+   "tainted_covered_only": 2,
+   "tainted_covered_only_share": 0.041666666666666664,
+   "tainted_share": 0.041666666666666664,
+   "unit_not_found_in_incomplete_container": 0,
+   "unit_not_found_share": 0.00909090909090909
+  },
+  "agentic+asof": {
+   "abstained": 17,
+   "answered": 103,
+   "container_not_found_in_covered_share": 0.0,
+   "container_not_found_share": 0.0040650406504065045,
+   "counts": {
+    "container_not_found": 1,
+    "norm_only": 67,
+    "resolved": 243,
+    "unit_not_found": 2
+   },
+   "exist_share": 0.9878048780487805,
+   "in_force_share": 0.9835390946502057,
+   "no_reference": 0,
+   "no_reference_share": 0.0,
+   "references": 313,
+   "references_free_text": 313,
+   "references_per_answer": 3.0388349514563107,
+   "rows": 120,
+   "support_judged": 199,
+   "support_share": 0.8743718592964824,
+   "tainted": 7,
+   "tainted_covered_only": 6,
+   "tainted_covered_only_share": 0.05825242718446602,
+   "tainted_share": 0.06796116504854369,
+   "unit_not_found_in_incomplete_container": 0,
+   "unit_not_found_share": 0.008130081300813009
+  },
+  "closed_book": {
+   "abstained": 94,
+   "answered": 26,
+   "container_not_found_in_covered_share": 0.0,
+   "container_not_found_share": 0.0,
+   "counts": {
+    "container_not_found": 0,
+    "norm_only": 49,
+    "resolved": 49,
+    "unit_not_found": 1
+   },
+   "exist_share": 0.98,
+   "in_force_share": 0.9795918367346939,
+   "no_reference": 0,
+   "no_reference_share": 0.0,
+   "references": 99,
+   "references_free_text": 99,
+   "references_per_answer": 3.8076923076923075,
+   "rows": 120,
+   "support_judged": 36,
+   "support_share": 0.5555555555555556,
+   "tainted": 2,
+   "tainted_covered_only": 2,
+   "tainted_covered_only_share": 0.07692307692307693,
+   "tainted_share": 0.07692307692307693,
+   "unit_not_found_in_incomplete_container": 0,
+   "unit_not_found_share": 0.02
+  },
+  "engine": {
+   "abstained": 25,
+   "answered": 95,
+   "container_not_found_in_covered_share": 0.0,
+   "container_not_found_share": 0.0,
+   "counts": {
+    "container_not_found": 0,
+    "norm_only": 10,
+    "resolved": 169,
+    "unit_not_found": 0
+   },
+   "exist_share": 1.0,
+   "in_force_share": 1.0,
+   "no_reference": 0,
+   "no_reference_share": 0.0,
+   "references": 179,
+   "references_free_text": 74,
+   "references_per_answer": 1.8842105263157896,
+   "rows": 120,
+   "support_judged": 149,
+   "support_share": 0.8523489932885906,
+   "tainted": 0,
+   "tainted_covered_only": 0,
+   "tainted_covered_only_share": 0.0,
+   "tainted_share": 0.0,
+   "unit_not_found_in_incomplete_container": 0,
+   "unit_not_found_share": 0.0
+  },
+  "hybrid": {
+   "abstained": 77,
+   "answered": 43,
+   "container_not_found_in_covered_share": 0.0,
+   "container_not_found_share": 0.0,
+   "counts": {
+    "container_not_found": 0,
+    "norm_only": 26,
+    "resolved": 108,
+    "unit_not_found": 1
+   },
+   "exist_share": 0.9908256880733946,
+   "in_force_share": 1.0,
+   "no_reference": 0,
+   "no_reference_share": 0.0,
+   "references": 135,
+   "references_free_text": 135,
+   "references_per_answer": 3.13953488372093,
+   "rows": 120,
+   "support_judged": 68,
+   "support_share": 0.8382352941176471,
+   "tainted": 1,
+   "tainted_covered_only": 1,
+   "tainted_covered_only_share": 0.023255813953488372,
+   "tainted_share": 0.023255813953488372,
+   "unit_not_found_in_incomplete_container": 0,
+   "unit_not_found_share": 0.009174311926605505
+  }
+ },
+ "temporal": {
+  "agentic": {
+   "abstained": 72,
+   "cited_repealed": 1,
+   "gold_version": 35,
+   "n": 120,
+   "other_version": 7,
+   "undetermined": 4,
+   "unit_not_cited": 1
+  },
+  "agentic+asof": {
+   "abstained": 17,
+   "cited_repealed": 4,
+   "gold_version": 66,
+   "n": 120,
+   "no_gold": 7,
+   "other_version": 12,
+   "undetermined": 14
+  },
+  "closed_book": {
+   "abstained": 94,
+   "cited_repealed": 1,
+   "gold_version": 10,
+   "n": 120,
+   "no_gold": 1,
+   "other_version": 8,
+   "undetermined": 6
+  },
+  "engine": {
+   "abstained": 25,
+   "answered_without_the_unit": 5,
+   "gold_version": 51,
+   "n": 120,
+   "no_gold": 11,
+   "other_version": 4,
+   "undetermined": 19,
+   "unit_not_cited": 5
+  },
+  "hybrid": {
+   "abstained": 77,
+   "gold_version": 37,
+   "n": 120,
+   "other_version": 2,
+   "undetermined": 4
+  }
+ }
+}

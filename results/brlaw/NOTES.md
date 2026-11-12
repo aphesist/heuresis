@@ -177,3 +177,106 @@ full corpus, for existence and in-force checks). The `test` split (615) is not p
   effects, several acts) and the 44 + 9 tax-tier documents listed in the manifests.
 * **The 7,204 CARF rulings** were not downloaded (the test is about legislation).
 * A **human check** of the versioned pairs or of the resolver beyond the gold references has not been done.
+
+# Phase B: the paid check on `dev` and `temporal` (calibration data, NOT the registered result)
+
+Run after the orchestrator's go. Model `claude-haiku-5-5`, thinking left at the default, `draft.max_tokens` 4096, ledger
+`runs/brlaw/ledger.jsonl` (cap US$6.00, margin 0.25; copy in `phaseB/ledger.jsonl`). **Spent US$1.629, remaining US$4.371.** Smoke
+(5 dev questions x 5 systems) US$0.055 gave a projection of about US$0.011 per question, so (a) `temporal` (120) and (b) BR-TaxQA-R `dev`
+(100) ran in full, five systems each (`closed_book`, `hybrid`, `agentic`, `agentic+asof`, `engine`) on `brlaw-core`; (c) the support judge and the
+dev answer judge followed. 1,100 rows, 0 errors, nothing skipped. The BR-TaxQA-R `test` split and the old datasets were not touched.
+The citation metric reads the answer text a user would receive; **the engine's 0 % tainted is partly by construction**: the `references_traced`
+gate removes sentences with an untraced reference before the answer exists (counts below). Existence/in-force checks use the full store.
+Files: `results/brlaw/phaseB/{temporal,dev}/` (`analysis.json`, `citations_summary.json`, `citations.jsonl` without text, judge verdicts, `report.md`, manifest).
+The human-check CSVs (100 rows each, provision text included) stay in `runs/brlaw/*/citation_support_sample.csv` (not committed: corpus text).
+
+## Citation integrity (answered rows; Wilson 95 % intervals)
+
+| Split | System | Answered / abstained | Tainted, strict | Tainted, covered only | Refs per answer | Norm not found | Article not found | Resolved, not in force | Resolved and in force (of checkable) | No reference | Judge: supported |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| temporal | closed_book | 26 / 94 | 2/26 = 7.7 % [2.1, 24.1] | 7.7 % | 3.81 | 0/50 | 1/50 | 1/49 | 48/50 | 0/26 | 56 % (36) |
+| temporal | hybrid | 43 / 77 | 1/43 = 2.3 % [0.4, 12.1] | 2.3 % | 3.14 | 0/109 | 1/109 | 0/108 | 108/109 | 0/43 | 84 % (68) |
+| temporal | agentic | 48 / 72 | 2/48 = 4.2 % [1.2, 14.0] | 4.2 % | 3.35 | 0/110 | 1/110 | 1/109 | 108/110 | 0/48 | 84 % (89) |
+| temporal | agentic+asof | 103 / 17 | 7/103 = 6.8 % [3.3, 13.4] | 5.8 % [2.7, 12.1] (6/103) | 3.04 | 1/246 | 2/246 | 4/243 | 239/246 | 0/103 | 87 % (199) |
+| temporal | engine | 95 / 25 | 0/95 = 0 % [0, 3.9] | 0 % | 1.88 | 0/169 | 0/169 | 0/169 | 169/169 | 0/95 | 85 % (149) |
+| dev | closed_book | 72 / 28 | 20/72 = 27.8 % [18.8, 39.1] | 16/72 = 22.2 % [14.2, 33.1] | 2.50 | 4/147 | 18/147 | 1/125 | 124/147 | 1/72 | 25 % (107) |
+| dev | hybrid | 64 / 36 | 8/64 = 12.5 % [6.5, 22.8] | 5/64 = 7.8 % [3.4, 17.0] | 3.45 | 3/187 | 4/187 | 1/180 | 179/187 | 0/64 | 79 % (168) |
+| dev | agentic | 73 / 27 | 11/73 = 15.1 % [8.6, 25.0] | 8/73 = 11.0 % [5.7, 20.2] | 3.08 | 4/186 | 8/186 | 0/174 | 174/186 | 0/73 | 86 % (170) |
+| dev | agentic+asof | 76 / 24 | 8/76 = 10.5 % [5.4, 19.4] | 6/76 = 7.9 % [3.7, 16.2] | 3.33 | 3/211 | 8/211 | 0/200 | 200/211 | 0/76 | 84 % (196) |
+| dev | engine | 87 / 13 | 0/87 = 0 % [0, 4.2] | 0 % | 4.16 | 0/334 | 0/334 | 0/334 | 334/334 | 0/87 | 60 % (329) |
+
+(Judge sample sizes are the number of judged references; the human-check CSVs hold 100 stratified rows per split, 20 per system.
+The judge is a model's opinion, unchecked by a human.) "Not found" shares are of checkable references (resolved + not found); norm-only
+mentions are excluded.
+
+**Reading.** On dev, the system with no retrieval (`closed_book`) names a provision that does not exist or is not in force in
+28 % of its answers (22 % counting only the norm types the corpus almost completely covers) and its references are judged to support the
+sentence 25 % of the time; the retrieval systems are at 10-15 %; the engine delivers none. On `temporal` every system is low because
+the questions name the norm and article; the differences there are small and the intervals overlap. The dev
+"norm not found" for baselines are mostly real norms outside the corpus (e.g. INs of the 1990s), which is why the restricted column is lower.
+The engine's judged support (60 % on dev) is its weak spot: it cites correctly but its sentences are often more
+general than the provision (the judge says NOT_SUPPORTED); a model-judge verdict, not checked by a human.
+
+## Paired differences, engine minus system (mean per question, bootstrap 95 %)
+
+Tainted-rate difference (a negative number favours the engine): dev: closed_book -0.20 [-0.28, -0.13]; hybrid -0.08 [-0.13, -0.03]; agentic -0.11 [-0.17, -0.05];
+agentic+asof -0.08 [-0.14, -0.03]. temporal: closed_book -0.017 [-0.042, 0]; hybrid -0.008 [-0.025, 0]; agentic -0.017 [-0.042, 0];
+agentic+asof -0.058 [-0.10, -0.017]. A tainted answer is counted only for answered rows (an abstention is not tainted), so the engine's
+lower rate is partly its gate and partly abstention behaviour; see the abstention counts.
+
+**Penalised score (+1 / 0 / -1), deterministic containment grader, dev:** meaningless here. The official answers are paragraphs, so every
+answered row is graded "wrong" and the score only rewards abstaining (the paired score differences in `analysis.json` follow abstention counts and
+are not reported as results). The judge-assisted grade below is the usable correctness number, and it is secondary and exploratory.
+
+## BR-TaxQA-R dev: correctness against the official answers (judge-assisted, `bench.judge`, exploratory)
+
+| System | Answered | Abstained | Judged EQUIVALENT to a gold answer | Cost per question | Cost per equivalent answer | Calls | Searches | Median latency |
+|---|---|---|---|---|---|---|---|---|
+| closed_book | 72 | 28 | 24 (24 % of 100) | $0.00066 | $0.0027 | 1.00 | 0 | 6.6 s |
+| hybrid | 64 | 36 | 32 | $0.00099 | $0.0031 | 1.00 | 1 | 5.3 s |
+| agentic | 73 | 27 | 35 | $0.00179 | $0.0051 | 2.92 | 1.92 | 7.6 s |
+| agentic+asof | 76 | 24 | 41 | $0.00201 | $0.0049 | 3.02 | 2.02 | 7.6 s |
+| engine | 87 | 13 | 32 | $0.00245 | $0.0077 | 2.16 | 2.16 | 9.5 s |
+
+The engine abstains least and answers more but with the same number of equivalent answers as `hybrid`; the model judge is lenient or strict by its
+own rule and no human checked it.
+
+## Dated questions (`temporal`, code-scored: which version did the answer give?)
+
+| System | Abstained | Gave the version in force at the date | Gave the superseded / other version | Undetermined | Unit not cited | Cited a repealed provision as in force | No second version to compare |
+|---|---|---|---|---|---|---|---|
+| closed_book | 94 | 10 | 8 | 6 | 0 | 1 | 1 |
+| hybrid (today's text) | 77 | 37 | 2 | 4 | 0 | 0 | 0 |
+| agentic | 72 | 35 | 7 | 4 | 1 | 1 | 0 |
+| agentic+asof | 17 | 66 | 12 | 14 | 0 | 4 | 7 |
+| engine | 25 | 51 | 4 | 19 | 5 (+5 answered without the unit) | 0 | 11 |
+
+Share of all 120 questions answered with the version in force: engine 43 %, agentic+asof 55 %, hybrid 31 %, agentic 29 %, closed_book 8 %; of answers
+whose version could be told apart: engine 51/55 = 93 %, agentic+asof 66/78 = 85 %, hybrid 37/39 = 95 %, agentic 35/42 = 83 %, closed_book 10/18 = 56 %.
+Citing the superseded wording happened 2-12 times per system, most often for `agentic+asof` (12) and `closed_book` (8). "No second version" are
+repealed provisions asked about before the repeal (the store holds one version). Note that `hybrid` and `agentic` search as of today, yet mostly
+return the wording in force at the date: many provisions had a single later change and the question names the article. This is calibration, 60 provisions from two base norms.
+
+## The engine's `references_traced` gate (offline replay of the stored drafts)
+
+dev: 88 engine rows replayed, 312 drafted sentences, **48 failed the gate** (16 of them failed only the gate; the rest also failed another check);
+temporal: 111 rows, 314 sentences, **42 failed** (23 only the gate). Examples (from `analysis.json`):
+1. `taxqa-053`: "...observada a IN SRF nº 21/1997, alterada pela IN SRF nº 73/1997": **norm not found in the corpus** (a norm the passage did not contain; real or not, the answer could not have verified it); dropped.
+2. `taxqa-013`: "Essa solução cita a Lei nº 9.250/1995, arts. 8º e 10": the articles are **named but not among the cited passages**; dropped.
+3. temporal `art314-before`: "...art. 7º do regulamento aprovado pelo Decreto nº 3.590, de 11 de janeiro de 1939": **norm not found**; dropped.
+(also `art. 318 da CLT` named in a sentence that cites a different unit; `taxqa-066`: arts. of IN SRF 283/2003 and IN RFB 2.178/2024 named but not cited.)
+Some drops are conservative: a sentence about what a norm says, naming another norm in passing, is dropped.
+
+## Three engine wrong answers (dev, judge NOT_EQUIVALENT)
+
+`taxqa-033` (requirements of the IRPF 2024 program): the engine answers about filing deadline and means, not the Java/platform requirements. `taxqa-045`
+(where to file a rectifying return): it gives the rule for a refund claim and a floppy-disk delivery from an old IN, not the 2024 rule (stale source in the
+corpus, not a citation error). `taxqa-053`: it answers with the 1999 Ato Declaratório and the 1999 return field, an obsolete procedure. These show retrieval
+choosing older acts on an as-of date of 2024-12-31 because the tax tier holds one version of each text.
+
+## Caveats
+
+* Calibration data on `dev` and `temporal`, n = 100 and 120, one model, one run; nothing here is the registered result.
+* The tainted metric counts a system's final text; the engine's number includes its gate. The gate and `abstention` rates differ across systems.
+* All "in force" numbers except the 60 versioned provisions rest on single-version sources; the 1,000-odd human-check rows have not been read by a human.
+* The deterministic containment grader and the penalised score are not meaningful on BR-TaxQA-R (long official answers); the judge-assisted grade is exploratory.

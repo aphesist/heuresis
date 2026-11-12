@@ -1,0 +1,464 @@
+{
+ "complete_cases": 100,
+ "systems": {
+  "agentic": {
+   "n": 100,
+   "answered": 73,
+   "abstained": 27,
+   "tainted_strict": [
+    11,
+    73,
+    [
+     0.1507,
+     0.0863,
+     0.25
+    ]
+   ],
+   "tainted_covered_only": [
+    8,
+    73,
+    [
+     0.1096,
+     0.0566,
+     0.2016
+    ]
+   ],
+   "refs_per_answer": 3.08,
+   "refs": 225,
+   "container_not_found": [
+    4,
+    186
+   ],
+   "unit_not_found": [
+    8,
+    186
+   ],
+   "unit_not_found_incomplete_container": 0,
+   "resolved_not_in_force": [
+    0,
+    174
+   ],
+   "resolved_and_in_force": [
+    174,
+    186
+   ],
+   "norm_only": 39,
+   "no_reference": [
+    0,
+    73
+   ],
+   "usd_per_question": 0.00179,
+   "usd_total": 0.1789,
+   "calls_mean": 2.92,
+   "searches_mean": 1.92,
+   "latency_ms_median": 7624,
+   "score_mean": [
+    -0.73,
+    -0.81,
+    -0.64
+   ],
+   "outcomes": {
+    "wrong": 73,
+    "abstained": 27
+   }
+  },
+  "agentic+asof": {
+   "n": 100,
+   "answered": 76,
+   "abstained": 24,
+   "tainted_strict": [
+    8,
+    76,
+    [
+     0.1053,
+     0.0543,
+     0.1942
+    ]
+   ],
+   "tainted_covered_only": [
+    6,
+    76,
+    [
+     0.0789,
+     0.0367,
+     0.1617
+    ]
+   ],
+   "refs_per_answer": 3.33,
+   "refs": 253,
+   "container_not_found": [
+    3,
+    211
+   ],
+   "unit_not_found": [
+    8,
+    211
+   ],
+   "unit_not_found_incomplete_container": 0,
+   "resolved_not_in_force": [
+    0,
+    200
+   ],
+   "resolved_and_in_force": [
+    200,
+    211
+   ],
+   "norm_only": 42,
+   "no_reference": [
+    0,
+    76
+   ],
+   "usd_per_question": 0.00201,
+   "usd_total": 0.2015,
+   "calls_mean": 3.02,
+   "searches_mean": 2.02,
+   "latency_ms_median": 7608,
+   "score_mean": [
+    -0.76,
+    -0.84,
+    -0.68
+   ],
+   "outcomes": {
+    "wrong": 76,
+    "abstained": 24
+   }
+  },
+  "closed_book": {
+   "n": 100,
+   "answered": 72,
+   "abstained": 28,
+   "tainted_strict": [
+    20,
+    72,
+    [
+     0.2778,
+     0.1876,
+     0.3905
+    ]
+   ],
+   "tainted_covered_only": [
+    16,
+    72,
+    [
+     0.2222,
+     0.1417,
+     0.3309
+    ]
+   ],
+   "refs_per_answer": 2.5,
+   "refs": 180,
+   "container_not_found": [
+    4,
+    147
+   ],
+   "unit_not_found": [
+    18,
+    147
+   ],
+   "unit_not_found_incomplete_container": 2,
+   "resolved_not_in_force": [
+    1,
+    125
+   ],
+   "resolved_and_in_force": [
+    124,
+    147
+   ],
+   "norm_only": 33,
+   "no_reference": [
+    1,
+    72
+   ],
+   "usd_per_question": 0.00066,
+   "usd_total": 0.0656,
+   "calls_mean": 1,
+   "searches_mean": 0,
+   "latency_ms_median": 6607,
+   "score_mean": [
+    -0.72,
+    -0.8,
+    -0.63
+   ],
+   "outcomes": {
+    "wrong": 72,
+    "abstained": 28
+   }
+  },
+  "engine": {
+   "n": 100,
+   "answered": 87,
+   "abstained": 13,
+   "tainted_strict": [
+    0,
+    87,
+    [
+     0.0,
+     0,
+     0.0423
+    ]
+   ],
+   "tainted_covered_only": [
+    0,
+    87,
+    [
+     0.0,
+     0,
+     0.0423
+    ]
+   ],
+   "refs_per_answer": 4.16,
+   "refs": 362,
+   "container_not_found": [
+    0,
+    334
+   ],
+   "unit_not_found": [
+    0,
+    334
+   ],
+   "unit_not_found_incomplete_container": 0,
+   "resolved_not_in_force": [
+    0,
+    334
+   ],
+   "resolved_and_in_force": [
+    334,
+    334
+   ],
+   "norm_only": 28,
+   "no_reference": [
+    0,
+    87
+   ],
+   "usd_per_question": 0.00245,
+   "usd_total": 0.2451,
+   "calls_mean": 2.16,
+   "searches_mean": 2.16,
+   "latency_ms_median": 9547,
+   "score_mean": [
+    -0.87,
+    -0.93,
+    -0.8
+   ],
+   "outcomes": {
+    "wrong": 87,
+    "abstained": 13
+   }
+  },
+  "hybrid": {
+   "n": 100,
+   "answered": 64,
+   "abstained": 36,
+   "tainted_strict": [
+    8,
+    64,
+    [
+     0.125,
+     0.0647,
+     0.2277
+    ]
+   ],
+   "tainted_covered_only": [
+    5,
+    64,
+    [
+     0.0781,
+     0.0338,
+     0.1702
+    ]
+   ],
+   "refs_per_answer": 3.45,
+   "refs": 221,
+   "container_not_found": [
+    3,
+    187
+   ],
+   "unit_not_found": [
+    4,
+    187
+   ],
+   "unit_not_found_incomplete_container": 0,
+   "resolved_not_in_force": [
+    1,
+    180
+   ],
+   "resolved_and_in_force": [
+    179,
+    187
+   ],
+   "norm_only": 34,
+   "no_reference": [
+    0,
+    64
+   ],
+   "usd_per_question": 0.00099,
+   "usd_total": 0.0992,
+   "calls_mean": 1,
+   "searches_mean": 1,
+   "latency_ms_median": 5293,
+   "score_mean": [
+    -0.64,
+    -0.73,
+    -0.54
+   ],
+   "outcomes": {
+    "wrong": 64,
+    "abstained": 36
+   }
+  }
+ },
+ "paired_vs_engine": {
+  "agentic": {
+   "tainted_rate_diff_per_question": [
+    -0.11,
+    -0.17,
+    -0.05
+   ],
+   "score_diff": [
+    -0.14,
+    -0.22,
+    -0.06
+   ]
+  },
+  "agentic+asof": {
+   "tainted_rate_diff_per_question": [
+    -0.08,
+    -0.14,
+    -0.03
+   ],
+   "score_diff": [
+    -0.11,
+    -0.19,
+    -0.03
+   ]
+  },
+  "closed_book": {
+   "tainted_rate_diff_per_question": [
+    -0.2,
+    -0.28,
+    -0.13
+   ],
+   "score_diff": [
+    -0.15,
+    -0.25,
+    -0.06
+   ]
+  },
+  "hybrid": {
+   "tainted_rate_diff_per_question": [
+    -0.08,
+    -0.13,
+    -0.03
+   ],
+   "score_diff": [
+    -0.23,
+    -0.31,
+    -0.15
+   ]
+  }
+ },
+ "engine_gate": {
+  "engine_rows": 88,
+  "sentences": 312,
+  "gate_failures": 48,
+  "gate_only_failures": 16,
+  "examples": [
+   {
+    "qid": "taxqa-013",
+    "sentence": "Essa solução cita a Lei nº 9.250/1995, arts. 8º e 10.",
+    "reference": "Lei nº 9.250/1995, arts. 8º e 10",
+    "status": "resolved",
+    "why": "'Lei nº 9.250/1995, arts. 8º e 10': names a unit the sentence does not cite",
+    "other_checks_pass": true
+   },
+   {
+    "qid": "taxqa-053",
+    "sentence": "O contribuinte pode pedir a restituição ou compensação do imposto retido, observada a IN SRF nº 21/1997, alterada pela IN SRF nº 73/1997.",
+    "reference": "IN SRF nº 21/1997",
+    "status": "container_not_found",
+    "why": "'IN SRF nº 21/1997': no such source in the corpus",
+    "other_checks_pass": true
+   },
+   {
+    "qid": "taxqa-066",
+    "sentence": "Essas modalidades constam do art. 1º da Instrução normativa SRF nº 283/2003.",
+    "reference": "art. 1º da Instrução normativa SRF nº 283/2003",
+    "status": "resolved",
+    "why": "'art. 1º da Instrução normativa SRF nº 283/2003': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "taxqa-066",
+    "sentence": "Isso consta do parágrafo único do art. 1º da Instrução normativa SRF nº 283/2003.",
+    "reference": "art. 1º da Instrução normativa SRF nº 283/2003",
+    "status": "resolved",
+    "why": "'art. 1º da Instrução normativa SRF nº 283/2003': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "taxqa-066",
+    "sentence": "Isso consta do art. 13 da Instrução normativa RFB nº 2.178/2024.",
+    "reference": "art. 13 da Instrução normativa RFB nº 2.178/2024",
+    "status": "resolved",
+    "why": "'art. 13 da Instrução normativa RFB nº 2.178/2024': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "taxqa-093",
+    "sentence": "(Instrução Normativa SRF nº 81/2001, art. 3º, § 2º, I)",
+    "reference": "Instrução Normativa SRF nº 81/2001, art. 3º",
+    "status": "resolved",
+    "why": "'Instrução Normativa SRF nº 81/2001, art. 3º': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "taxqa-093",
+    "sentence": "(Instrução Normativa SRF nº 81/2001, art. 7º, I e II)",
+    "reference": "Instrução Normativa SRF nº 81/2001, art. 7º",
+    "status": "resolved",
+    "why": "'Instrução Normativa SRF nº 81/2001, art. 7º': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "taxqa-093",
+    "sentence": "Havendo bens a inventariar, também é obrigatória a declaração final, a ser apresentada no ano em que transitar em julgado a decisão da partilha, sobrepartilha ou adjudicação.",
+    "reference": "decisão",
+    "status": "norm_only",
+    "why": "'decisão': names a source none of the cited passages belongs to",
+    "other_checks_pass": true
+   },
+   {
+    "qid": "taxqa-093",
+    "sentence": "(Instrução Normativa SRF nº 81/2001, art. 3º, § 4º)",
+    "reference": "Instrução Normativa SRF nº 81/2001, art. 3º",
+    "status": "resolved",
+    "why": "'Instrução Normativa SRF nº 81/2001, art. 3º': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "taxqa-127",
+    "sentence": "Isso decorre do art. 2º, inciso IV, da Instrução Normativa SRF nº 208/2002.",
+    "reference": "art. 2º, inciso IV, da Instrução Normativa SRF nº 208/2002",
+    "status": "resolved",
+    "why": "'art. 2º, inciso IV, da Instrução Normativa SRF nº 208/2002': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "taxqa-164",
+    "sentence": "Isso consta do art. 18 da Instrução Normativa SRF nº 208/2002.",
+    "reference": "art. 18 da Instrução Normativa SRF nº 208/2002",
+    "status": "resolved",
+    "why": "'art. 18 da Instrução Normativa SRF nº 208/2002': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   },
+   {
+    "qid": "taxqa-164",
+    "sentence": "Isso consta do art. 17, § 2º, da Instrução Normativa SRF nº 208/2002.",
+    "reference": "art. 17, § 2º, da Instrução Normativa SRF nº 208/2002",
+    "status": "resolved",
+    "why": "'art. 17, § 2º, da Instrução Normativa SRF nº 208/2002': names a unit the sentence does not cite",
+    "other_checks_pass": false
+   }
+  ]
+ }
+}
