@@ -18,12 +18,22 @@ returns a `Dataset`. Building is idempotent (a corpus whose file hashes match it
   the unanswerable fraction (MultiHop-RAG) or the current/outdated mix (HoH) is
   preserved in every split. If the pool is smaller than the request, dev is filled
   first, then test, then sealed.
+- **`dev2`** (added with the engine redesign): a fourth split of up to 100 questions per dataset, cut
+  *after* the three above from the questions that are in none of them, in the same hash order and with
+  the same per-stratum allocation, so it cannot change which ids dev, test and sealed hold (their
+  id-list hashes are identical, checked by a test against the hashes in PREREGISTRATION.md section 2).
+  It exists so that a design change made on dev evidence can be checked on questions that evidence never
+  touched. Its size is whatever is left when the pool is smaller than the request (`musique`: 100 of the
+  1,000 are in none of the three, so `dev2` is exactly those 100). It is a tuning split, not a test
+  split: `bench.calibrate` and `bench.judge` accept `dev` and `dev2`, and nothing else.
 - `MANIFEST.json` next to each corpus records: source repo and pinned commit hash,
   sha256 of each raw file, sha256 of `sources/units/events/edges/questions.jsonl`,
   counts, `corpus_tokens` (characters of all version texts / 4), the split
   parameters and, per split, the sha256 of the newline-joined ordered question-id
   list. `load` refuses to continue if the default-parameter split hashes differ from
-  the manifest.
+  the manifest. The `dev2` record (`requested`, `size`, `pool_unused`, `unanswerable`,
+  `question_ids_sha256`) is the separate key `dev2`; the `splits` record, and with it the three
+  original hashes, is unchanged.
 - Unit ids are `<dataset>:<doc id>#<n>`. Passages of long articles are cut at
   paragraph boundaries into about 150 to 250 words; the article title is kept in
   `Unit.title` of every passage.

@@ -29,6 +29,12 @@ from .types import Dataset, Question
 SEED = 20261111
 BUILD_VERSION = 1
 SPLITS = ("dev", "test", "sealed")
+#: A fourth split, cut from the questions that are in none of the three above, in the same
+#: hash order and with the same stratification. It exists so that a design change made on
+#: dev evidence can be checked on questions that evidence never touched. The three splits
+#: above are computed exactly as before (their id-list hashes are unchanged).
+EXTRA_SPLITS = ("dev2",)
+N_DEV2 = 100
 
 #: Datasets with no usable public release (see docs/datasets.md).
 UNAVAILABLE = {
@@ -93,11 +99,14 @@ def split_questions(
     n_sealed: int = 300,
     seed: int = SEED,
     stratum: Callable[[Question], Any] = lambda q: q.answerable,
+    n_dev2: int = N_DEV2,
 ) -> dict[str, tuple[Question, ...]]:
-    """Disjoint, deterministic dev/test/sealed splits, stratified by ``stratum``.
+    """Disjoint, deterministic dev/test/sealed splits, stratified by ``stratum``, and a
+    fourth split ``dev2`` taken after them from what is left.
 
-    Sizes shrink in the order dev, test, sealed when the pool is smaller than the
-    request. Inside a split questions are ordered by their hash.
+    Sizes shrink in the order dev, test, sealed, dev2 when the pool is smaller than the
+    request. Inside a split questions are ordered by their hash. ``dev2`` follows the three
+    others in the same per-stratum order, so it cannot change which ids they hold.
     """
     ids = [q.id for q in questions]
     if len(set(ids)) != len(ids):
@@ -110,12 +119,13 @@ def split_questions(
     n = len(questions)
     sizes = {}
     left = n
-    for name, want in zip(SPLITS, (n_dev, n_test, n_sealed)):
+    names = SPLITS + EXTRA_SPLITS
+    for name, want in zip(names, (n_dev, n_test, n_sealed, n_dev2)):
         sizes[name] = max(0, min(want, left))
         left -= sizes[name]
     pointer = {k: 0 for k in strata}
     out: dict[str, tuple[Question, ...]] = {}
-    for name in SPLITS:
+    for name in names:
         remaining = {k: len(strata[k]) - pointer[k] for k in strata}
         alloc = _allocate(sizes[name], remaining, weights)
         picked: list[str] = []
@@ -508,23 +518,39 @@ def _is_built(cdir: str) -> bool:
         return False
 
 
-def _compute_splits(rows: list[dict], stratum: str, n_dev, n_test, n_sealed, seed):
+def _compute_splits(rows: list[dict], stratum: str, n_dev, n_test, n_sealed, seed,
+                    n_dev2: int = N_DEV2):
     qs = [_row_to_q(r) for r in rows]
     return split_questions(qs, n_dev=n_dev, n_test=n_test, n_sealed=n_sealed, seed=seed,
-                           stratum=STRATUM[stratum])
+                           stratum=STRATUM[stratum], n_dev2=n_dev2)
 
 
 def _split_record(splits: dict[str, tuple[Question, ...]], params: dict) -> dict:
+    """The record of the three original splits. ``dev2`` is deliberately not in it: the
+    record (and its id-list hashes) is what ``load`` checks and what the pre-registration
+    quotes, and it must not change. See :func:`_dev2_record`."""
+    base = {k: v for k, v in splits.items() if k in SPLITS}
     return {
         "params": params,
-        "sizes": {k: len(v) for k, v in splits.items()},
-        "unanswerable": {k: sum(not q.answerable for q in v) for k, v in splits.items()},
-        "question_ids_sha256": {k: ids_hash(q.id for q in v) for k, v in splits.items()},
+        "sizes": {k: len(v) for k, v in base.items()},
+        "unanswerable": {k: sum(not q.answerable for q in v) for k, v in base.items()},
+        "question_ids_sha256": {k: ids_hash(q.id for q in v) for k, v in base.items()},
     }
 
 
+def _dev2_record(splits: dict[str, tuple[Question, ...]], n_dev2: int, n_pool: int) -> dict:
+    """The record of ``dev2``, kept apart from the original split record. ``pool_unused`` is
+    the number of questions in none of dev, test or sealed (what dev2 is cut from)."""
+    v = splits["dev2"]
+    used = sum(len(splits[k]) for k in SPLITS)
+    return {"requested": n_dev2, "size": len(v), "pool_unused": n_pool - used,
+            "unanswerable": sum(not q.answerable for q in v),
+            "question_ids_sha256": ids_hash(q.id for q in v)}
+
+
 def build(name: str, root: str = "data", *, n_test: int = 500, n_dev: int = 100,
-          n_sealed: int = 300, seed: int = SEED, force: bool = False) -> str:
+          n_sealed: int = 300, seed: int = SEED, force: bool = False,
+          n_dev2: int = N_DEV2) -> str:
     """Download (if needed) and build one corpus; idempotent. Returns the corpus dir."""
     if name in UNAVAILABLE:
         raise RuntimeError(f"{name}: {UNAVAILABLE[name]}")
@@ -532,6 +558,7 @@ def build(name: str, root: str = "data", *, n_test: int = 500, n_dev: int = 100,
         raise KeyError(f"unknown dataset {name!r}; known: {sorted(SPECS) + sorted(UNAVAILABLE)}")
     cdir = corpus_dir(root, name)
     if not force and _is_built(cdir):
+        _add_dev2_record(cdir, n_dev2, n_dev, n_test, n_sealed, seed)
         return cdir
     spec = SPECS[name]
     raw_hashes = download(name, root)
@@ -548,7 +575,7 @@ def build(name: str, root: str = "data", *, n_test: int = 500, n_dev: int = 100,
     # corpus_tokens counts the text of every version, i.e. what a store indexes
     chars_all = sum(len(e["text"] or "") for e in built["events"])
     rows = built["questions"]
-    splits = _compute_splits(rows, built["stratum"], n_dev, n_test, n_sealed, seed)
+    splits = _compute_splits(rows, built["stratum"], n_dev, n_test, n_sealed, seed, n_dev2)
     params = {"n_dev": n_dev, "n_test": n_test, "n_sealed": n_sealed, "seed": seed,
               "stratum": built["stratum"]}
     manifest = {
@@ -565,6 +592,7 @@ def build(name: str, root: str = "data", *, n_test: int = 500, n_dev: int = 100,
         "meta": built["meta"],
         "files": {f: sha256_file(os.path.join(tmp, f)) for f in (*_CORPUS_FILES, "questions.jsonl")},
         "splits": _split_record(splits, params),
+        "dev2": _dev2_record(splits, n_dev2, len(rows)),
     }
     with open(_manifest_path(tmp), "w", encoding="utf-8") as fh:
         json.dump(manifest, fh, indent=2, sort_keys=True)
@@ -574,15 +602,37 @@ def build(name: str, root: str = "data", *, n_test: int = 500, n_dev: int = 100,
     return cdir
 
 
+def _add_dev2_record(cdir: str, n_dev2: int, n_dev: int, n_test: int, n_sealed: int,
+                     seed: int) -> None:
+    """A corpus built before ``dev2`` existed has no ``dev2`` entry in its manifest: add it
+    (only that key; the corpus files and the original ``splits`` record stay as they were)."""
+    m = _read_manifest(cdir)
+    if not m or "dev2" in m or "splits" not in m:
+        return
+    params = m["splits"]["params"]
+    if (params["n_dev"], params["n_test"], params["n_sealed"], params["seed"]) != (
+            n_dev, n_test, n_sealed, seed):
+        return
+    with open(os.path.join(cdir, "questions.jsonl"), encoding="utf-8") as fh:
+        rows = [json.loads(line) for line in fh if line.strip()]
+    splits = _compute_splits(rows, params["stratum"], n_dev, n_test, n_sealed, seed, n_dev2)
+    m["dev2"] = _dev2_record(splits, n_dev2, len(rows))
+    with open(_manifest_path(cdir), "w", encoding="utf-8") as fh:
+        json.dump(m, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+
+
 def load(name: str, root: str = "data", *, n_test: int = 500, n_dev: int = 100,
-         n_sealed: int = 300, seed: int = SEED) -> Dataset:
-    """Build the corpus if needed and return the dataset with its three splits."""
-    cdir = build(name, root, n_test=n_test, n_dev=n_dev, n_sealed=n_sealed, seed=seed)
+         n_sealed: int = 300, seed: int = SEED, n_dev2: int = N_DEV2) -> Dataset:
+    """Build the corpus if needed and return the dataset with its splits: dev, test and
+    sealed (hash-checked against the manifest) and dev2."""
+    cdir = build(name, root, n_test=n_test, n_dev=n_dev, n_sealed=n_sealed, seed=seed,
+                 n_dev2=n_dev2)
     manifest = _read_manifest(cdir)
     with open(os.path.join(cdir, "questions.jsonl"), encoding="utf-8") as fh:
         rows = [json.loads(line) for line in fh if line.strip()]
     stratum = manifest["splits"]["params"]["stratum"]
-    splits = _compute_splits(rows, stratum, n_dev, n_test, n_sealed, seed)
+    splits = _compute_splits(rows, stratum, n_dev, n_test, n_sealed, seed, n_dev2)
     params = {"n_dev": n_dev, "n_test": n_test, "n_sealed": n_sealed, "seed": seed,
               "stratum": stratum}
     rec = manifest["splits"]
@@ -591,9 +641,16 @@ def load(name: str, root: str = "data", *, n_test: int = 500, n_dev: int = 100,
         if got != rec["question_ids_sha256"]:
             raise RuntimeError(f"{name}: split hashes differ from MANIFEST.json "
                                "(pre-registered splits changed)")
+        rec2 = manifest.get("dev2")
+        if rec2 is not None and rec2.get("requested") == n_dev2 and \
+                _dev2_record(splits, n_dev2, len(rows))["question_ids_sha256"] != \
+                rec2["question_ids_sha256"]:
+            raise RuntimeError(f"{name}: dev2 hash differs from MANIFEST.json")
     meta = {**manifest["meta"], "manifest": _manifest_path(cdir),
             "source": manifest["source"], "counts": manifest["counts"],
-            "splits": _split_record(splits, params), "description": manifest["description"]}
+            "splits": _split_record(splits, params),
+            "dev2": _dev2_record(splits, n_dev2, len(rows)),
+            "description": manifest["description"]}
     return Dataset(name=name, corpus_dir=cdir, questions=splits, licence=manifest["licence"],
                    corpus_tokens=manifest["corpus_tokens"], meta=meta)
 
@@ -626,4 +683,4 @@ def _has_pyarrow() -> bool:
 
 
 __all__ = ["load", "build", "available", "download", "split_questions", "split_passages",
-           "locate_fact", "ids_hash", "SEED"]
+           "locate_fact", "ids_hash", "SEED", "SPLITS", "EXTRA_SPLITS", "N_DEV2"]

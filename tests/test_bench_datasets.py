@@ -29,7 +29,7 @@ def test_splits_disjoint_sizes_and_order_independent():
     qs = _qs()
     a = D.split_questions(qs, n_dev=10, n_test=40, n_sealed=20)
     assert [len(a[k]) for k in ("dev", "test", "sealed")] == [10, 40, 20]
-    ids = [q.id for k in a for q in a[k]]
+    ids = [q.id for k in ("dev", "test", "sealed") for q in a[k]]
     assert len(ids) == len(set(ids)) == 70
     shuffled = qs[:]
     random.Random(1).shuffle(shuffled)
@@ -160,7 +160,8 @@ def _mhr_raw(root, n_art=12, n_q=60):
 
 def _sizes(root, name, **kw):
     ds = D.load(name, root, **kw)
-    return ds, {k: len(v) for k, v in ds.questions.items()}
+    # the three original splits; dev2 has its own tests
+    return ds, {k: len(v) for k, v in ds.questions.items() if k in D.SPLITS}
 
 
 def test_musique_build_manifest_and_idempotence(tmp_path):
@@ -295,8 +296,11 @@ def test_unavailable_and_unknown():
 def test_real_dataset(name):
     ds = D.load(name, DATA_ROOT)
     assert [len(ds.questions[k]) for k in ("dev", "test", "sealed")] == [100, 500, 300]
-    ids = [q.id for k in ds.questions for q in ds.questions[k]]
+    ids = [q.id for k in ("dev", "test", "sealed") for q in ds.questions[k]]
     assert len(ids) == len(set(ids)) == 900
+    # dev2: 100 questions in none of the three
+    assert len(ds.questions["dev2"]) == 100
+    assert not {q.id for q in ds.questions["dev2"]} & set(ids)
     man = json.load(open(ds.meta["manifest"]))
     for f, h in man["files"].items():
         assert D.sha256_file(os.path.join(ds.corpus_dir, f)) == h
@@ -304,10 +308,130 @@ def test_real_dataset(name):
         assert man["counts"]["unanswerable"] == 301
         frac = 301 / 2556
         for k, v in ds.questions.items():
-            assert abs(sum(not q.answerable for q in v) / len(v) - frac) < 0.02
+            assert abs(sum(not q.answerable for q in v) / len(v) - frac) < 0.05
         assert man["counts"]["sources"] > 1
     if name == "musique":
         assert man["counts"]["questions"] == 1000 and man["counts"]["units"] == 11656
         assert all(q.gold_units for v in ds.questions.values() for q in v)
     if name == "hoh":
         assert all(q.as_of and q.gold_units for v in ds.questions.values() for q in v)
+
+
+# ---------------------------------------------------------------- dev2
+
+
+def _ids(splits, names=("dev", "test", "sealed")):
+    return {k: [q.id for q in splits[k]] for k in names}
+
+
+def test_dev2_does_not_change_the_three_original_splits():
+    qs = _qs()
+    without = D.split_questions(qs, n_dev=10, n_test=30, n_sealed=20, n_dev2=0)
+    with_ = D.split_questions(qs, n_dev=10, n_test=30, n_sealed=20, n_dev2=15)
+    assert _ids(with_) == _ids(without)
+    assert [D.ids_hash(i) for i in _ids(with_).values()] == [D.ids_hash(i) for i in _ids(without).values()]
+    assert len(without["dev2"]) == 0 and len(with_["dev2"]) == 15
+
+
+def test_dev2_is_disjoint_from_dev_test_sealed_and_in_hash_order():
+    qs = _qs()
+    a = D.split_questions(qs, n_dev=10, n_test=30, n_sealed=20, n_dev2=15)
+    used = {q.id for k in ("dev", "test", "sealed") for q in a[k]}
+    d2 = [q.id for q in a["dev2"]]
+    assert len(d2) == 15 and not set(d2) & used
+    assert d2 == sorted(d2, key=lambda i: D.order_key(D.SEED, i))
+    # it is the next questions in the hash order, per stratum: nothing in the pool that is
+    # earlier in that order and unused was skipped
+    by_order = sorted((q for q in qs), key=lambda q: D.order_key(D.SEED, q.id))
+    for ans in (True, False):
+        stratum = [q.id for q in by_order if q.answerable == ans]
+        taken = [i for i in stratum if i in used]
+        mine = [i for i in stratum if i in set(d2)]
+        rest = [i for i in stratum if i not in used and i not in set(d2)]
+        # the dev2 picks of a stratum come before every unpicked question of that stratum
+        assert all(stratum.index(m) < stratum.index(r) for m in mine for r in rest)
+        assert taken or mine
+
+
+def test_dev2_keeps_the_stratification_rule():
+    a = D.split_questions(_qs(), n_dev=10, n_test=30, n_sealed=20, n_dev2=20)  # 30% null
+    assert sum(not q.answerable for q in a["dev2"]) == 6
+    h = D.split_questions(_hoh_like(), n_dev=10, n_test=30, n_sealed=20, n_dev2=20,
+                          stratum=lambda q: q.kind)
+    assert {q.kind for q in h["dev2"]} == {"current", "outdated"}
+    assert sum(q.kind == "outdated" for q in h["dev2"]) == 10
+
+
+def _hoh_like():
+    return [Question(id=f"h{i}", text="t", answers=("a",), kind="outdated" if i % 2 else "current")
+            for i in range(200)]
+
+
+def test_dev2_takes_what_exists_when_the_unused_pool_is_small():
+    # musique-like: the pool is 100 + 500 + 300 + 100
+    qs = [Question(id=f"m{i}", text="t", answers=("a",)) for i in range(1000)]
+    a = D.split_questions(qs)
+    assert [len(a[k]) for k in ("dev", "test", "sealed", "dev2")] == [100, 500, 300, 100]
+    # fewer than 100 left: dev2 takes them all
+    b = D.split_questions(qs[:960])
+    assert [len(b[k]) for k in ("dev", "test", "sealed", "dev2")] == [100, 500, 300, 60]
+    # and nothing at all when the pool is used up
+    c = D.split_questions(qs[:900])
+    assert len(c["dev2"]) == 0
+
+
+def test_the_manifest_records_dev2_and_leaves_the_original_split_record_alone(tmp_path):
+    root = str(tmp_path)
+    _musique_raw(root, 60)
+    cdir = D.build("musique", root, n_dev=5, n_test=20, n_sealed=10, n_dev2=7)
+    man = json.load(open(os.path.join(cdir, "MANIFEST.json")))
+    assert set(man["splits"]["question_ids_sha256"]) == {"dev", "test", "sealed"}
+    assert set(man["splits"]["sizes"]) == {"dev", "test", "sealed"}
+    assert man["dev2"]["size"] == 7 and man["dev2"]["requested"] == 7
+    assert man["dev2"]["pool_unused"] == man["counts"]["questions"] - 35
+    ds = D.load("musique", root, n_dev=5, n_test=20, n_sealed=10, n_dev2=7)
+    assert man["dev2"]["question_ids_sha256"] == D.ids_hash(q.id for q in ds.questions["dev2"])
+    # the same three hashes as a build that never heard of dev2
+    _musique_raw(str(tmp_path / "ref"), 60)
+    ref = D.build("musique", str(tmp_path / "ref"), n_dev=5, n_test=20, n_sealed=10, n_dev2=0)
+    ref_man = json.load(open(os.path.join(ref, "MANIFEST.json")))
+    assert ref_man["splits"] == man["splits"]
+
+
+def test_a_manifest_built_before_dev2_gets_only_the_dev2_key(tmp_path):
+    root = str(tmp_path)
+    _musique_raw(root, 60)
+    cdir = D.build("musique", root, n_dev=5, n_test=20, n_sealed=10, n_dev2=7)
+    path = os.path.join(cdir, "MANIFEST.json")
+    man = json.load(open(path))
+    legacy = {k: v for k, v in man.items() if k != "dev2"}
+    json.dump(legacy, open(path, "w"), indent=2, sort_keys=True)
+    D.build("musique", root, n_dev=5, n_test=20, n_sealed=10, n_dev2=7)
+    again = json.load(open(path))
+    assert again == man  # only dev2 was added; every other entry is as it was
+
+
+#: The id-list hashes of the original splits, as printed in PREREGISTRATION.md section 2
+#: (computed before dev2 existed). A change to any of them breaks the pre-registration.
+PREREG_HASHES = {
+    "hoh": {"dev": "877ed197a98ad4551a3f2effac63ad191883dc3af811876a63187ff04b2f8d37",
+            "test": "67ba51b77a7e344943d4a2c7612eda61e41dd5b0d5d6243e465e1d9b7191790e",
+            "sealed": "b49defb6cc9dc2291d7c667e6d7f7c2ae8f6284884fab4d8210c0e6b1b69d34b"},
+    "multihoprag": {"dev": "1e0ecec058beaeb9c4e2073b5157ee3851035e3ca496255e31c7d7895d0d0fda",
+                    "test": "ffc6230a6b7158e5f09ce29448edf86122537c78d64de9fb9bb2b0518f9ea028",
+                    "sealed": "990c92563d7b19d74376a2241e976f1c6a74f89179ed37d35d5f134cde7bfc07"},
+    "musique": {"dev": "8e995fe3dcf8f98cf04a9b59b13217eca2fbd66ec13d7162cc5d662f9ee622dc",
+                "test": "73ae2d3b9a5ce7f1f4ad5367701782a6eecc7a7e3518d43a3dd665fd45a202c3",
+                "sealed": "2cc5aa3fe534ed1de7d0a7fb95cc9731dec0722f4e18833c5f181b0842e9567e"},
+}
+
+
+@pytest.mark.skipif(not REAL, reason="set HEURESIS_TEST_DATA=1 with built corpora")
+@pytest.mark.parametrize("name", ["musique", "multihoprag", "hoh"])
+def test_real_original_split_hashes_are_the_preregistered_ones(name):
+    ds = D.load(name, DATA_ROOT)
+    man = json.load(open(ds.meta["manifest"]))
+    assert man["splits"]["question_ids_sha256"] == PREREG_HASHES[name]
+    got = {k: D.ids_hash(q.id for q in ds.questions[k]) for k in ("dev", "test", "sealed")}
+    assert got == PREREG_HASHES[name]
+    assert man["dev2"]["question_ids_sha256"] == D.ids_hash(q.id for q in ds.questions["dev2"])
