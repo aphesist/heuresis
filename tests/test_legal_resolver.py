@@ -123,3 +123,9 @@ def test_trace_claims_marks_failures_and_skips_plain_domains(store):
         name = "plain"
     c = Claim("art. 99 da Lei nº 1/2020 [t1]", passage_marks=["t1"])
     assert trace_claims([c], ps, Plain(), store) == 0 and "references_traced" not in c.checks
+
+
+def test_covers_predicate():
+    d = get_domain("legal_br")
+    assert d.covers({"kind": "lei", "year": "1995"}) and not d.covers({"kind": "lei", "year": "1900"})
+    assert not d.covers({"kind": "instrucao.normativa", "year": "2024"}) and not d.covers({"kind": "lei", "year": ""})

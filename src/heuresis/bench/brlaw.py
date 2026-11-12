@@ -567,7 +567,7 @@ def _names_for(urn: str, best: dict, left_out: dict, file_titles: dict) -> tuple
 
 
 def _explicit_acronyms(name: str) -> list[str]:
-    return [a or b for a, b in re.findall(r"\(([A-Z][A-Za-z0-9/.-]{1,12})\)|\s-\s([A-Z][A-Z0-9/]{1,12})(?=[,\s]|$)", name)]
+    return [a or b for a, b in re.findall(r"\(([A-Z][A-Za-z0-9/.-]{1,12})\)|\s[-–—]\s([A-Z][A-Z0-9/]{1,12})(?=[,\s]|$)", name)]
 
 
 def build_tax(raw_dir: str, out_dir: str) -> dict:

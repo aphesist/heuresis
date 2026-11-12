@@ -231,7 +231,8 @@ class Engine:
         d = draft_mod.parse_draft(text)
         ps = [p if p.mark else dataclasses.replace(p, mark=f"t{i}")
               for i, p in enumerate(passages, 1)]
-        return _verify(d, ps, [], self.store, as_of or AsOf(), self.entailer, self.config.verify)
+        return _verify(d, self._labelled(ps), [], self.store, as_of or AsOf(), self.entailer,
+                       self.config.verify)
 
     def _labelled(self, passages: list[Passage]) -> list[Passage]:
         """Passages as the verifier should read them. For a domain with a reference resolver the

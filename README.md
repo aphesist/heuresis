@@ -109,6 +109,29 @@ and wording. Everything domain-specific lives there.
 | `jsonl` | the exchange format (`sources`, `units`, `events`, `edges`) | the events themselves | used by the benchmark |
 | `legal_br` | the `jsonl` format with LexML-style ids | the events, plus `published` and `effects` axes | **a synthetic example**: Portuguese date and reference rules and wording; not legal advice, not a legal product |
 
+## Law as the example domain: a citation-integrity test
+
+The engine is generic; law is the example where its design should matter, because the failure it targets is
+real: lawyers have been sanctioned after AI tools invented laws, citations and wording. The benchmarks above
+grade whether an answer string appears; none measures whether a **citation exists, was in force on the date
+asked about, or supports the claim**. [`docs/legal-citation-test.md`](docs/legal-citation-test.md) describes a
+test that does, on Brazilian federal law:
+
+* a corpus in three tiers built into the exchange format (the legal texts of BR-TaxQA-R; about 29,000
+  federal norms from `ctresb/leis`; and a small versioned tier whose provisions have two real, dated wordings
+  downloaded from the Câmara dos Deputados), every id and date taken from a source, no provision written by
+  anyone;
+* in the core, only generic pieces: an optional `Domain.resolve_references`, a deterministic gate
+  `references_traced` (a sentence may only name the provisions it cites, and they must exist), and a
+  citation metric (`bench/citations.py`) applied identically to every system's answer text; in the `legal_br`
+  plug-in, a resolver for citations as lawyers write them ("art. 8º, II, da Lei nº 9.250/1995", "CTN, art. 43");
+* questions from BR-TaxQA-R with official answers and article-level gold, and date-dependent questions built
+  by code from the version pairs.
+
+Status: **built and checked offline; no paid call has been made for it.** What it measures, what it does not,
+and its limits (single-version tiers, an incomplete corpus, "norm not found" meaning fabricated *or* outside the
+corpus) are in the document and in [`results/brlaw/NOTES.md`](results/brlaw/NOTES.md).
+
 ## The locked surface
 
 The code is split into a part an outside optimiser may change and a part it may not.

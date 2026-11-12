@@ -283,8 +283,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     if a.paid and not os.environ.get(a.key_env):
         print(f"error: environment variable {a.key_env} is not set; nothing was run", file=sys.stderr)
         return 2
+    from ..domains import get_domain
+    covers = getattr(get_domain(a.domain), "covers", None)
     analysed = analyse_run(a.run_dir, a.db, a.domain)
-    summary = summary_by_system(analysed)
+    summary = summary_by_system(analysed, covers)
     items: list[dict] = []
     if a.paid:
         from ..domains import get_domain

@@ -71,10 +71,13 @@ _CITE_TYPES = [
     ("ato declaratorio", "ato.declaratorio"), ("solucao de consulta", "solucao.consulta"),
     ("portaria", "portaria"), ("resolucao", "resolucao"), ("decreto", "decreto"), ("lei", "lei"),
     ("lc", "lei.complementar"), ("mp", "medida.provisoria"), ("ec", "emenda.constitucional"),
-    ("in", "instrucao.normativa"), ("dl", "decreto.lei"),
+    ("in", "instrucao.normativa"), ("dl", "decreto.lei"), ("circular", "circular"), ("despacho", "despacho"),
+    ("parecer", "parecer"), ("nota", "nota"), ("solucao de divergencia", "solucao.divergencia"),
+    ("solucao de consulta interna", "solucao.consulta.interna"),
 ]
 _SHORT_TYPES = {"lc", "mp", "ec", "in", "dl"}
-_INFRALEGAL = {"instrucao.normativa", "portaria", "resolucao", "parecer.normativo", "solucao.consulta",
+_INFRALEGAL = {"circular", "despacho", "parecer", "nota", "solucao.divergencia", "solucao.consulta.interna",
+               "instrucao.normativa", "portaria", "resolucao", "parecer.normativo", "solucao.consulta",
                "ato.declaratorio", "ato.declaratorio.interpretativo", "ato.declaratorio.normativo",
                "ato.declaratorio.executivo"}
 _TYPE_ALT = "|".join(re.escape(t) for t, _ in sorted(_CITE_TYPES, key=lambda x: -len(x[0])))
@@ -83,12 +86,9 @@ _NORM_RE = re.compile(
     r"(?<![a-z0-9])(?P<type>" + _TYPE_ALT + r")(?![a-z])(?P<issuer>(?:\s+[a-z]{2,8}(?:/[a-z]{2,5})?){0,2}?)"
     r"\s*(?P<nn>n[oº°.]{0,2}s?\.?)?\s*(?P<num>" + _NUM + r")(?:-\d{1,3})?"
     r"(?:\s*/\s*(?P<y1>\d{4}|\d{2})|\s*,?\s+de\s+(?:\d{1,2}[o°]?\s+de\s+[a-z]+\s+de\s+)?(?P<y2>\d{4}))?")
-_ART_RE = re.compile(r"(?<![a-z])(?:artigos?|arts?)\.?\s*(?P<list>\d[^a-z]{0,2}(?:[^.;:()\n]{0,60}?))(?=\s*(?:,|\b)|$)")
 _ARTNUM = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d{3})+|\d+)\s*[o°º]?(?:\s*-\s*([a-z])\b)?")
 _CONNECT_NEXT = re.compile(
     r"^[\s,;(§\d.o°ºivxlc\"'a-z)-]{0,90}?\b(?:da|do|das|dos|de|na|no|nas|nos|desta|deste|dessa|desse|pela|pelo)\s+$")
-_SUB = re.compile(r"^(?:[\s,;.§()\"']|\bparagrafo\b|\bunico\b|\binciso\b|\balinea\b|\bcaput\b|\bc/c\b|\be\b|\bou\b|"
-                  r"\b[ivxlc]+\b|\b\d+[o°º]?\b|\b[a-z]\)|\bitem\b|\bnos?\b|\bsubitem\b)*$")
 
 
 def fold(text: str) -> str:
@@ -113,14 +113,15 @@ def acronym_of(name: str) -> str:
 
 def explicit_acronyms(name: str) -> list[str]:
     """Acronyms a title spells out: ``Name (CTN)`` and ``Name - RIR/2018``."""
-    return re.findall(r"\(([A-Z][A-Za-z0-9/.-]{1,12})\)|\s-\s([A-Z][A-Z0-9/]{1,12})(?=[,\s]|$)", name) and [
-        a or b for a, b in re.findall(r"\(([A-Z][A-Za-z0-9/.-]{1,12})\)|\s-\s([A-Z][A-Z0-9/]{1,12})(?=[,\s]|$)", name)]
+    return [a or b for a, b in re.findall(
+        r"\(([A-Z][A-Za-z0-9/.-]{1,12})\)|\s[-–—]\s([A-Z][A-Z0-9/]{1,12})(?=[,\s]|$)", name)]
 
 
 class _Norm:
-    __slots__ = ("urn", "kind", "authority", "date", "number", "title")
+    __slots__ = ("urn", "kind", "authority", "date", "number", "title", "revoked")
 
-    def __init__(self, urn: str, title: str):
+    def __init__(self, urn: str, title: str, revoked: bool = False):
+        self.revoked = revoked
         m = _URN_FULL.match(urn)
         self.urn, self.title = urn, title
         self.authority, self.kind, self.date, self.number = m.groups() if m else ("", "", "", "")
@@ -141,7 +142,7 @@ class NormIndex:
         for s in sources:
             if s.kind != "norm":
                 continue
-            n = _Norm(s.id, s.meta.get("title", ""))
+            n = _Norm(s.id, s.meta.get("title", ""), bool(s.meta.get("revoked_flag")))
             if not n.kind:
                 continue
             self.by_num.setdefault((n.kind, n.number.split("-")[0]), []).append(n)
@@ -159,6 +160,11 @@ class NormIndex:
                         self.acronyms.setdefault(a, []).append(n)
             for a in s.meta.get("aliases", []):
                 self.acronyms.setdefault(a, []).append(n)
+        # an alias shared by several norms ("CPC": the code of 1939 and the one of 2015) is tried
+        # on the newest first, and on norms the source does not flag as revoked before the others
+        for table in (self.acronyms, self.names):
+            for k, ns in table.items():
+                table[k] = sorted({n.urn: n for n in ns}.values(), key=lambda n: (n.revoked, -int(n.date[:4] or 0)))
         # the head noun alone ("Constituição, art. 153") when no other name starts with it
         heads: dict[str, set[str]] = {}
         for nm, ns in list(self.names.items()):
@@ -172,7 +178,7 @@ class NormIndex:
 
     def alias_regex(self):
         if self._alias_re is None and (self.acronyms or self.names):
-            alts = sorted([re.escape(a) for a in self.acronyms] , key=len, reverse=True)
+            alts = sorted((re.escape(a) for a in self.acronyms), key=len, reverse=True)
             self._alias_re = re.compile(r"(?<![A-Za-z0-9/])(" + "|".join(alts) + r")(?:/(?:\d{2}|\d{4}))?(?![A-Za-z0-9])") if alts else None
             names = sorted((re.escape(n) for n in self.names), key=len, reverse=True)
             self._name_re = re.compile(r"(?<![a-z])(" + "|".join(names) + r")(?![a-z])") if names else None
@@ -364,6 +370,17 @@ class LegalBRDomain(JsonlDomain):
 
     def abstention_text(self, kind, query):
         return _TEXTS.get(kind)
+
+    #: Norm types for which a sample of the Senate's own lists (``results/brlaw``) found 95-100 % of the
+    #: norms of every sampled year in the corpus. Not complete: a "norm not found" for these is
+    #: probably, not certainly, a norm that does not exist.
+    COVERED_KINDS = ("lei", "lei.complementar", "decreto.lei", "emenda.constitucional")
+
+    def covers(self, meta):
+        """Whether a missing container described by ``meta`` (kind, number, year as written) is one
+        the corpus covers almost completely, so that "not found" most likely means "does not exist"."""
+        y = meta.get("year", "")
+        return meta.get("kind") in self.COVERED_KINDS and y.isdigit() and 1946 <= int(y) <= 2025
 
     def resolve_references(self, text, store):
         """Citations in ``text`` as lawyers write them, resolved to unit ids of ``store``, or to

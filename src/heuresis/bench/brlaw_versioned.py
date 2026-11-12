@@ -120,9 +120,6 @@ def parse_articles(lines: list[str]) -> dict[str, dict]:
             if _KW.search(a.group(0)):
                 anns.append({"text": re.sub(r"\s+", " ", _HREF.sub("", a.group(0))),
                              "hrefs": sorted(set(_HREF.findall(a.group(0))))})
-        clean = raw
-        for a in sorted(anns, key=lambda x: -len(x["text"])):
-            pass
         clean = _strip_annotations(raw)
         res[k] = {"raw": _HREF.sub("", raw), "clean": clean, "annotations": anns}
     return res
@@ -141,7 +138,7 @@ def norm_words(t: str) -> str:
 
 
 _PUB = re.compile(r"(\d{1,2})/(\d{1,2})/(\d{4}),\s*P[áa]gina")
-_ENTRY = re.compile(r"(?:Esta|Este|A presente)\s+(?:Lei|Decreto|Medida Provis[óo]ria)[^.]{0,40}?"
+_ENTRY = re.compile(r"(?:Esta|Este|[ÊE]ste|[ÊE]sse|O\s+presente|A\s+presente)\s+(?:Lei|Decreto|Medida\s+Provis[óo]ria)[^.]{0,40}?"
                     r"(?:entra|entrará|entrar[áa])\s+em\s+vigor([^.]*)\.", re.I)
 
 
@@ -167,6 +164,8 @@ def entry_into_force(orig_lines: list[str], pub: str) -> tuple[str | None, str, 
     if not m:
         return None, "low", ""
     clause = re.sub(r"\s+", " ", m.group(0)).strip()
+    if re.search(r"efeito", m.group(1), re.I):
+        return None, "low", clause   # effects differ by article or are deferred: not one date for the act
     if re.search(r"data\s+de\s+sua\s+publica[çc][ãa]o", m.group(1), re.I):
         return pub, "high", clause
     d = B.long_date(m.group(1)) or (B.slash_dates(m.group(1)) or [None])[0]
@@ -183,9 +182,6 @@ def sibling(url: str, kind: str) -> str:
     return base + suffix
 
 
-def norm_of_href(href: str) -> str:
-    m = re.search(r"/legin/(?:fed|indef)/(\w+)/(\d{4})(?:-\d{4})?/(.+?)-(\d+)-(?:norma|publicacaooriginal)", href)
-    return f"{m.group(1)}/{m.group(2)}/{m.group(3)}-{m.group(4)}" if m else href
 
 
 _VIDE = re.compile(
@@ -270,10 +266,11 @@ def load_norm(url: str, raw_dir: str, log: list[dict]) -> dict | None:
     if not ident:
         return None
     eff, cert, clause = entry_into_force(olines, pub)
-    base_fallback = eff is None
-    eff = eff or pub
+    settled = eff is not None
+    if eff is None:
+        eff, cert = pub, "medium"   # only the base norm's own date may fall back to publication
     return {**ident, "vides": vide_map(nlines, norma_url), "url_norma": norma_url, "url_original": ourl, "pub": pub, "effective": eff,
-            "effective_certainty": cert, "entry_clause": clause, "effective_settled": eff is not None, "original": parse_articles(olines),
+            "effective_certainty": cert, "entry_clause": clause, "effective_settled": settled, "original": parse_articles(olines),
             "original_lines": olines}
 
 

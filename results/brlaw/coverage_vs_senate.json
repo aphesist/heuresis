@@ -1,0 +1,202 @@
+{
+ "lei:1960": {
+  "senate": 140,
+  "corpus": 139,
+  "both": 139,
+  "missing_from_corpus_first6": [
+   "3855"
+  ]
+ },
+ "lei:1975": {
+  "senate": 120,
+  "corpus": 119,
+  "both": 119,
+  "missing_from_corpus_first6": [
+   "6222"
+  ]
+ },
+ "lei:1990": {
+  "senate": 166,
+  "corpus": 164,
+  "both": 164,
+  "missing_from_corpus_first6": [
+   "8030",
+   "8115"
+  ]
+ },
+ "lei:1995": {
+  "senate": 281,
+  "corpus": 278,
+  "both": 277,
+  "missing_from_corpus_first6": [
+   "8983",
+   "9018",
+   "9121",
+   "9245"
+  ]
+ },
+ "lei:2000": {
+  "senate": 218,
+  "corpus": 209,
+  "both": 209,
+  "missing_from_corpus_first6": [
+   "10051",
+   "10057",
+   "10086",
+   "10094",
+   "10152",
+   "10161"
+  ]
+ },
+ "lei:2005": {
+  "senate": 176,
+  "corpus": 170,
+  "both": 170,
+  "missing_from_corpus_first6": [
+   "11087",
+   "11100",
+   "11232",
+   "11246",
+   "11255",
+   "11256"
+  ]
+ },
+ "lei:2010": {
+  "senate": 191,
+  "corpus": 189,
+  "both": 189,
+  "missing_from_corpus_first6": [
+   "12297",
+   "12320"
+  ]
+ },
+ "lei:2015": {
+  "senate": 163,
+  "corpus": 162,
+  "both": 162,
+  "missing_from_corpus_first6": [
+   "13115"
+  ]
+ },
+ "lei:2020": {
+  "senate": 143,
+  "corpus": 140,
+  "both": 140,
+  "missing_from_corpus_first6": [
+   "13978",
+   "14016",
+   "14109"
+  ]
+ },
+ "lei:2024": {
+  "senate": 291,
+  "corpus": 277,
+  "both": 277,
+  "missing_from_corpus_first6": [
+   "14818",
+   "14859",
+   "14877",
+   "14878",
+   "14902",
+   "14924"
+  ]
+ },
+ "lei.complementar:1975": {
+  "senate": 5,
+  "corpus": 4,
+  "both": 4,
+  "missing_from_corpus_first6": [
+   "25"
+  ]
+ },
+ "lei.complementar:1990": {
+  "senate": 2,
+  "corpus": 2,
+  "both": 2,
+  "missing_from_corpus_first6": []
+ },
+ "lei.complementar:1995": {
+  "senate": 2,
+  "corpus": 2,
+  "both": 2,
+  "missing_from_corpus_first6": []
+ },
+ "lei.complementar:2000": {
+  "senate": 3,
+  "corpus": 3,
+  "both": 3,
+  "missing_from_corpus_first6": []
+ },
+ "lei.complementar:2005": {
+  "senate": 3,
+  "corpus": 2,
+  "both": 2,
+  "missing_from_corpus_first6": [
+   "120"
+  ]
+ },
+ "lei.complementar:2010": {
+  "senate": 5,
+  "corpus": 5,
+  "both": 5,
+  "missing_from_corpus_first6": []
+ },
+ "lei.complementar:2015": {
+  "senate": 5,
+  "corpus": 4,
+  "both": 4,
+  "missing_from_corpus_first6": [
+   "149"
+  ]
+ },
+ "lei.complementar:2020": {
+  "senate": 5,
+  "corpus": 5,
+  "both": 5,
+  "missing_from_corpus_first6": []
+ },
+ "lei.complementar:2024": {
+  "senate": 7,
+  "corpus": 7,
+  "both": 7,
+  "missing_from_corpus_first6": []
+ },
+ "decreto.lei:1940": {
+  "senate": 984,
+  "corpus": 971,
+  "both": 971,
+  "missing_from_corpus_first6": [
+   "1994",
+   "2003",
+   "2262",
+   "2374",
+   "2397",
+   "2510"
+  ]
+ },
+ "decreto.lei:1950": "no list (TypeError)",
+ "decreto.lei:1960": "no list (TypeError)",
+ "decreto.lei:1970": {
+  "senate": 74,
+  "corpus": 74,
+  "both": 74,
+  "missing_from_corpus_first6": []
+ },
+ "decreto.lei:1975": {
+  "senate": 54,
+  "corpus": 52,
+  "both": 52,
+  "missing_from_corpus_first6": [
+   "1402",
+   "1407"
+  ]
+ },
+ "decreto.lei:1980": {
+  "senate": 91,
+  "corpus": 90,
+  "both": 90,
+  "missing_from_corpus_first6": [
+   "1796"
+  ]
+ }
+}

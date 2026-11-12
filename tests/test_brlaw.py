@@ -174,3 +174,27 @@ def test_canonical_title_and_acronyms():
     assert B.canonical_title(h) == "Lei nº 11.196, de 21 de novembro de 2005"
     assert B._explicit_acronyms("Código Tributário Nacional (CTN)") == ["CTN"]
     assert B._explicit_acronyms("Regulamento - RIR/2018, aprovado") == ["RIR/2018"]
+
+
+def test_load_checks_split_hashes_and_dispatch(tmp_path):
+    from heuresis.bench import datasets
+    cdir = tmp_path / "corpora" / "brlaw"
+    cdir.mkdir(parents=True)
+    qs = [{"id": "taxqa-1", "text": "q?", "answers": ["a"], "answerable": True, "as_of": "2024-12-31",
+           "gold_units": [URN + "!art1"], "cluster": "c", "kind": "gold", "split": "dev"},
+          {"id": "temporal-x-after", "text": "t?", "answers": [], "answerable": False, "as_of": "2020-01-01",
+           "gold_units": [], "cluster": "u", "kind": "temporal_repeal_after", "split": "temporal"}]
+    (cdir / "questions.jsonl").write_text("".join(json.dumps(q) + "\n" for q in qs), encoding="utf-8")
+    manifest = {"name": "brlaw", "licence": "l", "domain": "legal_br", "prompt_set": "legal_br", "corpus_tokens": 7,
+                "counts_in_corpus": {}, "questions": {"splits": {
+                    "dev": {"n": 1, "ids_sha256": B._ids_sha(["taxqa-1"])},
+                    "temporal": {"n": 1, "ids_sha256": B._ids_sha(["temporal-x-after"])}}}}
+    (cdir / "MANIFEST.json").write_text(json.dumps(manifest), encoding="utf-8")
+    ds = datasets.load("brlaw", str(tmp_path))
+    assert ds.meta["prompt_set"] == "legal_br" and ds.meta["domain"] == "legal_br"
+    assert [q.id for q in ds.questions["dev"]] == ["taxqa-1"] and ds.questions["temporal"][0].answerable is False
+    manifest["questions"]["splits"]["dev"]["ids_sha256"] = "0" * 64
+    (cdir / "MANIFEST.json").write_text(json.dumps(manifest), encoding="utf-8")
+    import pytest
+    with pytest.raises(RuntimeError, match="differs from MANIFEST"):
+        B.load(str(tmp_path))

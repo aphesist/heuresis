@@ -49,7 +49,12 @@ def test_annotation_acts_and_entry_into_force():
     assert V.entry_into_force(["Esta Lei entra em vigor em 1º de janeiro de 2006."], pub)[:2] == ("2006-01-01", "high")
     # a period ("cento e vinte dias") is not computed: the date stays unsettled
     assert V.entry_into_force(["Esta Lei entra em vigor após decorridos cento e vinte dias de sua publicação."], pub)[0] is None
+    assert V.entry_into_force(["Êste Decreto-lei entrará em vigor na data de sua publicação, revogadas as disposições."], pub)[:2] == (pub, "high")
+    assert V.entry_into_force(["O presente decreto-lei entrará em vigor na data de sua publicação."], pub)[:2] == (pub, "high")
     assert V.entry_into_force(["sem cláusula"], pub)[0] is None
+    # "produzindo efeitos: I - ...; II - a partir de ..." has no single date for the act
+    deferred = ["Esta Lei entra em vigor na data de sua publicação, produzindo efeitos: I - nessa data, em relação aos arts. 1º; II - a partir de 1º de janeiro de 2006, em relação aos demais."]
+    assert V.entry_into_force(deferred, pub)[0] is None
 
 
 def test_sibling_urls():
