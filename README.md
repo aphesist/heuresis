@@ -4,29 +4,34 @@
 
 **heuresis** is an open-source, domain-agnostic retrieval engine for searching and reasoning over
 large corpora that change over time. It orders its work by cost (cheap local stages first, one model
-call, then local verification), filters by validity date before it ranks, and returns either an
+call, then local checks), filters by validity date before it ranks, and returns either an
 answer in which every sentence is checked against the passages it cites, or a typed abstention that
 says why it did not answer. Law and accounting were its first intended domain and are one example
 plug-in among several; the core knows nothing about any of them.
 
-> **Status: built and tested offline; no system has been run and no answer graded on a test split;
-> no paid model call has been made.** Two retrieval-only sanity checks did read part of the test
+> **Status: built and tested offline. Paid model calls have been made on the dev split only
+> (calibration data, n = 100 per dataset; US$5.78 of the US$30 cap, ledger in
+> [`results/dev-fixes/ledger.jsonl`](results/dev-fixes/ledger.jsonl)); no system has been run and no
+> answer graded on a test or sealed split.** Two retrieval-only sanity checks did read part of the test
 > split (no model, no system answer); they are disclosed in
 > [PREREGISTRATION.md, section 2a](PREREGISTRATION.md#2a-prior-contact-with-the-test-split). The
-> main measurement is a retrieval-only pilot on the dev split
-> ([below](#what-the-dev-pilot-showed)). The benchmark is pre-registered as a draft in
-> [PREREGISTRATION.md](PREREGISTRATION.md) and has not been run.
+> engine was **redesigned on dev evidence** (an answer mode where the model may search, and
+> verification that grades instead of gating, see [below](#what-the-paid-dev-runs-showed)); the
+> redesigned engine is a **hypothesis until it has been measured on `dev2`**, a fresh tuning split,
+> and then on test. The benchmark is pre-registered as a draft in
+> [PREREGISTRATION.md](PREREGISTRATION.md) and its confirmatory part has not been run.
 
 ## How it works
 
 ```
-question ──► understand ──► retrieve ──────────────► draft ──► tools ──► verify ──► decide ──► answer
-             (rules,        lexical (as-of filter     one       calc,     4 checks   answered   with cited
-              dates,        inside the query)         model     dates,    per        partial    versions
-              ask-back)       │ early stop?           call      sql       sentence   abstained  or a typed
-                              ▼ no                                        (local)    divergent  abstention
-                           dense + RRF                                                needs_input
-                           (+ edges, + rerank: off by default)
+question ──► understand ──► retrieve ─────────────► answer ──► tools ──► verify ──► decide ──► answer
+             (rules,        lexical (as-of filter    model sees  calc,     4 checks   answered   with cited
+              dates,        inside the query)        passages;   dates,    per        partial    versions
+              ask-back)       │ early stop?          may reply   sql       sentence   abstained  or a typed
+                              ▼ no                   SEARCH: q    │        (local)    divergent  abstention
+                           dense + RRF                  │  ▲      │                   needs_input
+                           (+ edges, + rerank:          ▼  │ same as-of date and scope
+                            off by default)           retrieve again (at most 4 searches)
 ```
 
 1. **Understand.** Zero-cost rules read an explicit date and an intent from the question. If a
@@ -35,13 +40,21 @@ question ──► understand ──► retrieve ──────────�
    ranking, so a version that was not in force at the date cannot reach the ranking. When the top
    lexical hits stand clear of the rest, the later stages are skipped; otherwise dense search is
    fused in by reciprocal rank fusion.
-3. **Draft.** One model call writes short sentences, each ending in citation marks, and may request
-   deterministic tools (arithmetic, date arithmetic, one read-only SQL query) instead of computing.
+3. **Answer.** In the default `search` mode the model sees the retrieved passages (so an easy question
+   costs one call) and either writes short sentences, each ending in citation marks, or replies
+   `SEARCH: <query>`; a search runs the same retrieval with the question's own as-of date and scope,
+   shows passages not shown before, and the model answers or searches again (at most four searches).
+   It may request deterministic tools (arithmetic, date arithmetic, one read-only SQL query) instead
+   of computing. `answer.mode = "single"` is the earlier one-draft design.
 4. **Verify.** Per sentence: the cited marks exist, the cited versions are in force at the date, a
-   local entailment model says the cited text supports the sentence, and every number comes from a
-   cited passage or a tool result.
-5. **Decide.** Answered, partial (unsupported sentences removed), or abstained with a reason. The
-   grade is the minimum of claim support, version certainty and source coverage.
+   local entailment model scores whether the cited text supports the sentence, and every number comes
+   from a cited passage or a tool result.
+5. **Decide.** In the default `grade` mode a sentence is dropped, or the answer withheld, only for a
+   deterministic failure (a mark that does not exist, a version not in force at the date, a number
+   found nowhere in the cited passages or tool results) or when the model itself abstains; entailment
+   support only sets the grade (the minimum of claim support, version certainty and source coverage),
+   which is the answer's confidence. `decide.mode = "strict"` is the earlier design, where low
+   support also removes sentences.
 
 Time has two axes: *valid time* (when the content was in force) and *recorded time* (when the corpus
 learned of it), so a later correction can be hidden from a question about what was known earlier.
@@ -118,11 +131,13 @@ sandbox.
 A pre-registered comparison of the engine with standard RAG and agentic search, on three public
 datasets: `hoh` (facts that changed between monthly Wikipedia snapshots), `multihoprag` (multi-hop
 news questions, 11.8% unanswerable in the pool) and `musique` (multi-hop, all answerable). One
-generator, `claude-haiku-5-5`, for every system. Dev (100 questions per dataset) is for tuning; test
-(500) is run once; a sealed set (300) is never used here.
+generator, `claude-haiku-5-5`, for every system. Dev (100 questions per dataset) and `dev2` (up to 100
+more, from the questions in none of dev, test and sealed) are for tuning; test (500) is run once; a
+sealed set (300) is never used here.
 
 - **Systems:** `closed_book`, `bm25`, `vector`, `hybrid`, `hybrid_rerank`, `agentic` (4-search cap),
-  `engine`; an `oracle` as a ceiling. `long_context` is not run: the corpora are 1.4 to 7.3 million
+  `engine`; an `oracle` as a ceiling; and, exploratory, `engine_single` (the earlier engine design) and
+  time-aware `+asof` copies of the baselines. `long_context` is not run: the corpora are 1.4 to 7.3 million
   tokens.
 - **Primary test:** the engine against each of the six baselines on each dataset (18 comparisons), on
   the penalised score (+1 correct, 0 abstained, -1 wrong), paired permutation test, Holm-corrected at
@@ -178,6 +193,36 @@ At the packaged support threshold of 0.5, 0 of 100 matched pairs on `musique`, 3
 `multihoprag` and 39 of 100 on `hoh` scored at or above it, so the threshold is probably too strict
 for this kind of statement; the pre-registration calibrates it on dev.
 
+## What the paid dev runs showed
+
+*Dev split, n = 100 per dataset, `claude-haiku-5-5`: calibration data, not benchmark results; the same
+100 questions per dataset were used three times for tuning.* Sources: [`results/dev-fixes/NOTES.md`](results/dev-fixes/NOTES.md),
+[`results/dev-fixes/thinking-default/comparison.md`](results/dev-fixes/thinking-default/comparison.md) and
+[`results/dev-calibration/phase1/NOTES.md`](results/dev-calibration/phase1/NOTES.md). Penalised score:
++1 correct, 0 abstained, -1 wrong.
+
+- **The versioned store with its as-of filter is a large, robust gain.** On `hoh`, `hybrid` (searches as
+  of today) scored -0.060 and `hybrid` given the date (`hybrid+asof`) +0.770 with the model's thinking
+  disabled; with default thinking -0.100 and +0.680. Pooled over the three datasets: 0.120 and 0.390
+  (thinking disabled, n = 300).
+- **A plain hybrid baseline that is given the date matches the engine on the temporal set.** `hoh`,
+  `hybrid+asof` against the (earlier, single-draft) engine: +0.770 against +0.750 (thinking disabled),
+  +0.680 against +0.690 (default thinking). So the date filter, not the rest of the engine, carries that
+  result.
+- **The single-draft engine abstained on 61 to 76 percent of the multi-hop questions** (`musique` 73 and
+  76 of 100, `multihoprag` 65 and 61, with thinking disabled and default) and, with the model's default
+  thinking on, lost to the `agentic` baseline on both (engine minus `agentic`: `musique` -0.240
+  [-0.370, -0.110], `multihoprag` -0.270 [-0.440, -0.110]).
+- **The entailment verifier cannot separate right answers from wrong ones.** The claim-level AUROC for
+  claims of correct versus wrong drafts is 0.50 [0.36, 0.62] for the scoring the engine uses (163 claims
+  of correct and 24 of wrong drafts, pooled) and 0.44 to 0.57 for every candidate tried, because the
+  wrong answers' claims are usually true of their passage. This is why verification became a grader of
+  confidence, not a gate, in the redesign.
+
+The redesign these results led to (the `search` answer mode and the `grade` decision mode) is **not
+measured**. The check is a paid run on `dev2` with both thinking conditions and `engine_single` beside
+the new `engine`; its result will be reported in the same way, as tuning data.
+
 ## Honesty table
 
 What each claim rests on today. "Measured" means a number in a committed file; "tested" means a test
@@ -191,11 +236,14 @@ in `tests/` passes; "modelled" means arithmetic on stated assumptions.
 | The SQL tool is bound to the engine's own database; a model-written `db` is overwritten | **Tested** | `tests/test_engine.py`, `test_sql_binding` |
 | The guard rejects diffs outside the surface | **Tested** | `tests/test_locked_guard.py` |
 | The date filter fixes in-force retrieval on `hoh` | **Measured** (dev, n=100, retrieval only) | 92 to 100 of 100 with the filter against 42 to 49 of 100 without; partly by construction; no answer accuracy ([pilot](docs/pilot-dev.md)) |
+| Time-aware retrieval lifts answer accuracy on dated questions | **Measured on dev** (n = 100 per dataset, calibration data) | `hoh`: `hybrid` -0.060 and `hybrid+asof` +0.770 penalised score (thinking disabled); pooled 0.120 and 0.390 (n = 300). A plain `hybrid+asof` matches the single-draft engine on `hoh` (+0.770 against +0.750). [`results/dev-fixes/thinking-default/comparison.md`](results/dev-fixes/thinking-default/comparison.md) |
 | A local verifier separates matched from mismatched passages | **Measured as a crude proxy** (dev) | AUROC 0.855, 0.659, 0.918 on `musique`, `multihoprag`, `hoh`; not verification quality on drafted answers |
-| The benchmark costs a few dollars | **Modelled** | $2.16 to $4.01 for one test run of seven systems on 3 x 500 questions at 1 to 4 agentic searches; excludes `hybrid`, the `+asof` variants and calibration; assumes 120 output tokens per call and 3.5 characters per token |
+| The benchmark costs a few dollars | **Modelled**, partly checked on dev | $2.16 to $4.01 for one test run of seven systems on 3 x 500 questions at 1 to 4 agentic searches; excludes `hybrid`, the `+asof` variants, `engine_single`, the search mode and calibration; assumes 120 output tokens per call and 3.5 characters per token. On dev the measured cost was US$0.00006 to 0.0008 per question and system, thinking disabled or default (`results/dev-fixes/thinking-default/comparison.md`, cost table) |
 | The engine beats the baselines on the penalised score | Hypothesis | the pre-registered 18-comparison family; not run |
 | It is cheaper per correct answer than agentic search | Hypothesis | bootstrap interval of the difference; not run |
-| Verification improves reliability | Hypothesis | no end-to-end run exists; no drafted answers have been verified |
+| Verification as a gate improves reliability | **Measured on dev: it did not** (n = 100 per dataset, calibration data) | claim-level AUROC 0.50 [0.36, 0.62] (163 claims of correct, 24 of wrong drafts); the single-draft engine abstained on 149 of 300 dev questions; the threshold grid is flat. [`results/dev-calibration/phase1/NOTES.md`](results/dev-calibration/phase1/NOTES.md), [`results/dev-fixes/NOTES.md`](results/dev-fixes/NOTES.md) |
+| The redesigned engine (the model may search, with every search date-filtered; verification only grades) beats the single-draft engine and the baselines | Hypothesis | built and tested offline (`tests/test_engine_search.py`); not measured. The check is a paid run on `dev2`, then the test split |
+| The grade (min of support, version certainty, source coverage) orders answers by correctness | Hypothesis | the support part had AUROC about 0.5 on dev; version certainty and source coverage are constant in the benchmark corpora |
 | The ask-back gate helps | Hypothesis, not benchmarked | the benchmark attaches no classifier, so the gate cannot fire there |
 | Coverage grades improve calibration | Hypothesis, not benchmarked | the benchmark datasets declare full coverage |
 | Explicit-edge expansion helps | Hypothesis, off by default | not evaluated; the benchmark corpora have no edges |
@@ -219,10 +267,11 @@ text.
 ## Budget
 
 A hard cap of US$30 for every paid call this project makes, enforced by an append-only ledger that
-stops a run at the cap minus a $1 margin. The modelled cost of a test run is in the honesty table;
+stops a run at the cap minus a margin (US$1 by default; the dev runs used US$0.25). US$5.78 had been
+spent by the end of the dev re-run (dev split only). The modelled cost of a test run is in the honesty table;
 the figures are in [docs/pilot-dev.md](docs/pilot-dev.md) (item 6) and
 [PREREGISTRATION.md](PREREGISTRATION.md) (section 9). Everything else (the pilot, the tests, the
-offline mode) costs nothing.
+offline mode) costs nothing. The `dev2` check has its own ledger and a separate cap.
 
 ## Where it sits
 

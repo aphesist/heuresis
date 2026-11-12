@@ -69,6 +69,11 @@ arguments are passed through to `heuresis.bench.run.main` / `report.main`.
   thinking stays on and its tokens count against `max_tokens`). The manifest records `"temperature": null`
   with a note, the `thinking` setting, the model id and the output cap. Every call's stop reason and
   content-block counts go to the ledger, and each result row records `stop_reasons`, `blocks` and `text_chars`.
+- **Splits and systems.** `--split` takes `dev`, `dev2`, `test` or `sealed`; `dev2` is a tuning split like
+  `dev` (`docs/datasets.md`). The default systems include `engine` (answer mode `search`, decision mode
+  `grade`) and the exploratory `engine_single` (the earlier design); `--set answer.mode=single` or
+  `--set decide.mode=strict` changes the engine itself. The manifest records each engine system's effective
+  configuration under `engine_configs`.
 - **Config overrides.** `--set SECTION.KEY=VALUE` (repeatable) overrides one packaged config value for the run, e.g.
   `--set draft.prompt=v1`; the manifest records the resulting `engine_config`.
 - **Errors.** An API or model failure after the client's retries is written as a row with
@@ -90,7 +95,7 @@ answer states the same answer as a gold answer (EQUIVALENT / NOT_EQUIVALENT). Ve
 `RUN_DIR/judge.jsonl` (resumable), never into `results.jsonl`; `bench.report` then adds Table 1b
 (correct and penalised score under the judge-assisted grade, rows flipped per system). Without
 `--paid` it only prints how many rows it would judge; `--paid` needs `--cap`, `--ledger` and the key
-variable, as for `bench.run`. Dev run folders only (it refuses any other split).
+variable, as for `bench.run`. Dev run folders only: `dev` and `dev2` (it refuses any other split).
 
 ### Threshold calibration (`python -m heuresis.bench.calibrate RUN_DIR [RUN_DIR ...]`)
 
@@ -98,7 +103,10 @@ Prints the penalised score of the engine at each of the 45 pairs (`support_thres
 `partial_threshold`) in 0.1 .. 0.9 with partial not above support, pooled over the run folders, and the
 argmax. It replays labelling and the decision from the stored scores: no model, no entailer, no cost.
 Ties go to the higher support threshold, then the higher partial threshold (the proposed tie-break of
-PREREGISTRATION.md section 8.1). It refuses any run folder whose manifest split is not `dev`.
+PREREGISTRATION.md section 8.1). It refuses any run folder whose manifest split is not the `--split`
+given (`dev`, the default, or `dev2`), and every other split. With `decide.mode = "grade"` (the default)
+the thresholds no longer decide what is removed, so the grid is flat; it is informative only for the
+`strict` mode (`engine_single`).
 
 ## Verification status
 

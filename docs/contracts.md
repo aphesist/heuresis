@@ -50,15 +50,19 @@ class Config:            # nested dataclasses, one per stage; every field has a 
                            # early_stop=True, early_stop_margin=0.35,
                            # dense=True, expand=False, expand_hops=1, rerank=False,
                            # rewrite=False, second_round=False
+    answer: AnswerCfg    # mode="search" (or "single"), max_searches=4, search_k=5
     draft: DraftCfg      # model="claude-haiku-5-5", max_tokens=600, max_context_chars=24000
     verify: VerifyCfg    # support_threshold=0.5, partial_threshold=0.3, atomic_claims=False, support="window_title" (or "current")
-    decide: DecideCfg    # min_supported_fraction=1.0, partial_fraction=0.5, conflict_margin=0.1
+    decide: DecideCfg    # min_supported_fraction=1.0, partial_fraction=0.5, conflict_margin=0.1,
+                         # mode="grade" (or "strict")
 
 def load_config(path: str | None = None) -> Config   # None -> packaged default.json
 def config_to_dict(cfg) -> dict ; def config_from_dict(d) -> Config   # unknown keys raise
 ```
 
-`prompts.py` holds `DRAFT_SYSTEM` (the default, `DRAFT_SYSTEM_V2`; `DRAFT_SYSTEM_V1` is the first instruction, chosen with `draft.prompt = "v1"`) and `draft_prompt(question, as_of, passages, tools) -> str`.
+`prompts.py` holds `DRAFT_SYSTEM` (the instruction of `answer.mode = "single"`; the default `DRAFT_SYSTEM_V2`; `DRAFT_SYSTEM_V1` is the first instruction, chosen with `draft.prompt = "v1"`), `draft_prompt(question, as_of, passages, tools) -> str`, `SEARCH_SYSTEM` (the instruction of `answer.mode = "search"`, the default), `search_prompt(question, as_of, rounds, searches_left, max_searches, tools, max_sentences) -> str` (`rounds[0]` is the first retrieval, each later round is `(query, new passages)`) and `passage_line(mark, passage)`, the one rendering of a passage that every prompt of every system uses.
+
+`answer.mode = "search"`: the model replies with an answer in the draft format, or with exactly one line `SEARCH: <query>`. `answer.mode = "single"`: today's single draft. `decide.mode = "grade"`: entailment support only sets the grade; see `locked` below.
 
 ### fakes (`heuresis/fakes.py`)
 
@@ -147,6 +151,8 @@ row cap and a time limit.
 def draft(llm: LLM, query: Query, passages: list[Passage], tools: list[Tool], cfg: DraftCfg) -> Draft
 def parse_draft(raw: str) -> Draft
 def render(draft: Draft, tool_results: list[ToolResult]) -> str
+def parse_search(raw: str) -> str | None        # the query of a first line "SEARCH: <query>", else None
+def draft_from_prompt(llm, system: str, prompt: str, cfg) -> Draft   # one call over a caller-built prompt
 ```
 
 Draft format, one item per line:
@@ -169,7 +175,8 @@ with `pricing.price(model, tokens_in, tokens_out, cached=0, batch=False)`.
 ```python
 def verify(draft: Draft, passages, tool_results, store, as_of: AsOf, entailer: Entailer,
            cfg: VerifyCfg) -> list[Claim]
-def decide(claims, passages, query: Query, cfg: DecideCfg, store=None) -> tuple[str, float, Abstention | None]
+def decide(claims, passages, query: Query, cfg: DecideCfg, store=None, *, declined=None) -> tuple[str, float, Abstention | None]
+def deterministic_failure(claim: Claim) -> bool   # cited mark missing, version not in force, number untraced
 def locked_hash() -> str                       # sha256 over the bytes of heuresis/locked/*.py
 def check_diff(changed_paths: list[str]) -> list[str]   # paths outside heuresis/surface/ (violations)
 ```
@@ -180,7 +187,11 @@ store), `supported` (entailment of the sentence by the cited passages at or
 above the threshold), `numbers_traced` (every number in the sentence appears in a
 cited passage or is a cited tool value). A sentence with no marks is unsupported.
 Grade = min(lowest claim support, lowest cited certainty, lowest cited coverage),
-mapped to 0..1. `scoring.py` holds answer normalisation, exact match and token
+mapped to 0..1. `decide` with `cfg.mode == "strict"` removes a sentence whose entailment is below the
+support threshold and withholds the answer when too few remain; with `"grade"` (the default) only a
+`deterministic_failure` (the `exists`, `valid_at_date` or `numbers_traced` check) removes a sentence,
+the answer is withheld only when every sentence fails one or the model itself abstained, and support
+only sets the grade. `scoring.py` holds answer normalisation, exact match and token
 F1, the penalised score (+1 / 0 / -1), risk-coverage and AURC, and citation
 precision and recall.
 
@@ -191,8 +202,28 @@ precision and recall.
 `.search(question, as_of=None, scope=None, k=10) -> list[Passage]`,
 `.verify(text, passages, as_of=None) -> list[Claim]`, `.unit(unit_id, as_of=None) -> Version | None`.
 
+`ask` runs `answer.mode` (`single` or `search`) and `decide.mode` (`strict` or `grade`) as configured.
 `domain=None` means the domain stored in the database, or `text` for a new one; an
 explicit domain that differs from the stored one raises `ValueError` naming both,
 unless the database has no units. `Answer.trace` stage names: `understand`,
 `lexical`, `dense`, `expand`, `rerank`, `retrieve`, `draft`, `tools`,
-`draft_followup`, `verify`, `decide`, `assemble`.
+`draft_followup`, `verify`, `decide`, `assemble`; in `search` mode also `search` (one per model-requested
+search: tokens 0, `n_out` = passages shown, note = `i/max: query; ...`), while every model turn is a `draft`
+stage (a turn that asked for a search says so in its note).
+
+### bench (`heuresis/bench/`)
+
+Systems: `closed_book`, `bm25`, `vector`, `hybrid`, `hybrid_rerank`, `agentic`, `long_context`,
+`engine`, `oracle` and `engine_single`. `engine` runs the packaged configuration plus
+`draft.max_sentences = 2` (by default `answer.mode = "search"`, `decide.mode = "grade"`); `engine_single`
+runs the earlier engine (`answer.mode = "single"`, `decide.mode = "strict"`) and is exploratory.
+For every system `calls` counts model calls and `searches` counts retrievals (single-shot systems 1;
+`agentic` its `SEARCH` actions; the engine its first retrieval plus the model's searches). The manifest
+records `config`, `engine_config` and `engine_configs` (the effective configuration of each engine
+system in the run).
+
+Splits (`datasets.load(name).questions`): `dev`, `test`, `sealed` (unchanged: same ids and id-list hashes)
+and `dev2`, cut after them from the questions that are in none of the three, in the same hash order and
+with the same stratification rule; its record is the manifest key `dev2` (`requested`, `size`,
+`pool_unused`, `unanswerable`, `question_ids_sha256`), kept apart from `splits`. `bench.calibrate` and
+`bench.judge` accept `dev` and `dev2` and refuse every other split.

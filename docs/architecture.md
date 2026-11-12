@@ -34,8 +34,8 @@ content is an error).
 
 ## Stages of `Engine.ask`
 
-Cost-ordered: the cheap, local stages run first, the model is called once, and everything after it
-is local again.
+Cost-ordered: the cheap, local stages run first, the model is called (once for an easy question,
+a few times for a hard one, see step 3), and everything after it is local again.
 
 1. **Understand** (`router.py`, zero cost). Rules extract an explicit date from the question into
    `as_of.valid` (ISO, `15/03/2024`, "March 2024", "em março de 2024", a bare year) and set an
@@ -52,15 +52,28 @@ is local again.
    two lists are fused by reciprocal rank fusion. Optional stages, off by default: expansion along
    explicit edges (`expand`) and a cross-encoder rerank (`rerank`). At most `rerank_out` passages
    go on, numbered `t1..tn`, each with its source coverage and version certainty.
-3. **Draft** (`draft.py`). One model call. The prompt holds the as-of date, the passages with their
-   validity spans, the question and an optional length limit. The model writes short sentences each
-   ending in citation marks, may request deterministic tool calls (`CALL k1 calc {...}`), or may
-   write `ABSTAIN <type>: <reason>`. Low-ranked passages are dropped, never cut, to fit
-   `max_context_chars`.
+3. **Answer** (`draft.py`, `engine.py`), in one of two modes chosen by `answer.mode`. In both, the
+   prompt holds the as-of date, the passages with their validity spans (the one shared
+   `passage_line` rendering), the question and an optional length limit, and the model writes short
+   sentences each ending in citation marks, may request deterministic tool calls
+   (`CALL k1 calc {...}`), or may write `ABSTAIN <type>: <reason>`. Passages are dropped, never cut,
+   to fit `max_context_chars`.
+   - `"search"` (the default since the redesign; a hypothesis until measured, see the README).
+     Turn 1 shows the passages of the step-2 cascade, so an easy question costs one call. The model
+     may answer, or reply with exactly one line `SEARCH: <query>`. A search runs the **same cascade
+     with the question's own as-of date and scope**, so every search is date-filtered in code; it
+     shows up to `answer.search_k` passages that were not shown before, with marks continuing the
+     numbering (`t9`, `t10`, ...), and the model gets the whole accumulated context again. At most
+     `answer.max_searches` searches (default 4); when none remain the prompt says so and the model
+     must answer or abstain, and a further `SEARCH` ends in an `unsupported` abstention with a trace
+     note. Each model turn is a `draft` stage and each search a `search` stage; budget is checked
+     before every call.
+   - `"single"` (the earlier design, kept and tested): one draft over the one retrieval of step 2.
 4. **Tools** (`tools/`). `calc` (arithmetic by AST whitelist and `Decimal`), `dates` (differences,
    additions, weekday checks) and `sql` (one read-only `SELECT` with a row cap and a time limit). The
    engine binds `sql` to the database the `tables` domain read; a model-written `db` argument is
-   overwritten. After a `sql` call there is one follow-up draft with the results in the prompt.
+   overwritten. After a `sql` call there is one follow-up draft with the results in the prompt
+   (in `search` mode the follow-up repeats the last turn's prompt).
 5. **Verify** (`locked/verify.py`, local). Four checks per sentence: every cited mark exists; every
    cited version is in force at the date (checked against the store, not the passage copy); the cited
    passages entail the sentence (local NLI model, scored as the best entailment over title-prefixed
@@ -68,10 +81,21 @@ is local again.
    thresholds `support_threshold` and `partial_threshold`); every number in the sentence appears in a cited passage or is a cited tool
    value. A sentence with no marks is unsupported. A sentence that fails exists, valid or numbers is
    unsupported whatever its entailment score.
-6. **Decide** (`locked/decide.py`). All claims supported (fraction `min_supported_fraction`):
-   `answered`. At least `partial_fraction` supported: `partial`, with the unsupported sentences
-   removed. Otherwise an abstention. The grade is the minimum of the lowest claim support, the lowest
-   cited certainty and the lowest cited source coverage, mapped to 0..1.
+6. **Decide** (`locked/decide.py`), in one of two modes chosen by `decide.mode`.
+   - `"grade"` (the default since the redesign): verification grades, it does not gate. A sentence is
+     removed, or the answer withheld, only for a **deterministic failure**: a cited mark that does not
+     exist, a cited version not in force at the as-of date, or a number found in no cited passage or
+     tool result (an uncited sentence has no mark to fail; it is kept with support 0, so it pulls the
+     grade to 0). The model's own `ABSTAIN` still abstains, and if every sentence fails a deterministic
+     check the answer is an abstention (`not_valid_at_date` when all failed only the date check, else
+     `unsupported`). Entailment support no longer removes anything; a kept sentence below the support
+     threshold is labelled `partial` and keeps its citations.
+   - `"strict"` (the earlier design): all claims supported (fraction `min_supported_fraction`):
+     `answered`. At least `partial_fraction` supported: `partial`, with the unsupported sentences
+     removed. Otherwise an abstention.
+   In both, the grade is the minimum of the lowest claim support, the lowest cited certainty and the
+   lowest cited source coverage (of the kept sentences), mapped to 0..1; it is the confidence used for
+   risk-coverage.
 7. **Assemble.** The answer text with tool values filled in, the claims with their labels and
    citations (`unit_id @ valid_from..valid_to`), the grade and a trace of every stage with time,
    tokens and cost.
@@ -85,7 +109,7 @@ An abstention names why, so the caller can act on it (`model.ABSTENTIONS`):
 | `no_source` | nothing relevant was found |
 | `not_valid_at_date` | the topic exists but no version is in force at the date (also when all cited versions failed the date check) |
 | `outside_coverage` | every retrieved passage comes from a source with coverage 0 |
-| `unsupported` | a draft was written but did not pass verification, or the model call failed |
+| `unsupported` | a draft was written but did not pass verification, the model asked to search with no search left, or the model call failed |
 | `needs_input` | the router wants one datum from the user |
 | `out_of_scope` | the router judged it not a question for this corpus |
 | `budget` | the cost budget ran out before a verified answer |
@@ -124,5 +148,7 @@ Python allows.
 ## Cost accounting
 
 Every model call returns a `Usage` priced by `pricing.price` from a dated table. The engine's trace
-sums per stage; the benchmark's ledger (`bench/ledger.py`) appends every charge to a file and stops
+sums per stage; in `search` mode every model turn (`draft`) and every search (`search`) is a stage
+with its tokens, cost and time, so the cost of a question is the sum of all of them and the number
+of model calls and retrievals can be read from the trace; the benchmark's ledger (`bench/ledger.py`) appends every charge to a file and stops
 at a cap. Local models (embedder, reranker, entailer) are not priced.
