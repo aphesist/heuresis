@@ -1,0 +1,165 @@
+{
+ "note": "N = true statement of its passage that does not answer the question (intermediate hop, echo of the question, partial or off-target); G = answer that reads as correct but the containment grader rejects (paraphrase, word order, \"mi\" vs \"miles\", possessive). Classes are the assistant's reading of the 15 engine answers graded wrong on dev (n=100 per dataset); not an automated judgement.",
+ "rows": [
+  {
+   "dataset": "musique",
+   "qid": "musique:2hop__242938_18803",
+   "class": "N",
+   "claim_support": [
+    0.98,
+    0.15
+   ],
+   "gold_string_in_shown_passages": true,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "musique",
+   "qid": "musique:2hop__464479_70131",
+   "class": "G",
+   "claim_support": [
+    0.62
+   ],
+   "gold_string_in_shown_passages": true,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "musique",
+   "qid": "musique:2hop__80_59409",
+   "class": "N",
+   "claim_support": [
+    0.53,
+    0.0
+   ],
+   "gold_string_in_shown_passages": false,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "musique",
+   "qid": "musique:3hop1__145427_106426_157788",
+   "class": "N",
+   "claim_support": [
+    0.89,
+    0.19
+   ],
+   "gold_string_in_shown_passages": false,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "musique",
+   "qid": "musique:3hop1__857_846_7821",
+   "class": "G",
+   "claim_support": [
+    0.21,
+    0.64
+   ],
+   "gold_string_in_shown_passages": true,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "musique",
+   "qid": "musique:3hop2__132957_379231_40768",
+   "class": "N",
+   "claim_support": [
+    0.93,
+    0.98
+   ],
+   "gold_string_in_shown_passages": true,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "multihoprag",
+   "qid": "multihoprag:q0323",
+   "class": "G",
+   "claim_support": [
+    0.51,
+    0.03
+   ],
+   "gold_string_in_shown_passages": true,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "multihoprag",
+   "qid": "multihoprag:q0599",
+   "class": "N",
+   "claim_support": [
+    0.51,
+    0.0
+   ],
+   "gold_string_in_shown_passages": false,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "hoh",
+   "qid": "hoh:13925745#0@2024-09-01",
+   "class": "G",
+   "claim_support": [
+    0.98
+   ],
+   "gold_string_in_shown_passages": false,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "hoh",
+   "qid": "hoh:1606930#0@2024-06-01",
+   "class": "N",
+   "claim_support": [
+    0.0,
+    0.92
+   ],
+   "gold_string_in_shown_passages": false,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "hoh",
+   "qid": "hoh:18586248#0@2024-12-01",
+   "class": "G",
+   "claim_support": [
+    0.99
+   ],
+   "gold_string_in_shown_passages": false,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "hoh",
+   "qid": "hoh:36639582#0@2024-10-01",
+   "class": "N",
+   "claim_support": [
+    0.99
+   ],
+   "gold_string_in_shown_passages": false,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "hoh",
+   "qid": "hoh:4754712#0@2024-06-01",
+   "class": "N",
+   "claim_support": [
+    0.0,
+    0.97
+   ],
+   "gold_string_in_shown_passages": true,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "hoh",
+   "qid": "hoh:50635396#0@2024-11-01",
+   "class": "G",
+   "claim_support": [
+    0.98,
+    0.85
+   ],
+   "gold_string_in_shown_passages": false,
+   "gold_unit_shown": true
+  },
+  {
+   "dataset": "hoh",
+   "qid": "hoh:6858494#0@2024-07-01",
+   "class": "G",
+   "claim_support": [
+    0.97
+   ],
+   "gold_string_in_shown_passages": true,
+   "gold_unit_shown": true
+  }
+ ]
+}

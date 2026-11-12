@@ -1,0 +1,677 @@
+{
+  "banner": null,
+  "dry_run": false,
+  "dataset": "multihoprag",
+  "split": "dev",
+  "n_questions_planned": 100,
+  "error_rows": 0,
+  "complete_case": {
+    "systems": [
+      "bm25",
+      "vector",
+      "hybrid",
+      "hybrid_rerank"
+    ],
+    "n_common": 100,
+    "completed": {
+      "bm25": 100,
+      "vector": 100,
+      "hybrid": 100,
+      "hybrid_rerank": 100
+    }
+  },
+  "workers": 4,
+  "locked_hash": "3c23fecd42520db9a36c3208d285d6d96465f42e1c2ef8e31d2d2b2d79de1b71",
+  "surface_hash": "b7e767ecd37764e19220985ea959a16c650a2aec104f7f3a867013de736ed58f",
+  "prompts_hash": "1498745bcecca370bd94caef482d685ab41c84890ab5a208320f2dcbacc2a462",
+  "price_table": "anthropic-2026-11",
+  "models": {
+    "embedder": "onnx:intfloat/multilingual-e5-small",
+    "entailer": "onnx:MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+    "generator": "claude-haiku-5-5",
+    "reranker": "onnx:cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+  },
+  "bootstrap_iters": 1000,
+  "seed": 0,
+  "unavailable": {},
+  "systems": {
+    "bm25": {
+      "n": 100,
+      "counts": {
+        "correct": 32,
+        "wrong": 4,
+        "abstained": 64
+      },
+      "wilson": {
+        "correct": {
+          "p": 0.32,
+          "lo": 0.23669147324999096,
+          "hi": 0.41662618610452384
+        },
+        "wrong": {
+          "p": 0.04,
+          "lo": 0.01566330399154762,
+          "hi": 0.09837071435887917
+        },
+        "abstained": {
+          "p": 0.64,
+          "lo": 0.5423540245160874,
+          "hi": 0.7272877959859567
+        }
+      },
+      "errors": 0,
+      "penalised_score": {
+        "est": 0.28,
+        "lo": 0.17017092995457805,
+        "hi": 0.39450957073281234
+      },
+      "accuracy": 0.32,
+      "coverage": 0.24,
+      "selective_accuracy": 0.8333333333333334,
+      "aurc": 0.03251535734373263,
+      "risk_coverage": [
+        [
+          0.041667,
+          0.0
+        ],
+        [
+          0.083333,
+          0.0
+        ],
+        [
+          0.125,
+          0.0
+        ],
+        [
+          0.166667,
+          0.0
+        ],
+        [
+          0.208333,
+          0.0
+        ],
+        [
+          0.25,
+          0.0
+        ],
+        [
+          0.291667,
+          0.0
+        ],
+        [
+          0.333333,
+          0.0
+        ],
+        [
+          0.375,
+          0.0
+        ],
+        [
+          0.416667,
+          0.0
+        ],
+        [
+          0.458333,
+          0.0
+        ],
+        [
+          0.5,
+          0.0
+        ],
+        [
+          0.541667,
+          0.0
+        ],
+        [
+          0.583333,
+          0.0
+        ],
+        [
+          0.625,
+          0.0
+        ],
+        [
+          0.666667,
+          0.0
+        ],
+        [
+          0.708333,
+          0.0
+        ],
+        [
+          0.75,
+          0.055556
+        ],
+        [
+          0.791667,
+          0.052632
+        ],
+        [
+          0.833333,
+          0.1
+        ],
+        [
+          0.875,
+          0.095238
+        ],
+        [
+          0.916667,
+          0.136364
+        ],
+        [
+          0.958333,
+          0.173913
+        ],
+        [
+          1.0,
+          0.166667
+        ]
+      ],
+      "unanswerable": {
+        "n": 12,
+        "abstain_rate": 1.0
+      },
+      "citation": null,
+      "retrieval_recall": {
+        "n": 88,
+        "value": 0.4299242424242424
+      },
+      "cost": {
+        "mean_usd": 0.000387162,
+        "total_usd": 0.0387162,
+        "mean_tokens_in": 2198.57,
+        "mean_tokens_out": 334.61
+      },
+      "cost_per_correct": {
+        "est": 0.00120988125,
+        "lo": 0.000915519816576087,
+        "hi": 0.0017497074624060148
+      },
+      "latency_ms": {
+        "median": 1856.009174499377,
+        "p95": 3272.579489451209
+      },
+      "stage_ms_median": null,
+      "mean_answer_chars": 259.7083333333333,
+      "mean_calls": 1.0,
+      "mean_searches": 1.0,
+      "time_aware": false
+    },
+    "vector": {
+      "n": 100,
+      "counts": {
+        "correct": 27,
+        "wrong": 2,
+        "abstained": 71
+      },
+      "wilson": {
+        "correct": {
+          "p": 0.27,
+          "lo": 0.1926958414957634,
+          "hi": 0.36432116767944994
+        },
+        "wrong": {
+          "p": 0.02,
+          "lo": 0.005501967550162357,
+          "hi": 0.07001179072854387
+        },
+        "abstained": {
+          "p": 0.71,
+          "lo": 0.6146110882442888,
+          "hi": 0.7898516425087772
+        }
+      },
+      "errors": 0,
+      "penalised_score": {
+        "est": 0.25,
+        "lo": 0.14998563218390804,
+        "hi": 0.3522727272727273
+      },
+      "accuracy": 0.27,
+      "coverage": 0.17,
+      "selective_accuracy": 0.8823529411764706,
+      "aurc": 0.09412569360666245,
+      "risk_coverage": [
+        [
+          0.058824,
+          0.0
+        ],
+        [
+          0.117647,
+          0.0
+        ],
+        [
+          0.176471,
+          0.0
+        ],
+        [
+          0.235294,
+          0.0
+        ],
+        [
+          0.294118,
+          0.0
+        ],
+        [
+          0.352941,
+          0.0
+        ],
+        [
+          0.411765,
+          0.142857
+        ],
+        [
+          0.470588,
+          0.125
+        ],
+        [
+          0.529412,
+          0.111111
+        ],
+        [
+          0.588235,
+          0.2
+        ],
+        [
+          0.647059,
+          0.181818
+        ],
+        [
+          0.705882,
+          0.166667
+        ],
+        [
+          0.764706,
+          0.153846
+        ],
+        [
+          0.823529,
+          0.142857
+        ],
+        [
+          0.882353,
+          0.133333
+        ],
+        [
+          0.941176,
+          0.125
+        ],
+        [
+          1.0,
+          0.117647
+        ]
+      ],
+      "unanswerable": {
+        "n": 12,
+        "abstain_rate": 1.0
+      },
+      "citation": null,
+      "retrieval_recall": {
+        "n": 88,
+        "value": 0.2850378787878788
+      },
+      "cost": {
+        "mean_usd": 0.000354795,
+        "total_usd": 0.0354795,
+        "mean_tokens_in": 2132.6,
+        "mean_tokens_out": 283.07
+      },
+      "cost_per_correct": {
+        "est": 0.0013140555555555555,
+        "lo": 0.000987618545386905,
+        "hi": 0.002013810264705882
+      },
+      "latency_ms": {
+        "median": 1695.3282355007104,
+        "p95": 3336.4467081005387
+      },
+      "stage_ms_median": null,
+      "mean_answer_chars": 258.2352941176471,
+      "mean_calls": 1.0,
+      "mean_searches": 1.0,
+      "time_aware": false
+    },
+    "hybrid": {
+      "n": 100,
+      "counts": {
+        "correct": 34,
+        "wrong": 1,
+        "abstained": 65
+      },
+      "wilson": {
+        "correct": {
+          "p": 0.34,
+          "lo": 0.25461520797348164,
+          "hi": 0.43722271145275377
+        },
+        "wrong": {
+          "p": 0.01,
+          "lo": 0.0017674320641406435,
+          "hi": 0.054486196178705294
+        },
+        "abstained": {
+          "p": 0.65,
+          "lo": 0.5525444329688796,
+          "hi": 0.7363575175690247
+        }
+      },
+      "errors": 0,
+      "penalised_score": {
+        "est": 0.33,
+        "lo": 0.2232124409681228,
+        "hi": 0.4326923076923077
+      },
+      "accuracy": 0.34,
+      "coverage": 0.23,
+      "selective_accuracy": 0.9565217391304348,
+      "aurc": 0.012814738628090534,
+      "risk_coverage": [
+        [
+          0.043478,
+          0.0
+        ],
+        [
+          0.086957,
+          0.0
+        ],
+        [
+          0.130435,
+          0.0
+        ],
+        [
+          0.173913,
+          0.0
+        ],
+        [
+          0.217391,
+          0.0
+        ],
+        [
+          0.26087,
+          0.0
+        ],
+        [
+          0.304348,
+          0.0
+        ],
+        [
+          0.347826,
+          0.0
+        ],
+        [
+          0.391304,
+          0.0
+        ],
+        [
+          0.434783,
+          0.0
+        ],
+        [
+          0.478261,
+          0.0
+        ],
+        [
+          0.521739,
+          0.0
+        ],
+        [
+          0.565217,
+          0.0
+        ],
+        [
+          0.608696,
+          0.0
+        ],
+        [
+          0.652174,
+          0.0
+        ],
+        [
+          0.695652,
+          0.0
+        ],
+        [
+          0.73913,
+          0.0
+        ],
+        [
+          0.782609,
+          0.055556
+        ],
+        [
+          0.826087,
+          0.052632
+        ],
+        [
+          0.869565,
+          0.05
+        ],
+        [
+          0.913043,
+          0.047619
+        ],
+        [
+          0.956522,
+          0.045455
+        ],
+        [
+          1.0,
+          0.043478
+        ]
+      ],
+      "unanswerable": {
+        "n": 12,
+        "abstain_rate": 1.0
+      },
+      "citation": null,
+      "retrieval_recall": {
+        "n": 88,
+        "value": 0.3835227272727273
+      },
+      "cost": {
+        "mean_usd": 0.000372132,
+        "total_usd": 0.0372132,
+        "mean_tokens_in": 2200.77,
+        "mean_tokens_out": 304.11
+      },
+      "cost_per_correct": {
+        "est": 0.0010945058823529413,
+        "lo": 0.0008506675555555557,
+        "hi": 0.0015785879891304345
+      },
+      "latency_ms": {
+        "median": 1893.1730075000814,
+        "p95": 3235.922460600068
+      },
+      "stage_ms_median": null,
+      "mean_answer_chars": 253.52173913043478,
+      "mean_calls": 1.0,
+      "mean_searches": 1.0,
+      "time_aware": false
+    },
+    "hybrid_rerank": {
+      "n": 100,
+      "counts": {
+        "correct": 29,
+        "wrong": 4,
+        "abstained": 67
+      },
+      "wilson": {
+        "correct": {
+          "p": 0.29,
+          "lo": 0.21014835749122274,
+          "hi": 0.3853889117557111
+        },
+        "wrong": {
+          "p": 0.04,
+          "lo": 0.01566330399154762,
+          "hi": 0.09837071435887917
+        },
+        "abstained": {
+          "p": 0.67,
+          "lo": 0.5730534379509054,
+          "hi": 0.7543687726587196
+        }
+      },
+      "errors": 0,
+      "penalised_score": {
+        "est": 0.25,
+        "lo": 0.1415857060407849,
+        "hi": 0.35187908496732023
+      },
+      "accuracy": 0.29,
+      "coverage": 0.21,
+      "selective_accuracy": 0.8095238095238095,
+      "aurc": 0.09170726647506833,
+      "risk_coverage": [
+        [
+          0.047619,
+          0.0
+        ],
+        [
+          0.095238,
+          0.0
+        ],
+        [
+          0.142857,
+          0.0
+        ],
+        [
+          0.190476,
+          0.0
+        ],
+        [
+          0.238095,
+          0.0
+        ],
+        [
+          0.285714,
+          0.0
+        ],
+        [
+          0.333333,
+          0.0
+        ],
+        [
+          0.380952,
+          0.125
+        ],
+        [
+          0.428571,
+          0.111111
+        ],
+        [
+          0.47619,
+          0.1
+        ],
+        [
+          0.52381,
+          0.090909
+        ],
+        [
+          0.571429,
+          0.166667
+        ],
+        [
+          0.619048,
+          0.153846
+        ],
+        [
+          0.666667,
+          0.142857
+        ],
+        [
+          0.714286,
+          0.133333
+        ],
+        [
+          0.761905,
+          0.125
+        ],
+        [
+          0.809524,
+          0.117647
+        ],
+        [
+          0.857143,
+          0.111111
+        ],
+        [
+          0.904762,
+          0.157895
+        ],
+        [
+          0.952381,
+          0.2
+        ],
+        [
+          1.0,
+          0.190476
+        ]
+      ],
+      "unanswerable": {
+        "n": 12,
+        "abstain_rate": 1.0
+      },
+      "citation": null,
+      "retrieval_recall": {
+        "n": 88,
+        "value": 0.3039772727272727
+      },
+      "cost": {
+        "mean_usd": 0.00037812300000000007,
+        "total_usd": 0.03781230000000001,
+        "mean_tokens_in": 2233.18,
+        "mean_tokens_out": 309.61
+      },
+      "cost_per_correct": {
+        "est": 0.0013038724137931037,
+        "lo": 0.0009783130405405405,
+        "hi": 0.001911982249999999
+      },
+      "latency_ms": {
+        "median": 11820.35944099971,
+        "p95": 13666.588365250072
+      },
+      "stage_ms_median": null,
+      "mean_answer_chars": 230.52380952380952,
+      "mean_calls": 1.0,
+      "mean_searches": 1.0,
+      "time_aware": false
+    }
+  },
+  "paired": {},
+  "exploratory_paired": {},
+  "reference": "engine",
+  "exploratory_systems": [],
+  "pareto": {
+    "bm25": {
+      "mean_usd": 0.000387162,
+      "accuracy": 0.32,
+      "penalised_score": 0.28,
+      "pareto_accuracy": false,
+      "pareto_penalised_score": false
+    },
+    "vector": {
+      "mean_usd": 0.000354795,
+      "accuracy": 0.27,
+      "penalised_score": 0.25,
+      "pareto_accuracy": true,
+      "pareto_penalised_score": true
+    },
+    "hybrid": {
+      "mean_usd": 0.000372132,
+      "accuracy": 0.34,
+      "penalised_score": 0.33,
+      "pareto_accuracy": true,
+      "pareto_penalised_score": true
+    },
+    "hybrid_rerank": {
+      "mean_usd": 0.00037812300000000007,
+      "accuracy": 0.29,
+      "penalised_score": 0.25,
+      "pareto_accuracy": false,
+      "pareto_penalised_score": false
+    }
+  }
+}

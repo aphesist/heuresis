@@ -1,0 +1,16 @@
+counts at (0.5,0.3): correct/wrong/abstained, pooled and per dataset; paired difference vs C1_current [95% CI]
+C1_current                 pooled: (75, 15, 210) diff +0.000 [+0.000,+0.000] | musique: (8, 6, 86) diff +0.000 [+0.000,+0.000] | multihoprag: (12, 2, 86) diff +0.000 [+0.000,+0.000] | hoh: (55, 7, 38) diff +0.000 [+0.000,+0.000]
+C1t_current_with_title     pooled: (104, 13, 183) diff +0.103 [+0.067,+0.143] | musique: (9, 5, 86) diff +0.020 [+0.000,+0.060] | multihoprag: (13, 0, 87) diff +0.030 [+0.000,+0.070] | hoh: (82, 8, 10) diff +0.260 [+0.160,+0.360]
+C2_max_passage             pooled: (75, 15, 210) diff +0.000 [-0.013,+0.013] | musique: (7, 6, 87) diff -0.010 [-0.050,+0.020] | multihoprag: (13, 2, 85) diff +0.010 [+0.000,+0.030] | hoh: (55, 7, 38) diff +0.000 [+0.000,+0.000]
+C2t_max_passage_title      pooled: (103, 14, 183) diff +0.097 [+0.057,+0.140] | musique: (8, 6, 86) diff +0.000 [-0.040,+0.050] | multihoprag: (13, 0, 87) diff +0.030 [+0.000,+0.070] | hoh: (82, 8, 10) diff +0.260 [+0.160,+0.360]
+C3_max_sentence_window     pooled: (82, 15, 203) diff +0.023 [+0.000,+0.050] | musique: (10, 7, 83) diff +0.010 [-0.040,+0.060] | multihoprag: (17, 1, 82) diff +0.060 [+0.010,+0.110] | hoh: (55, 7, 38) diff +0.000 [+0.000,+0.000]
+C3t_max_window_title       pooled: (115, 15, 170) diff +0.133 [+0.087,+0.180] | musique: (11, 7, 82) diff +0.020 [-0.040,+0.090] | multihoprag: (22, 0, 78) diff +0.120 [+0.060,+0.190] | hoh: (82, 8, 10) diff +0.260 [+0.170,+0.360]
+C4_lexical                 pooled: (120, 16, 164) diff +0.147 [+0.103,+0.193] | musique: (14, 6, 80) diff +0.060 [+0.000,+0.130] | multihoprag: (23, 2, 75) diff +0.110 [+0.050,+0.170] | hoh: (83, 8, 9) diff +0.270 [+0.170,+0.370]
+C5_max(C3,C4)              pooled: (120, 16, 164) diff +0.147 [+0.103,+0.193] | musique: (14, 6, 80) diff +0.060 [+0.000,+0.130] | multihoprag: (23, 2, 75) diff +0.110 [+0.050,+0.180] | hoh: (83, 8, 9) diff +0.270 [+0.170,+0.370]
+C5t_max(C3t,C4)            pooled: (120, 16, 164) diff +0.147 [+0.103,+0.193] | musique: (14, 6, 80) diff +0.060 [+0.000,+0.130] | multihoprag: (23, 2, 75) diff +0.110 [+0.050,+0.170] | hoh: (83, 8, 9) diff +0.270 [+0.170,+0.380]
+
+C3t_max_window_title vs C4_lexical (paired):
+  pooled: -0.013 [-0.037,+0.007]
+  musique: -0.040 [-0.090,+0.000]
+  multihoprag: +0.010 [-0.020,+0.040]
+  hoh: -0.010 [-0.030,+0.000]
