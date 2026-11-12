@@ -1,0 +1,180 @@
+{
+  "banner": null,
+  "dry_run": false,
+  "dataset": "musique",
+  "split": "dev",
+  "n_questions_planned": 100,
+  "error_rows": 0,
+  "complete_case": {
+    "systems": [
+      "engine"
+    ],
+    "n_common": 100,
+    "completed": {
+      "engine": 100
+    }
+  },
+  "workers": 4,
+  "locked_hash": "d98f86a5969279db434645acb8585f512999c60789068afdfa3cfdff4aa2eb88",
+  "surface_hash": "782a54403fb1f0fb6d56f1c3053b844b067422bbc7eca7b54a3169646378d4f1",
+  "prompts_hash": "c025db9efc35daf759babe28848d6db14a0f8c2fbc853ea21cd60e01505d3a7b",
+  "price_table": "anthropic-2026-11",
+  "models": {
+    "embedder": "onnx:intfloat/multilingual-e5-small",
+    "entailer": "onnx:MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+    "generator": "claude-haiku-5-5",
+    "reranker": "onnx:cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+  },
+  "bootstrap_iters": 500,
+  "seed": 0,
+  "unavailable": {},
+  "systems": {
+    "engine": {
+      "n": 100,
+      "counts": {
+        "correct": 13,
+        "wrong": 3,
+        "abstained": 84
+      },
+      "wilson": {
+        "correct": {
+          "p": 0.13,
+          "lo": 0.0775716742724051,
+          "hi": 0.20980351440076425
+        },
+        "wrong": {
+          "p": 0.03,
+          "lo": 0.010254524024038925,
+          "hi": 0.08451936429052759
+        },
+        "abstained": {
+          "p": 0.84,
+          "lo": 0.7557973061072976,
+          "hi": 0.8990471151119521
+        }
+      },
+      "errors": 0,
+      "penalised_score": {
+        "est": 0.1,
+        "lo": 0.02926185037121645,
+        "hi": 0.17
+      },
+      "accuracy": 0.13,
+      "coverage": 0.16,
+      "selective_accuracy": 0.8125,
+      "aurc": 0.3630533528971029,
+      "risk_coverage": [
+        [
+          0.0625,
+          0.0
+        ],
+        [
+          0.125,
+          0.5
+        ],
+        [
+          0.1875,
+          0.666667
+        ],
+        [
+          0.25,
+          0.75
+        ],
+        [
+          0.3125,
+          0.6
+        ],
+        [
+          0.375,
+          0.5
+        ],
+        [
+          0.4375,
+          0.428571
+        ],
+        [
+          0.5,
+          0.375
+        ],
+        [
+          0.5625,
+          0.333333
+        ],
+        [
+          0.625,
+          0.3
+        ],
+        [
+          0.6875,
+          0.272727
+        ],
+        [
+          0.75,
+          0.25
+        ],
+        [
+          0.8125,
+          0.230769
+        ],
+        [
+          0.875,
+          0.214286
+        ],
+        [
+          0.9375,
+          0.2
+        ],
+        [
+          1.0,
+          0.1875
+        ]
+      ],
+      "unanswerable": {
+        "n": 0,
+        "abstain_rate": null
+      },
+      "citation": {
+        "n": 16,
+        "precision": 0.9166666666666666,
+        "recall": 0.546875
+      },
+      "retrieval_recall": {
+        "n": 100,
+        "value": 0.5216666666666667
+      },
+      "cost": {
+        "mean_usd": 0.000296003,
+        "total_usd": 0.0296003,
+        "mean_tokens_in": 2455.48,
+        "mean_tokens_out": 100.91
+      },
+      "cost_per_correct": {
+        "est": 0.002276946153846154,
+        "lo": 0.0015505661842105264,
+        "hi": 0.004267775
+      },
+      "latency_ms": {
+        "median": 1456.8965689998095,
+        "p95": 2704.7731671502333
+      },
+      "stage_ms_median": 1663.3585484994455,
+      "mean_answer_chars": 115.0625,
+      "mean_calls": 1.26,
+      "mean_searches": 1.0,
+      "time_aware": true
+    }
+  },
+  "paired": {},
+  "exploratory_paired": {},
+  "reference": "engine",
+  "exploratory_systems": [],
+  "pareto": {
+    "engine": {
+      "mean_usd": 0.000296003,
+      "accuracy": 0.13,
+      "penalised_score": 0.1,
+      "pareto_accuracy": true,
+      "pareto_penalised_score": true
+    }
+  }
+}
