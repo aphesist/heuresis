@@ -1,0 +1,16 @@
+| off | musique | as built | 29/11/60 | +0.180 |
+| off | musique | uncited kept | 29/12/59 | +0.170 |
+| off | multihoprag | as built | 36/46/18 | -0.100 |
+| off | multihoprag | uncited kept | 64/23/13 | +0.410 |
+| off | hoh | as built | 78/16/6 | +0.620 |
+| off | hoh | uncited kept | 78/17/5 | +0.610 |
+| off | pooled | as built | 143/73/84 | +0.233 |
+| off | pooled | uncited kept | 171/52/77 | +0.397 |
+| default | musique | as built | 47/21/32 | +0.260 |
+| default | musique | uncited kept | 51/17/32 | +0.340 |
+| default | multihoprag | as built | 42/52/6 | -0.100 |
+| default | multihoprag | uncited kept | 76/22/2 | +0.540 |
+| default | hoh | as built | 77/19/4 | +0.580 |
+| default | hoh | uncited kept | 78/18/4 | +0.600 |
+| default | pooled | as built | 166/92/42 | +0.247 |
+| default | pooled | uncited kept | 205/57/38 | +0.493 |

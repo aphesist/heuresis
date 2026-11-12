@@ -1,0 +1,191 @@
+{"qid": "multihoprag:q0006", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 310, "tokens_out": 14, "usd": 3.8e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0006", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "bm25", "tokens_in": 361, "tokens_out": 14, "usd": 4.3100000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0006", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 352, "tokens_out": 10, "usd": 4.02e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0006", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 395, "tokens_out": 10, "usd": 4.45e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0042", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 351, "tokens_out": 14, "usd": 4.21e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0042", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 331, "tokens_out": 14, "usd": 4.01e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0042", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 368, "tokens_out": 10, "usd": 4.1800000000000006e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0089", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "bm25", "tokens_in": 436, "tokens_out": 10, "usd": 4.86e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0089", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 460, "tokens_out": 14, "usd": 5.3e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0089", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 410, "tokens_out": 10, "usd": 4.6e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0089", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid+asof", "tokens_in": 458, "tokens_out": 10, "usd": 5.08e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0089", "raw": "The gold answer is \"Agree.\" The system a", "stop_reason": "max_tokens", "system": "agentic+asof", "tokens_in": 444, "tokens_out": 20, "usd": 5.440000000000001e-05, "verdict": null}
+{"qid": "multihoprag:q0130", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "bm25", "tokens_in": 379, "tokens_out": 14, "usd": 4.49e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0089", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 409, "tokens_out": 10, "usd": 4.5900000000000004e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0130", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 392, "tokens_out": 14, "usd": 4.6200000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0130", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 349, "tokens_out": 14, "usd": 4.1899999999999995e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0147", "raw": "The system answer describes the clues bu", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 380, "tokens_out": 20, "usd": 4.8e-05, "verdict": null}
+{"qid": "multihoprag:q0166", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 419, "tokens_out": 14, "usd": 4.89e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0176", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 326, "tokens_out": 14, "usd": 3.96e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0166", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid_rerank", "tokens_in": 358, "tokens_out": 14, "usd": 4.2800000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0212", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 440, "tokens_out": 14, "usd": 5.1e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0212", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 431, "tokens_out": 14, "usd": 5.01e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0247", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 430, "tokens_out": 14, "usd": 5e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0247", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 377, "tokens_out": 10, "usd": 4.27e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0247", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 371, "tokens_out": 14, "usd": 4.41e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0295", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid", "tokens_in": 411, "tokens_out": 14, "usd": 4.8100000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0295", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 343, "tokens_out": 14, "usd": 4.13e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0295", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid+asof", "tokens_in": 399, "tokens_out": 14, "usd": 4.690000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0295", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 405, "tokens_out": 10, "usd": 4.55e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0306", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 414, "tokens_out": 10, "usd": 4.64e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0306", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 427, "tokens_out": 14, "usd": 4.97e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0379", "raw": "The system answer never names the indivi", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 375, "tokens_out": 20, "usd": 4.75e-05, "verdict": null}
+{"qid": "multihoprag:q0479", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 361, "tokens_out": 14, "usd": 4.3100000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0495", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid+asof", "tokens_in": 415, "tokens_out": 10, "usd": 4.65e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0495", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 312, "tokens_out": 10, "usd": 3.6200000000000006e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0531", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 346, "tokens_out": 14, "usd": 4.16e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0535", "raw": "The system answer describes the individu", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 385, "tokens_out": 20, "usd": 4.85e-05, "verdict": null}
+{"qid": "multihoprag:q0542", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 347, "tokens_out": 14, "usd": 4.1700000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0542", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 433, "tokens_out": 14, "usd": 5.03e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0563", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 449, "tokens_out": 14, "usd": 5.190000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0573", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 340, "tokens_out": 14, "usd": 4.1e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0563", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 449, "tokens_out": 14, "usd": 5.190000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0573", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 441, "tokens_out": 14, "usd": 5.11e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0563", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid_rerank", "tokens_in": 488, "tokens_out": 14, "usd": 5.58e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0617", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 373, "tokens_out": 14, "usd": 4.4300000000000006e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0628", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 402, "tokens_out": 14, "usd": 4.72e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0720", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 304, "tokens_out": 14, "usd": 3.740000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0650", "raw": "The system answer never explicitly names", "stop_reason": "max_tokens", "system": "engine_single", "tokens_in": 367, "tokens_out": 20, "usd": 4.6700000000000003e-05, "verdict": null}
+{"qid": "multihoprag:q0736", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 575, "tokens_out": 14, "usd": 6.45e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0755", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 362, "tokens_out": 10, "usd": 4.1200000000000005e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0755", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 353, "tokens_out": 14, "usd": 4.2300000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0802", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 333, "tokens_out": 14, "usd": 4.0300000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0801", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 292, "tokens_out": 14, "usd": 3.6200000000000006e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0802", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 317, "tokens_out": 14, "usd": 3.8700000000000006e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0802", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 320, "tokens_out": 14, "usd": 3.9e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0802", "raw": "The question asks for a yes/no judgment,", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 352, "tokens_out": 20, "usd": 4.52e-05, "verdict": null}
+{"qid": "multihoprag:q0830", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 329, "tokens_out": 14, "usd": 3.99e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0830", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 405, "tokens_out": 14, "usd": 4.75e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0877", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid", "tokens_in": 362, "tokens_out": 10, "usd": 4.1200000000000005e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0830", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 415, "tokens_out": 14, "usd": 4.85e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0877", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 403, "tokens_out": 14, "usd": 4.7300000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0880", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 394, "tokens_out": 14, "usd": 4.64e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0880", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 416, "tokens_out": 10, "usd": 4.66e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0880", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 404, "tokens_out": 14, "usd": 4.740000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0880", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 383, "tokens_out": 14, "usd": 4.53e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0909", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 410, "tokens_out": 14, "usd": 4.8e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0935", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 304, "tokens_out": 14, "usd": 3.740000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0935", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "bm25", "tokens_in": 382, "tokens_out": 14, "usd": 4.52e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0935", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid", "tokens_in": 364, "tokens_out": 10, "usd": 4.14e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0909", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 460, "tokens_out": 14, "usd": 5.3e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0935", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 360, "tokens_out": 14, "usd": 4.3e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0935", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid+asof", "tokens_in": 378, "tokens_out": 14, "usd": 4.4800000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0935", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 348, "tokens_out": 14, "usd": 4.1800000000000006e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0946", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 417, "tokens_out": 14, "usd": 4.8700000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0946", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 441, "tokens_out": 14, "usd": 5.11e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0957", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 339, "tokens_out": 10, "usd": 3.89e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q0966", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 454, "tokens_out": 14, "usd": 5.2400000000000007e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0967", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 388, "tokens_out": 14, "usd": 4.58e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0967", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 391, "tokens_out": 14, "usd": 4.61e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1061", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 301, "tokens_out": 14, "usd": 3.71e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1055", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 346, "tokens_out": 14, "usd": 4.16e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1061", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 371, "tokens_out": 14, "usd": 4.41e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1061", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 393, "tokens_out": 14, "usd": 4.630000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1116", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 315, "tokens_out": 10, "usd": 3.65e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q1121", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 376, "tokens_out": 14, "usd": 4.46e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1138", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 399, "tokens_out": 14, "usd": 4.690000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1167", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 355, "tokens_out": 14, "usd": 4.25e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1167", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 369, "tokens_out": 14, "usd": 4.3899999999999996e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1371", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid", "tokens_in": 440, "tokens_out": 14, "usd": 5.1e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1414", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 372, "tokens_out": 14, "usd": 4.4200000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1371", "raw": "The system answer does not state \"Yes\" o", "stop_reason": "max_tokens", "system": "engine_single", "tokens_in": 360, "tokens_out": 20, "usd": 4.6e-05, "verdict": null}
+{"qid": "multihoprag:q1414", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 403, "tokens_out": 14, "usd": 4.7300000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1414", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 306, "tokens_out": 14, "usd": 3.76e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1414", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid+asof", "tokens_in": 370, "tokens_out": 14, "usd": 4.4e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1414", "raw": "The question asks for a yes/no confirmat", "stop_reason": "max_tokens", "system": "agentic+asof", "tokens_in": 406, "tokens_out": 20, "usd": 5.0600000000000003e-05, "verdict": null}
+{"qid": "multihoprag:q1477", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 341, "tokens_out": 14, "usd": 4.11e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1492", "raw": "The gold answer is \"no,\" meaning the Spo", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 383, "tokens_out": 20, "usd": 4.83e-05, "verdict": null}
+{"qid": "multihoprag:q1501", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 339, "tokens_out": 14, "usd": 4.09e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1510", "raw": "The gold answer is \"no,\" meaning the que", "stop_reason": "max_tokens", "system": "agentic", "tokens_in": 445, "tokens_out": 20, "usd": 5.45e-05, "verdict": null}
+{"qid": "multihoprag:q1510", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 368, "tokens_out": 14, "usd": 4.380000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1638", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 426, "tokens_out": 10, "usd": 4.76e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q1638", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 373, "tokens_out": 14, "usd": 4.4300000000000006e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1638", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 454, "tokens_out": 14, "usd": 5.2400000000000007e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1665", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 392, "tokens_out": 10, "usd": 4.4200000000000004e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q1703", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 395, "tokens_out": 14, "usd": 4.65e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1703", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 396, "tokens_out": 10, "usd": 4.46e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q1703", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 390, "tokens_out": 14, "usd": 4.6e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1717", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 440, "tokens_out": 14, "usd": 5.1e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1717", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 373, "tokens_out": 10, "usd": 4.2300000000000005e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q1717", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 453, "tokens_out": 14, "usd": 5.2300000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1724", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 334, "tokens_out": 14, "usd": 4.04e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1729", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid", "tokens_in": 440, "tokens_out": 14, "usd": 5.1e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1729", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 429, "tokens_out": 14, "usd": 4.990000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1729", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid+asof", "tokens_in": 488, "tokens_out": 14, "usd": 5.58e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1729", "raw": "The question asks whether both articles ", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 399, "tokens_out": 20, "usd": 4.990000000000001e-05, "verdict": null}
+{"qid": "multihoprag:q1729", "raw": "The gold answer is \"Yes,\" meaning both a", "stop_reason": "max_tokens", "system": "engine_single", "tokens_in": 399, "tokens_out": 20, "usd": 4.990000000000001e-05, "verdict": null}
+{"qid": "multihoprag:q1766", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 357, "tokens_out": 14, "usd": 4.27e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1766", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "bm25", "tokens_in": 371, "tokens_out": 14, "usd": 4.41e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1766", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid", "tokens_in": 364, "tokens_out": 14, "usd": 4.34e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1766", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid+asof", "tokens_in": 368, "tokens_out": 14, "usd": 4.380000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1766", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 336, "tokens_out": 10, "usd": 3.86e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q1766", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 373, "tokens_out": 14, "usd": 4.4300000000000006e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1766", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid_rerank", "tokens_in": 413, "tokens_out": 14, "usd": 4.83e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1797", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 377, "tokens_out": 14, "usd": 4.47e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1939", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 408, "tokens_out": 14, "usd": 4.78e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2040", "raw": "The system answer never names the indivi", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 366, "tokens_out": 20, "usd": 4.66e-05, "verdict": null}
+{"qid": "multihoprag:q2043", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 422, "tokens_out": 14, "usd": 4.92e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2053", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 354, "tokens_out": 14, "usd": 4.24e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2053", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 324, "tokens_out": 10, "usd": 3.74e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q2069", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "bm25", "tokens_in": 457, "tokens_out": 10, "usd": 5.0700000000000006e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q2069", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 384, "tokens_out": 10, "usd": 4.3400000000000005e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q2131", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 351, "tokens_out": 14, "usd": 4.21e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2131", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 450, "tokens_out": 14, "usd": 5.2e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2206", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 415, "tokens_out": 14, "usd": 4.85e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2206", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 365, "tokens_out": 14, "usd": 4.35e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2206", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 332, "tokens_out": 10, "usd": 3.82e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q2212", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 350, "tokens_out": 14, "usd": 4.2e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2206", "raw": "The gold answer is \"no\" to the yes/no qu", "stop_reason": "max_tokens", "system": "engine_single", "tokens_in": 308, "tokens_out": 20, "usd": 4.0799999999999996e-05, "verdict": null}
+{"qid": "multihoprag:q2206", "raw": "The gold answer is \"no,\" meaning the pre", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 356, "tokens_out": 20, "usd": 4.5600000000000004e-05, "verdict": null}
+{"qid": "multihoprag:q2212", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 450, "tokens_out": 14, "usd": 5.2e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2212", "raw": "The gold answer is \"Yes,\" meaning there ", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 347, "tokens_out": 20, "usd": 4.47e-05, "verdict": null}
+{"qid": "multihoprag:q2213", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 417, "tokens_out": 14, "usd": 4.8700000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2213", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 439, "tokens_out": 14, "usd": 5.0900000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2213", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid_rerank", "tokens_in": 414, "tokens_out": 14, "usd": 4.8400000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2216", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 340, "tokens_out": 14, "usd": 4.1e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2234", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 342, "tokens_out": 14, "usd": 4.1200000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2238", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "bm25", "tokens_in": 417, "tokens_out": 14, "usd": 4.8700000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2238", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid", "tokens_in": 501, "tokens_out": 14, "usd": 5.71e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2238", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 516, "tokens_out": 10, "usd": 5.66e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q2238", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 390, "tokens_out": 10, "usd": 4.4e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q2238", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 387, "tokens_out": 14, "usd": 4.57e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2295", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 330, "tokens_out": 14, "usd": 4e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2295", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid_rerank", "tokens_in": 429, "tokens_out": 14, "usd": 4.990000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2308", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 326, "tokens_out": 10, "usd": 3.76e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q2308", "raw": "The system answer never names the compan", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 317, "tokens_out": 20, "usd": 4.1700000000000004e-05, "verdict": null}
+{"qid": "multihoprag:q2360", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 395, "tokens_out": 10, "usd": 4.45e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q2383", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 374, "tokens_out": 14, "usd": 4.44e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2383", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 425, "tokens_out": 14, "usd": 4.95e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2385", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 349, "tokens_out": 14, "usd": 4.1899999999999995e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2385", "raw": "The gold answer is \"no.\" The system's an", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 430, "tokens_out": 20, "usd": 5.3e-05, "verdict": null}
+{"qid": "multihoprag:q2387", "raw": "EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 434, "tokens_out": 10, "usd": 4.8400000000000004e-05, "verdict": "EQUIVALENT"}
+{"qid": "multihoprag:q2420", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 287, "tokens_out": 14, "usd": 3.57e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2420", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "bm25", "tokens_in": 379, "tokens_out": 14, "usd": 4.49e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2420", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 384, "tokens_out": 14, "usd": 4.5400000000000006e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2420", "raw": "The system answer's core conclusion is t", "stop_reason": "max_tokens", "system": "agentic+asof", "tokens_in": 366, "tokens_out": 20, "usd": 4.66e-05, "verdict": null}
+{"qid": "multihoprag:q2441", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "closed_book", "tokens_in": 443, "tokens_out": 14, "usd": 5.130000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2441", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid", "tokens_in": 439, "tokens_out": 14, "usd": 5.0900000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2441", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic", "tokens_in": 503, "tokens_out": 14, "usd": 5.7300000000000004e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2441", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "hybrid+asof", "tokens_in": 449, "tokens_out": 14, "usd": 5.190000000000001e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2441", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 353, "tokens_out": 14, "usd": 4.2300000000000005e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2441", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 505, "tokens_out": 14, "usd": 5.75e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2464", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 394, "tokens_out": 14, "usd": 4.64e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0089", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 444, "tokens_out": 14, "usd": 5.14e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q0147", "raw": "The system answer does not name the indi", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 380, "tokens_out": 20, "usd": 4.8e-05, "verdict": null}
+{"qid": "multihoprag:q0379", "raw": "The system answer never names the indivi", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 375, "tokens_out": 20, "usd": 4.75e-05, "verdict": null}
+{"qid": "multihoprag:q0535", "raw": "The system answer never names the indivi", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 385, "tokens_out": 20, "usd": 4.85e-05, "verdict": null}
+{"qid": "multihoprag:q0650", "raw": "The system answer never names a country ", "stop_reason": "max_tokens", "system": "engine_single", "tokens_in": 367, "tokens_out": 20, "usd": 4.6700000000000003e-05, "verdict": null}
+{"qid": "multihoprag:q0802", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 352, "tokens_out": 14, "usd": 4.22e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1371", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine_single", "tokens_in": 360, "tokens_out": 14, "usd": 4.3e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q1414", "raw": "The gold answer to the question is \"Yes.", "stop_reason": "max_tokens", "system": "agentic+asof", "tokens_in": 406, "tokens_out": 20, "usd": 5.0600000000000003e-05, "verdict": null}
+{"qid": "multihoprag:q1492", "raw": "The gold answer is \"no.\" The system answ", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 383, "tokens_out": 20, "usd": 4.83e-05, "verdict": null}
+{"qid": "multihoprag:q1510", "raw": "The gold answer is \"no,\" meaning the cla", "stop_reason": "max_tokens", "system": "agentic", "tokens_in": 445, "tokens_out": 20, "usd": 5.45e-05, "verdict": null}
+{"qid": "multihoprag:q1729", "raw": "The question asks whether both articles ", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 399, "tokens_out": 20, "usd": 4.990000000000001e-05, "verdict": null}
+{"qid": "multihoprag:q1729", "raw": "The gold answer is \"Yes,\" meaning both a", "stop_reason": "max_tokens", "system": "engine_single", "tokens_in": 399, "tokens_out": 20, "usd": 4.990000000000001e-05, "verdict": null}
+{"qid": "multihoprag:q2040", "raw": "The system answer never names the indivi", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 366, "tokens_out": 20, "usd": 4.66e-05, "verdict": null}
+{"qid": "multihoprag:q2206", "raw": "The gold answer is \"no\" to the yes/no qu", "stop_reason": "max_tokens", "system": "engine_single", "tokens_in": 308, "tokens_out": 20, "usd": 4.0799999999999996e-05, "verdict": null}
+{"qid": "multihoprag:q2206", "raw": "The gold answer is \"no,\" meaning the pre", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 356, "tokens_out": 20, "usd": 4.5600000000000004e-05, "verdict": null}
+{"qid": "multihoprag:q2212", "raw": "The gold answer is \"Yes\" (there was a ch", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 347, "tokens_out": 20, "usd": 4.47e-05, "verdict": null}
+{"qid": "multihoprag:q2308", "raw": "The system answer never names the compan", "stop_reason": "max_tokens", "system": "engine", "tokens_in": 317, "tokens_out": 20, "usd": 4.1700000000000004e-05, "verdict": null}
+{"qid": "multihoprag:q2385", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "engine", "tokens_in": 430, "tokens_out": 14, "usd": 5e-05, "verdict": "NOT_EQUIVALENT"}
+{"qid": "multihoprag:q2420", "raw": "NOT_EQUIVALENT", "stop_reason": "end_turn", "system": "agentic+asof", "tokens_in": 366, "tokens_out": 14, "usd": 4.36e-05, "verdict": "NOT_EQUIVALENT"}

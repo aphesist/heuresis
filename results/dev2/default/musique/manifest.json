@@ -1,0 +1,461 @@
+{
+  "config": {
+    "answer": {
+      "max_searches": 4,
+      "mode": "search",
+      "search_k": 5
+    },
+    "decide": {
+      "conflict_margin": 0.1,
+      "min_supported_fraction": 1.0,
+      "mode": "grade",
+      "partial_fraction": 0.5
+    },
+    "draft": {
+      "max_context_chars": 24000,
+      "max_sentences": 0,
+      "max_tokens": 4096,
+      "model": "claude-haiku-5-5",
+      "prompt": "v2"
+    },
+    "retrieve": {
+      "dense": true,
+      "early_stop": true,
+      "early_stop_margin": 0.35,
+      "expand": false,
+      "expand_hops": 1,
+      "k_dense": 50,
+      "k_lexical": 50,
+      "rerank": false,
+      "rerank_in": 50,
+      "rerank_out": 8,
+      "rewrite": false,
+      "rrf_k": 60,
+      "second_round": false
+    },
+    "router": {
+      "ask_threshold": 0.6,
+      "default_intent": "lookup"
+    },
+    "verify": {
+      "answers_question": false,
+      "atomic_claims": false,
+      "partial_threshold": 0.3,
+      "support": "window_title",
+      "support_threshold": 0.5
+    }
+  },
+  "corpus_tokens": 1409951,
+  "dataset": "musique",
+  "dry_run": false,
+  "engine_config": {
+    "answer": {
+      "max_searches": 4,
+      "mode": "search",
+      "search_k": 5
+    },
+    "decide": {
+      "conflict_margin": 0.1,
+      "min_supported_fraction": 1.0,
+      "mode": "grade",
+      "partial_fraction": 0.5
+    },
+    "draft": {
+      "max_context_chars": 24000,
+      "max_sentences": 2,
+      "max_tokens": 4096,
+      "model": "claude-haiku-5-5",
+      "prompt": "v2"
+    },
+    "retrieve": {
+      "dense": true,
+      "early_stop": true,
+      "early_stop_margin": 0.35,
+      "expand": false,
+      "expand_hops": 1,
+      "k_dense": 50,
+      "k_lexical": 50,
+      "rerank": false,
+      "rerank_in": 50,
+      "rerank_out": 8,
+      "rewrite": false,
+      "rrf_k": 60,
+      "second_round": false
+    },
+    "router": {
+      "ask_threshold": 0.6,
+      "default_intent": "lookup"
+    },
+    "verify": {
+      "answers_question": false,
+      "atomic_claims": false,
+      "partial_threshold": 0.3,
+      "support": "window_title",
+      "support_threshold": 0.5
+    }
+  },
+  "engine_configs": {
+    "engine": {
+      "answer": {
+        "max_searches": 4,
+        "mode": "search",
+        "search_k": 5
+      },
+      "decide": {
+        "conflict_margin": 0.1,
+        "min_supported_fraction": 1.0,
+        "mode": "grade",
+        "partial_fraction": 0.5
+      },
+      "draft": {
+        "max_context_chars": 24000,
+        "max_sentences": 2,
+        "max_tokens": 4096,
+        "model": "claude-haiku-5-5",
+        "prompt": "v2"
+      },
+      "retrieve": {
+        "dense": true,
+        "early_stop": true,
+        "early_stop_margin": 0.35,
+        "expand": false,
+        "expand_hops": 1,
+        "k_dense": 50,
+        "k_lexical": 50,
+        "rerank": false,
+        "rerank_in": 50,
+        "rerank_out": 8,
+        "rewrite": false,
+        "rrf_k": 60,
+        "second_round": false
+      },
+      "router": {
+        "ask_threshold": 0.6,
+        "default_intent": "lookup"
+      },
+      "verify": {
+        "answers_question": false,
+        "atomic_claims": false,
+        "partial_threshold": 0.3,
+        "support": "window_title",
+        "support_threshold": 0.5
+      }
+    },
+    "engine_single": {
+      "answer": {
+        "max_searches": 4,
+        "mode": "single",
+        "search_k": 5
+      },
+      "decide": {
+        "conflict_margin": 0.1,
+        "min_supported_fraction": 1.0,
+        "mode": "strict",
+        "partial_fraction": 0.5
+      },
+      "draft": {
+        "max_context_chars": 24000,
+        "max_sentences": 2,
+        "max_tokens": 4096,
+        "model": "claude-haiku-5-5",
+        "prompt": "v2"
+      },
+      "retrieve": {
+        "dense": true,
+        "early_stop": true,
+        "early_stop_margin": 0.35,
+        "expand": false,
+        "expand_hops": 1,
+        "k_dense": 50,
+        "k_lexical": 50,
+        "rerank": false,
+        "rerank_in": 50,
+        "rerank_out": 8,
+        "rewrite": false,
+        "rrf_k": 60,
+        "second_round": false
+      },
+      "router": {
+        "ask_threshold": 0.6,
+        "default_intent": "lookup"
+      },
+      "verify": {
+        "answers_question": false,
+        "atomic_claims": false,
+        "partial_threshold": 0.3,
+        "support": "window_title",
+        "support_threshold": 0.5
+      }
+    }
+  },
+  "first_started": "2026-11-12T13:28:10Z",
+  "last_run": {
+    "errors": 0,
+    "skipped": 0,
+    "stopped": null,
+    "written": 900
+  },
+  "last_started": "2026-11-12T13:28:10Z",
+  "latency_note": "ms is wall-clock around System.answer, measured the same way for every system, with 4 concurrent workers; stage_ms (engine only) is the sum of the engine's stage timings",
+  "ledger": {
+    "cap_usd": 4.0,
+    "margin_usd": 0.25,
+    "path": "runs/dev2/ledger.jsonl"
+  },
+  "licence": "CC BY 4.0 (MuSiQue, StonyBrookNLP/musique README); the Hugging Face card of osunlp/HippoRAG_2 states no licence",
+  "limit": null,
+  "locked_hash": "f13783b57968b2b8b9313bb31d89f83aac1ea417520a9de70676aa890d52ad53",
+  "model_provenance": {
+    "embedder": {
+      "id": "onnx:intfloat/multilingual-e5-small",
+      "onnx_sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665",
+      "tokenizer_sha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+    },
+    "entailer": {
+      "id": "onnx:MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+      "onnx_sha256": "79f8cda2b1230585a95ea0514a6f1bd21c5c986ba0529bb3261213a3e195fa6e",
+      "tokenizer_sha256": "098c131bb4423163db239755e309facaa6850059f850f9f3d88a78344a4b631c"
+    },
+    "generator": {
+      "id": "claude-haiku-5-5",
+      "max_tokens": 4096,
+      "note": "not sent: the model rejects the parameter; sampling is the API default",
+      "temperature": null,
+      "thinking": null
+    },
+    "reranker": {
+      "id": "onnx:cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "onnx_sha256": "3e9a03ed1e966f7c5288dd4230e3d6a9bf5e3a170a06f1f4241c5bca12c6487c",
+      "tokenizer_sha256": "62c24cdc13d4c9952d63718d6c9fa4c287974249e16b7ade6d5a85e7bbb75626"
+    }
+  },
+  "models": {
+    "embedder": "onnx:intfloat/multilingual-e5-small",
+    "entailer": "onnx:MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+    "generator": "claude-haiku-5-5",
+    "reranker": "onnx:cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+  },
+  "n_questions": 100,
+  "params": {
+    "agent_k": 5,
+    "agent_rerank": false,
+    "cap_usd": 4.0,
+    "dataset": "musique",
+    "dry_run": false,
+    "embedder": null,
+    "entailer": null,
+    "estimate_usd": 0.02,
+    "k": 8,
+    "key_env": "PROJECTS_ANTHROPIC_KEY",
+    "ledger": "runs/dev2/ledger.jsonl",
+    "limit": null,
+    "long_context_limit": 90000,
+    "margin_usd": 0.25,
+    "max_actions": 4,
+    "model": null,
+    "out": "runs/dev2/default/musique",
+    "overrides": [
+      "draft.max_tokens=4096"
+    ],
+    "paid": true,
+    "reranker": null,
+    "seed": 0,
+    "split": "dev2",
+    "systems": "closed_book,bm25,hybrid,hybrid_rerank,agentic,engine,engine_single",
+    "thinking": "default",
+    "time_aware": false,
+    "time_aware_variants": true,
+    "variants_of": "hybrid,agentic",
+    "workers": 4
+  },
+  "price_table": "anthropic-2026-11",
+  "prompts_hash": "c025db9efc35daf759babe28848d6db14a0f8c2fbc853ea21cd60e01505d3a7b",
+  "question_ids": [
+    "musique:2hop__10620_79092",
+    "musique:2hop__107548_124896",
+    "musique:2hop__108158_83769",
+    "musique:2hop__121386_37168",
+    "musique:2hop__123145_66723",
+    "musique:2hop__123509_5385",
+    "musique:2hop__124412_402641",
+    "musique:2hop__124933_653666",
+    "musique:2hop__128608_82341",
+    "musique:2hop__131455_11960",
+    "musique:2hop__143915_68489",
+    "musique:2hop__144303_483189",
+    "musique:2hop__147260_623159",
+    "musique:2hop__149862_108549",
+    "musique:2hop__14_59409",
+    "musique:2hop__161915_78851",
+    "musique:2hop__167577_31122",
+    "musique:2hop__17854_17873",
+    "musique:2hop__203437_152093",
+    "musique:2hop__223655_463572",
+    "musique:2hop__23459_35123",
+    "musique:2hop__235471_565925",
+    "musique:2hop__25797_990",
+    "musique:2hop__284789_52835",
+    "musique:2hop__29339_40482",
+    "musique:2hop__335418_279684",
+    "musique:2hop__34594_160249",
+    "musique:2hop__363214_590899",
+    "musique:2hop__412633_15781",
+    "musique:2hop__448615_127908",
+    "musique:2hop__46550_85990",
+    "musique:2hop__46862_68042",
+    "musique:2hop__507528_139339",
+    "musique:2hop__569582_304416",
+    "musique:2hop__603598_25719",
+    "musique:2hop__62311_62279",
+    "musique:2hop__636597_480615",
+    "musique:2hop__6827_49664",
+    "musique:2hop__684287_78303",
+    "musique:2hop__71294_494136",
+    "musique:2hop__72660_319330",
+    "musique:2hop__78401_158262",
+    "musique:2hop__814856_110882",
+    "musique:2hop__818302_25719",
+    "musique:2hop__82270_177869",
+    "musique:2hop__82669_768138",
+    "musique:2hop__83405_158262",
+    "musique:2hop__839126_472799",
+    "musique:2hop__95687_577502",
+    "musique:2hop__96411_159054",
+    "musique:3hop1__106845_5188_86687",
+    "musique:3hop1__108062_720914_27537",
+    "musique:3hop1__140786_2053_52946",
+    "musique:3hop1__141138_2053_52946",
+    "musique:3hop1__144678_443779_52195",
+    "musique:3hop1__145411_443779_52195",
+    "musique:3hop1__161507_160713_77246",
+    "musique:3hop1__17192_78396_54865",
+    "musique:3hop1__239036_15840_36014",
+    "musique:3hop1__243276_42197_18397",
+    "musique:3hop1__379315_160713_77246",
+    "musique:3hop1__389761_567566_84283",
+    "musique:3hop1__406043_831637_91775",
+    "musique:3hop1__41865_55331_34700",
+    "musique:3hop1__46571_87694_124169",
+    "musique:3hop1__506062_792411_51423",
+    "musique:3hop1__507961_160713_77246",
+    "musique:3hop1__518381_709625_84283",
+    "musique:3hop1__579562_629431_64412",
+    "musique:3hop1__604991_339990_54675",
+    "musique:3hop1__652852_2053_52946",
+    "musique:3hop1__694534_160088_73916",
+    "musique:3hop1__829944_474097_84283",
+    "musique:3hop1__831162_831637_91775",
+    "musique:3hop1__857241_503371_21711",
+    "musique:3hop1__857_846_7887",
+    "musique:3hop1__90327_83076_319330",
+    "musique:3hop1__9285_5188_63702",
+    "musique:3hop2__158279_71753_70784",
+    "musique:3hop2__222979_132536_40768",
+    "musique:3hop2__57238_1926_54362",
+    "musique:3hop2__781093_223623_162182",
+    "musique:3hop2__90098_156850_10557",
+    "musique:3hop2__92991_72083_76291",
+    "musique:4hop1__129721_32392_823060_610794",
+    "musique:4hop1__131113_59747_211319_557671",
+    "musique:4hop1__152146_5274_458768_33677",
+    "musique:4hop1__15567_59747_211319_557671",
+    "musique:4hop1__15607_59747_211319_557671",
+    "musique:4hop1__31333_59747_211319_557671",
+    "musique:4hop1__343844_17130_70784_79935",
+    "musique:4hop1__391525_49925_13759_736921",
+    "musique:4hop1__51465_53706_795904_580996",
+    "musique:4hop1__525129_315334_131926_90707",
+    "musique:4hop1__58323_375563_161848_53331",
+    "musique:4hop1__696484_49925_13759_736921",
+    "musique:4hop1__813171_153080_159767_81096",
+    "musique:4hop1__846600_153080_33897_81096",
+    "musique:4hop2__161602_474028_88460_21034",
+    "musique:4hop3__862_846_326964_7713"
+  ],
+  "seed": 0,
+  "spent_usd": 1.4385031000000044,
+  "split": "dev2",
+  "surface_hash": "5e5f9afb2ae735c7fdc2ab9c8c3ae11cdefe0c88a2dd0354d165b203d7b299a4",
+  "systems": [
+    {
+      "available": true,
+      "exploratory": false,
+      "name": "closed_book",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 8,
+      "name": "bm25",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 8,
+      "name": "hybrid",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 8,
+      "name": "hybrid_rerank",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 5,
+      "max_actions": 4,
+      "name": "agentic",
+      "reason": "",
+      "retriever": "hybrid",
+      "time_aware": false
+    },
+    {
+      "answer_mode": "search",
+      "available": true,
+      "decide_mode": "grade",
+      "exploratory": false,
+      "max_searches": 4,
+      "name": "engine",
+      "reason": "",
+      "time_aware": true
+    },
+    {
+      "answer_mode": "single",
+      "available": true,
+      "decide_mode": "strict",
+      "exploratory": true,
+      "max_searches": 4,
+      "name": "engine_single",
+      "reason": "",
+      "time_aware": true
+    },
+    {
+      "available": true,
+      "exploratory": true,
+      "k": 8,
+      "name": "hybrid+asof",
+      "reason": "",
+      "time_aware": true
+    },
+    {
+      "available": true,
+      "exploratory": true,
+      "k": 5,
+      "max_actions": 4,
+      "name": "agentic+asof",
+      "reason": "",
+      "retriever": "hybrid",
+      "time_aware": true
+    }
+  ],
+  "workers": 4
+}

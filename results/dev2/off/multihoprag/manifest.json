@@ -1,0 +1,461 @@
+{
+  "config": {
+    "answer": {
+      "max_searches": 4,
+      "mode": "search",
+      "search_k": 5
+    },
+    "decide": {
+      "conflict_margin": 0.1,
+      "min_supported_fraction": 1.0,
+      "mode": "grade",
+      "partial_fraction": 0.5
+    },
+    "draft": {
+      "max_context_chars": 24000,
+      "max_sentences": 0,
+      "max_tokens": 600,
+      "model": "claude-haiku-5-5",
+      "prompt": "v2"
+    },
+    "retrieve": {
+      "dense": true,
+      "early_stop": true,
+      "early_stop_margin": 0.35,
+      "expand": false,
+      "expand_hops": 1,
+      "k_dense": 50,
+      "k_lexical": 50,
+      "rerank": false,
+      "rerank_in": 50,
+      "rerank_out": 8,
+      "rewrite": false,
+      "rrf_k": 60,
+      "second_round": false
+    },
+    "router": {
+      "ask_threshold": 0.6,
+      "default_intent": "lookup"
+    },
+    "verify": {
+      "answers_question": false,
+      "atomic_claims": false,
+      "partial_threshold": 0.3,
+      "support": "window_title",
+      "support_threshold": 0.5
+    }
+  },
+  "corpus_tokens": 1574432,
+  "dataset": "multihoprag",
+  "dry_run": false,
+  "engine_config": {
+    "answer": {
+      "max_searches": 4,
+      "mode": "search",
+      "search_k": 5
+    },
+    "decide": {
+      "conflict_margin": 0.1,
+      "min_supported_fraction": 1.0,
+      "mode": "grade",
+      "partial_fraction": 0.5
+    },
+    "draft": {
+      "max_context_chars": 24000,
+      "max_sentences": 2,
+      "max_tokens": 600,
+      "model": "claude-haiku-5-5",
+      "prompt": "v2"
+    },
+    "retrieve": {
+      "dense": true,
+      "early_stop": true,
+      "early_stop_margin": 0.35,
+      "expand": false,
+      "expand_hops": 1,
+      "k_dense": 50,
+      "k_lexical": 50,
+      "rerank": false,
+      "rerank_in": 50,
+      "rerank_out": 8,
+      "rewrite": false,
+      "rrf_k": 60,
+      "second_round": false
+    },
+    "router": {
+      "ask_threshold": 0.6,
+      "default_intent": "lookup"
+    },
+    "verify": {
+      "answers_question": false,
+      "atomic_claims": false,
+      "partial_threshold": 0.3,
+      "support": "window_title",
+      "support_threshold": 0.5
+    }
+  },
+  "engine_configs": {
+    "engine": {
+      "answer": {
+        "max_searches": 4,
+        "mode": "search",
+        "search_k": 5
+      },
+      "decide": {
+        "conflict_margin": 0.1,
+        "min_supported_fraction": 1.0,
+        "mode": "grade",
+        "partial_fraction": 0.5
+      },
+      "draft": {
+        "max_context_chars": 24000,
+        "max_sentences": 2,
+        "max_tokens": 600,
+        "model": "claude-haiku-5-5",
+        "prompt": "v2"
+      },
+      "retrieve": {
+        "dense": true,
+        "early_stop": true,
+        "early_stop_margin": 0.35,
+        "expand": false,
+        "expand_hops": 1,
+        "k_dense": 50,
+        "k_lexical": 50,
+        "rerank": false,
+        "rerank_in": 50,
+        "rerank_out": 8,
+        "rewrite": false,
+        "rrf_k": 60,
+        "second_round": false
+      },
+      "router": {
+        "ask_threshold": 0.6,
+        "default_intent": "lookup"
+      },
+      "verify": {
+        "answers_question": false,
+        "atomic_claims": false,
+        "partial_threshold": 0.3,
+        "support": "window_title",
+        "support_threshold": 0.5
+      }
+    },
+    "engine_single": {
+      "answer": {
+        "max_searches": 4,
+        "mode": "single",
+        "search_k": 5
+      },
+      "decide": {
+        "conflict_margin": 0.1,
+        "min_supported_fraction": 1.0,
+        "mode": "strict",
+        "partial_fraction": 0.5
+      },
+      "draft": {
+        "max_context_chars": 24000,
+        "max_sentences": 2,
+        "max_tokens": 600,
+        "model": "claude-haiku-5-5",
+        "prompt": "v2"
+      },
+      "retrieve": {
+        "dense": true,
+        "early_stop": true,
+        "early_stop_margin": 0.35,
+        "expand": false,
+        "expand_hops": 1,
+        "k_dense": 50,
+        "k_lexical": 50,
+        "rerank": false,
+        "rerank_in": 50,
+        "rerank_out": 8,
+        "rewrite": false,
+        "rrf_k": 60,
+        "second_round": false
+      },
+      "router": {
+        "ask_threshold": 0.6,
+        "default_intent": "lookup"
+      },
+      "verify": {
+        "answers_question": false,
+        "atomic_claims": false,
+        "partial_threshold": 0.3,
+        "support": "window_title",
+        "support_threshold": 0.5
+      }
+    }
+  },
+  "first_started": "2026-11-12T12:53:47Z",
+  "last_run": {
+    "errors": 0,
+    "skipped": 0,
+    "stopped": null,
+    "written": 900
+  },
+  "last_started": "2026-11-12T12:53:47Z",
+  "latency_note": "ms is wall-clock around System.answer, measured the same way for every system, with 4 concurrent workers; stage_ms (engine only) is the sum of the engine's stage timings",
+  "ledger": {
+    "cap_usd": 4.0,
+    "margin_usd": 0.25,
+    "path": "runs/dev2/ledger.jsonl"
+  },
+  "licence": "ODC-By (Hugging Face dataset card, license: odc-by)",
+  "limit": null,
+  "locked_hash": "f13783b57968b2b8b9313bb31d89f83aac1ea417520a9de70676aa890d52ad53",
+  "model_provenance": {
+    "embedder": {
+      "id": "onnx:intfloat/multilingual-e5-small",
+      "onnx_sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665",
+      "tokenizer_sha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+    },
+    "entailer": {
+      "id": "onnx:MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+      "onnx_sha256": "79f8cda2b1230585a95ea0514a6f1bd21c5c986ba0529bb3261213a3e195fa6e",
+      "tokenizer_sha256": "098c131bb4423163db239755e309facaa6850059f850f9f3d88a78344a4b631c"
+    },
+    "generator": {
+      "id": "claude-haiku-5-5",
+      "max_tokens": 600,
+      "note": "not sent: the model rejects the parameter; sampling is the API default",
+      "temperature": null,
+      "thinking": {
+        "type": "disabled"
+      }
+    },
+    "reranker": {
+      "id": "onnx:cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "onnx_sha256": "3e9a03ed1e966f7c5288dd4230e3d6a9bf5e3a170a06f1f4241c5bca12c6487c",
+      "tokenizer_sha256": "62c24cdc13d4c9952d63718d6c9fa4c287974249e16b7ade6d5a85e7bbb75626"
+    }
+  },
+  "models": {
+    "embedder": "onnx:intfloat/multilingual-e5-small",
+    "entailer": "onnx:MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+    "generator": "claude-haiku-5-5",
+    "reranker": "onnx:cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+  },
+  "n_questions": 100,
+  "params": {
+    "agent_k": 5,
+    "agent_rerank": false,
+    "cap_usd": 4.0,
+    "dataset": "multihoprag",
+    "dry_run": false,
+    "embedder": null,
+    "entailer": null,
+    "estimate_usd": 0.02,
+    "k": 8,
+    "key_env": "PROJECTS_ANTHROPIC_KEY",
+    "ledger": "runs/dev2/ledger.jsonl",
+    "limit": null,
+    "long_context_limit": 90000,
+    "margin_usd": 0.25,
+    "max_actions": 4,
+    "model": null,
+    "out": "runs/dev2/off/multihoprag",
+    "overrides": [],
+    "paid": true,
+    "reranker": null,
+    "seed": 0,
+    "split": "dev2",
+    "systems": "closed_book,bm25,hybrid,hybrid_rerank,agentic,engine,engine_single",
+    "thinking": "disabled",
+    "time_aware": false,
+    "time_aware_variants": true,
+    "variants_of": "hybrid,agentic",
+    "workers": 4
+  },
+  "price_table": "anthropic-2026-11",
+  "prompts_hash": "c025db9efc35daf759babe28848d6db14a0f8c2fbc853ea21cd60e01505d3a7b",
+  "question_ids": [
+    "multihoprag:q0006",
+    "multihoprag:q0042",
+    "multihoprag:q0078",
+    "multihoprag:q0089",
+    "multihoprag:q0130",
+    "multihoprag:q0147",
+    "multihoprag:q0166",
+    "multihoprag:q0176",
+    "multihoprag:q0202",
+    "multihoprag:q0212",
+    "multihoprag:q0247",
+    "multihoprag:q0295",
+    "multihoprag:q0306",
+    "multihoprag:q0379",
+    "multihoprag:q0422",
+    "multihoprag:q0479",
+    "multihoprag:q0495",
+    "multihoprag:q0531",
+    "multihoprag:q0535",
+    "multihoprag:q0542",
+    "multihoprag:q0563",
+    "multihoprag:q0573",
+    "multihoprag:q0606",
+    "multihoprag:q0617",
+    "multihoprag:q0625",
+    "multihoprag:q0628",
+    "multihoprag:q0650",
+    "multihoprag:q0720",
+    "multihoprag:q0732",
+    "multihoprag:q0736",
+    "multihoprag:q0755",
+    "multihoprag:q0801",
+    "multihoprag:q0802",
+    "multihoprag:q0830",
+    "multihoprag:q0877",
+    "multihoprag:q0880",
+    "multihoprag:q0909",
+    "multihoprag:q0935",
+    "multihoprag:q0946",
+    "multihoprag:q0957",
+    "multihoprag:q0966",
+    "multihoprag:q0967",
+    "multihoprag:q1055",
+    "multihoprag:q1061",
+    "multihoprag:q1062",
+    "multihoprag:q1116",
+    "multihoprag:q1121",
+    "multihoprag:q1138",
+    "multihoprag:q1167",
+    "multihoprag:q1171",
+    "multihoprag:q1321",
+    "multihoprag:q1371",
+    "multihoprag:q1414",
+    "multihoprag:q1477",
+    "multihoprag:q1492",
+    "multihoprag:q1501",
+    "multihoprag:q1510",
+    "multihoprag:q1611",
+    "multihoprag:q1635",
+    "multihoprag:q1638",
+    "multihoprag:q1641",
+    "multihoprag:q1665",
+    "multihoprag:q1703",
+    "multihoprag:q1712",
+    "multihoprag:q1717",
+    "multihoprag:q1724",
+    "multihoprag:q1729",
+    "multihoprag:q1752",
+    "multihoprag:q1753",
+    "multihoprag:q1766",
+    "multihoprag:q1793",
+    "multihoprag:q1797",
+    "multihoprag:q1869",
+    "multihoprag:q1939",
+    "multihoprag:q2040",
+    "multihoprag:q2043",
+    "multihoprag:q2053",
+    "multihoprag:q2069",
+    "multihoprag:q2106",
+    "multihoprag:q2131",
+    "multihoprag:q2206",
+    "multihoprag:q2212",
+    "multihoprag:q2213",
+    "multihoprag:q2216",
+    "multihoprag:q2234",
+    "multihoprag:q2238",
+    "multihoprag:q2295",
+    "multihoprag:q2308",
+    "multihoprag:q2337",
+    "multihoprag:q2360",
+    "multihoprag:q2370",
+    "multihoprag:q2372",
+    "multihoprag:q2383",
+    "multihoprag:q2385",
+    "multihoprag:q2387",
+    "multihoprag:q2406",
+    "multihoprag:q2420",
+    "multihoprag:q2441",
+    "multihoprag:q2464",
+    "multihoprag:q2492"
+  ],
+  "seed": 0,
+  "spent_usd": 0.7689274000000014,
+  "split": "dev2",
+  "surface_hash": "547d7f32387e2e4aff33eaa5ff39a388b52084f3680e54515ccc3d1433d878b3",
+  "systems": [
+    {
+      "available": true,
+      "exploratory": false,
+      "name": "closed_book",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 8,
+      "name": "bm25",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 8,
+      "name": "hybrid",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 8,
+      "name": "hybrid_rerank",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 5,
+      "max_actions": 4,
+      "name": "agentic",
+      "reason": "",
+      "retriever": "hybrid",
+      "time_aware": false
+    },
+    {
+      "answer_mode": "search",
+      "available": true,
+      "decide_mode": "grade",
+      "exploratory": false,
+      "max_searches": 4,
+      "name": "engine",
+      "reason": "",
+      "time_aware": true
+    },
+    {
+      "answer_mode": "single",
+      "available": true,
+      "decide_mode": "strict",
+      "exploratory": true,
+      "max_searches": 4,
+      "name": "engine_single",
+      "reason": "",
+      "time_aware": true
+    },
+    {
+      "available": true,
+      "exploratory": true,
+      "k": 8,
+      "name": "hybrid+asof",
+      "reason": "",
+      "time_aware": true
+    },
+    {
+      "available": true,
+      "exploratory": true,
+      "k": 5,
+      "max_actions": 4,
+      "name": "agentic+asof",
+      "reason": "",
+      "retriever": "hybrid",
+      "time_aware": true
+    }
+  ],
+  "workers": 4
+}
