@@ -36,12 +36,19 @@ class AnthropicLLM:
         urlopen: Callable[..., Any] | None = None,
         sleep: Callable[[float], None] | None = None,
         temperature: float | None = None,
+        thinking: dict | None = None,
     ):
         self.id = model
         #: Sampling temperature sent in every request; ``None`` (the default) sends none.
         self.temperature = temperature
         #: Whether requests carry ``temperature``; turns False if the API rejects it.
         self.temperature_sent = temperature is not None
+        #: The ``thinking`` request field sent in every call, e.g. ``{"type": "disabled"}``;
+        #: ``None`` (the default) sends none and leaves the model's own default. Thinking
+        #: tokens are billed as output tokens and count against ``max_tokens``, so a run
+        #: that wants ``max_tokens`` to bound the visible answer must turn it off. A model
+        #: that rejects the value fails the call (HTTP 400): it is not dropped silently.
+        self.thinking = dict(thinking) if thinking else None
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
@@ -87,6 +94,8 @@ class AnthropicLLM:
             "system": system,
             "messages": [{"role": "user", "content": prompt}],
         }
+        if self.thinking is not None:
+            payload["thinking"] = dict(self.thinking)
         base = dict(payload)
         if self.temperature_sent:
             payload["temperature"] = float(self.temperature)
@@ -134,6 +143,11 @@ class AnthropicLLM:
         raise LLMError(f"giving up after {self.max_retries + 1} attempts: {last}")
 
     def _finish(self, payload: dict, t0: float) -> tuple[str, Usage]:
+        blocks: dict[str, int] = {}
+        for b in payload.get("content", []):
+            if isinstance(b, dict):
+                t = str(b.get("type", "?"))
+                blocks[t] = blocks.get(t, 0) + 1
         text = "".join(
             b.get("text", "")
             for b in payload.get("content", [])
@@ -155,6 +169,9 @@ class AnthropicLLM:
             tokens_cached=cread,
             usd=usd,
             ms=(time.perf_counter() - t0) * 1000.0,
+            stop_reason=str(payload.get("stop_reason") or ""),
+            blocks=blocks,
+            text_chars=len(text),
         )
         return text, usage
 

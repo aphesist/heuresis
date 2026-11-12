@@ -36,6 +36,8 @@ class DraftCfg:
     max_tokens: int = 600
     max_context_chars: int = 24000
     max_sentences: int = 0
+    #: Which drafting instruction: "v2" (default) or "v1" (the first one, for an A/B).
+    prompt: str = "v2"
 
 
 @dataclass
@@ -43,6 +45,10 @@ class VerifyCfg:
     support_threshold: float = 0.5
     partial_threshold: float = 0.3
     atomic_claims: bool = False
+    #: How a claim's support is scored: "window_title" (default: the best entailment over
+    #: title-prefixed sentence windows of the cited passages) or "current" (the first
+    #: version: one joined premise of the cited passages' texts).
+    support: str = "window_title"
 
 
 @dataclass

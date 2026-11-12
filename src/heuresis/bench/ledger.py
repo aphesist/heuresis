@@ -84,6 +84,10 @@ class Ledger:
             "tokens_cached": usage.tokens_cached,
             "usd": float(usage.usd),
         }
+        if usage.stop_reason:  # recorded per call when the API reports it
+            row["stop_reason"] = usage.stop_reason
+            row["blocks"] = dict(usage.blocks)
+            row["text_chars"] = int(usage.text_chars)
         line = json.dumps(row, sort_keys=True) + "\n"
         with self._lock:
             with open(self.path, "a", encoding="utf-8") as fh:

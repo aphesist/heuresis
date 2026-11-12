@@ -63,8 +63,9 @@ is local again.
    overwritten. After a `sql` call there is one follow-up draft with the results in the prompt.
 5. **Verify** (`locked/verify.py`, local). Four checks per sentence: every cited mark exists; every
    cited version is in force at the date (checked against the store, not the passage copy); the cited
-   passages entail the sentence (local NLI model, thresholds `support_threshold` and
-   `partial_threshold`); every number in the sentence appears in a cited passage or is a cited tool
+   passages entail the sentence (local NLI model, scored as the best entailment over title-prefixed
+   windows of up to three consecutive sentences of each cited passage, `verify.support = "window_title"`;
+   thresholds `support_threshold` and `partial_threshold`); every number in the sentence appears in a cited passage or is a cited tool
    value. A sentence with no marks is unsupported. A sentence that fails exists, valid or numbers is
    unsupported whatever its entailment score.
 6. **Decide** (`locked/decide.py`). All claims supported (fraction `min_supported_fraction`):

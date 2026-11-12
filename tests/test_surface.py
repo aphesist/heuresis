@@ -48,3 +48,44 @@ def test_max_sentences_instruction():
     assert "at most" not in draft_prompt("Q?", None, ps, [], max_sentences=0)
     out = draft_prompt("Q?", None, ps, [], max_sentences=2)
     assert out.splitlines()[-1] == "Answer in at most 2 short sentences."
+
+
+def test_drafting_prompt_v2_is_default_and_v1_stays_selectable():
+    from heuresis.draft import draft as run_draft
+    from heuresis.model import Query
+    from heuresis.surface import DRAFT_SYSTEM_V1, DRAFT_SYSTEM_V2, draft_system
+
+    assert DRAFT_SYSTEM is DRAFT_SYSTEM_V2 and draft_system() == DRAFT_SYSTEM_V2
+    assert draft_system("v1") == DRAFT_SYSTEM_V1 and DRAFT_SYSTEM_V1 != DRAFT_SYSTEM_V2
+    # v1 is the first instruction, verbatim: it abstains whenever the passages do not answer
+    assert "If the passages do not answer the question, write only" in DRAFT_SYSTEM_V1
+    assert "combine facts" not in DRAFT_SYSTEM_V1
+    # v2 asks for the answer first, for combining passages, and for abstaining only then
+    for kw in ("combine facts from two or more passages", "State the answer in the first sentence",
+               "ALL the passages that support it", "Only if the answer is not in the passages"):
+        assert kw in DRAFT_SYSTEM_V2
+    for text in (DRAFT_SYSTEM_V1, DRAFT_SYSTEM_V2):  # same format rules in both
+        for kw in ("ONLY", "CALL k1 calc", "{k1}", "ABSTAIN <type>"):
+            assert kw in text
+        assert all(a in text for a in ABSTENTIONS)
+    with pytest.raises(ValueError):
+        draft_system("v3")
+    assert load_config().draft.prompt == "v2"
+
+    seen = []
+
+    class Spy:
+        def complete(self, system, prompt, *, max_tokens=600):
+            from heuresis.model import Usage
+            seen.append(system)
+            return "ABSTAIN unsupported: x", Usage()
+
+    cfg = load_config()
+    ps = [Passage("u1", 0, "The limit is 5.", title="Art 1", mark="t1")]
+    run_draft(Spy(), Query("q"), ps, [], cfg.draft)
+    cfg.draft.prompt = "v1"
+    run_draft(Spy(), Query("q"), ps, [], cfg.draft)
+    assert seen == [DRAFT_SYSTEM_V2, DRAFT_SYSTEM_V1]
+    from heuresis.bench import systems as S
+    a = S.surface_hash(load_config())
+    assert S.surface_hash(cfg) != a  # the choice of prompt is part of the surface hash

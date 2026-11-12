@@ -51,14 +51,14 @@ class Config:            # nested dataclasses, one per stage; every field has a 
                            # dense=True, expand=False, expand_hops=1, rerank=False,
                            # rewrite=False, second_round=False
     draft: DraftCfg      # model="claude-haiku-5-5", max_tokens=600, max_context_chars=24000
-    verify: VerifyCfg    # support_threshold=0.5, partial_threshold=0.3, atomic_claims=False
+    verify: VerifyCfg    # support_threshold=0.5, partial_threshold=0.3, atomic_claims=False, support="window_title" (or "current")
     decide: DecideCfg    # min_supported_fraction=1.0, partial_fraction=0.5, conflict_margin=0.1
 
 def load_config(path: str | None = None) -> Config   # None -> packaged default.json
 def config_to_dict(cfg) -> dict ; def config_from_dict(d) -> Config   # unknown keys raise
 ```
 
-`prompts.py` holds `DRAFT_SYSTEM` and `draft_prompt(question, as_of, passages, tools) -> str`.
+`prompts.py` holds `DRAFT_SYSTEM` (the default, `DRAFT_SYSTEM_V2`; `DRAFT_SYSTEM_V1` is the first instruction, chosen with `draft.prompt = "v1"`) and `draft_prompt(question, as_of, passages, tools) -> str`.
 
 ### fakes (`heuresis/fakes.py`)
 

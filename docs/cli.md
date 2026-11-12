@@ -64,7 +64,11 @@ arguments are passed through to `heuresis.bench.run.main` / `report.main`.
   from the variable named by `--key-env NAME`. Before any work it prints the variable NAME and the
   base URL (`https://api.anthropic.com`), never the value, and exits 2 if the variable is unset.
 - **Sampling.** No `temperature` is sent: the model rejects the parameter (HTTP 400), so sampling is the
-  API default. The manifest records `"temperature": null` with a note, the model id and the output cap.
+  API default. `--thinking disabled` (the default) sends `thinking: {"type": "disabled"}` on every call of
+  every system, so `max_tokens` bounds the visible answer; `--thinking default` sends nothing (adaptive
+  thinking stays on and its tokens count against `max_tokens`). The manifest records `"temperature": null`
+  with a note, the `thinking` setting, the model id and the output cap. Every call's stop reason and
+  content-block counts go to the ledger, and each result row records `stop_reasons`, `blocks` and `text_chars`.
 - **Errors.** An API or model failure after the client's retries is written as a row with
   `status: "error"` for every system (the engine included), retried when the runner restarts, and
   counted by the report as a wrong answer for that system. A budget stop is never an error: the run

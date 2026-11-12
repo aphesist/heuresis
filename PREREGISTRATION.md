@@ -93,7 +93,7 @@ Copied from `docs/datasets.md`.
 
 ## 3. Systems
 
-All systems share one generator (`claude-haiku-5-5`), one output cap (`draft.max_tokens` = 600), one SQLite corpus per dataset (built with the `jsonl` domain) and one local embedder. The generator's sampling is the API default for every system: the Messages API rejects the `temperature` parameter for `claude-haiku-5-5` (HTTP 400, "`temperature` is deprecated for this model."), so it cannot be set and `bench.run` does not send it (`AnthropicLLM(temperature=None)` in `src/heuresis/llm.py`). The manifest records `"temperature": null` with a note, the model id and the output cap. No seed parameter exists in the request, so repeat runs may differ.
+All systems share one generator (`claude-haiku-5-5`) called with thinking turned off (`thinking: {"type": "disabled"}`, `bench.run --thinking disabled`, the default; see the deviations log of 2026-11-12), so that one output cap (`draft.max_tokens` = 600) bounds the visible answer, one SQLite corpus per dataset (built with the `jsonl` domain) and one local embedder. The generator's sampling is the API default for every system: the Messages API rejects the `temperature` parameter for `claude-haiku-5-5` (HTTP 400, "`temperature` is deprecated for this model."), so it cannot be set and `bench.run` does not send it (`AnthropicLLM(temperature=None)` in `src/heuresis/llm.py`). The manifest records `"temperature": null` with a note, the `thinking` setting, the model id and the output cap. No seed parameter exists in the request, so repeat runs may differ.
 
 ### 3.1 The list
 
@@ -156,15 +156,16 @@ Reply with exactly one line `SEARCH: <query>` to search again, or answer now.
 No searches remain. Answer now.
 ```
 
-The engine's system prompt is `DRAFT_SYSTEM` in `src/heuresis/surface/prompts.py`. It is part of the surface hash (which also covers the source of `surface/prompts.py`, so `draft_prompt` too), not of `prompts_hash()`:
+The engine's system prompt is `DRAFT_SYSTEM` (= `DRAFT_SYSTEM_V2`) in `src/heuresis/surface/prompts.py`; the first version, `DRAFT_SYSTEM_V1`, is kept verbatim and selectable with `draft.prompt = "v1"` for an A/B. The prompt is part of the surface hash (which also covers the source of `surface/prompts.py`, so `draft_prompt` and V1 too), not of `prompts_hash()`. It was rewritten on dev evidence (deviations log, 2026-11-12):
 
 ```
 Answer ONLY from the numbered passages. Never use outside knowledge.
+Answer whenever the passages contain the answer, also when you must combine facts from two or more passages (for example, one passage names the person and another gives the fact about that person). A passage that is only partly relevant, or that does not repeat the question's wording, is no reason to abstain.
 Format, one item per line:
-- Write short sentences. End EVERY sentence with the marks of the passages that support it, like [t1] or [t1][t2].
+- State the answer in the first sentence, then add only what is needed. Write short sentences. End EVERY sentence with the marks of ALL the passages that support it, like [t1] or [t1][t2].
 - Never do arithmetic or date math yourself. Request it before the answer with a line `CALL k1 calc {"expr": "..."}` (k1, k2, ... one per call), then write {k1} where the result goes and add the mark [k1] to that sentence.
 - Use the as-of date you are given; passages show their validity as (title; valid from..to).
-- If the passages do not answer the question, write only `ABSTAIN <type>: <reason>` with type one of: no_source, not_valid_at_date, conflict, false_premise, outside_coverage, unsupported, needs_input, tool_failed, out_of_scope, budget.
+- Only if the answer is not in the passages, write only `ABSTAIN <type>: <reason>` with type one of: no_source, not_valid_at_date, conflict, false_premise, outside_coverage, unsupported, needs_input, tool_failed, out_of_scope, budget.
 ```
 
 Its user prompt starts `As-of date: <date or "today">`, lists the passages as above and the question, and ends with `Answer in at most 2 short sentences.` The same two-sentence length instruction therefore reaches every system, in different words.
@@ -241,12 +242,12 @@ python -m heuresis.bench.report runs/test/hoh runs/test/multihoprag runs/test/mu
 
 | Item | How it is obtained | Value at drafting | Frozen value |
 |---|---|---|---|
-| `locked_hash()` | `heuresis hash`, or `heuresis.locked.guard.locked_hash()` | `3c23fecd42520db9a36c3208d285d6d96465f42e1c2ef8e31d2d2b2d79de1b71` (unchanged by the work of section 12) | `[ ... ]` |
-| Surface hash | `heuresis.bench.systems.surface_hash` (effective engine config JSON, `DRAFT_SYSTEM`, source of `surface/prompts.py`); `heuresis hash` prints it and each run's `manifest.json` records it | `b7e767ecd37764e19220985ea959a16c650a2aec104f7f3a867013de736ed58f` (the pilot recorded `3e310d25...` and the earlier draft `9de82a74...` under narrower definitions) | `[ ... ]` |
+| `locked_hash()` | `heuresis hash`, or `heuresis.locked.guard.locked_hash()` | `d98f86a5969279db434645acb8585f512999c60789068afdfa3cfdff4aa2eb88` (changed on 2026-11-12 by the verifier change in `locked/verify.py`, deviations log; it was `3c23fecd42520db9a36c3208d285d6d96465f42e1c2ef8e31d2d2b2d79de1b71` before) | `[ ... ]` |
+| Surface hash | `heuresis.bench.systems.surface_hash` (effective engine config JSON, `DRAFT_SYSTEM`, source of `surface/prompts.py`); `heuresis hash` prints it and each run's `manifest.json` records it | `ca69c121b7a9d2a47da5f6ad04f31caf6dad9587a5afcf3c7dafe858350ea173` (changed on 2026-11-12 by the drafting prompt and the two new config fields; it was `b7e767ecd37764e19220985ea959a16c650a2aec104f7f3a867013de736ed58f` before; the pilot recorded `3e310d25...` and the earlier draft `9de82a74...` under narrower definitions) | `[ ... ]` |
 | Full effective engine config | `manifest.json` key `engine_config` | see below | `[ ... ]` |
 | `prompts_hash()` | `heuresis.bench.systems.prompts_hash()`; also printed by `heuresis hash` | `1498745bcecca370bd94caef482d685ab41c84890ab5a208320f2dcbacc2a462` | `[ ... ]` |
 | Dataset manifest hashes | sha256 of each `MANIFEST.json` | section 2 | `[ ... ]` |
-| Model ids and files | generator, embedder, reranker, entailer; `manifest.json` key `model_provenance` | `claude-haiku-5-5`, no temperature sent (`null`) and `max_tokens` 600; the three `onnx:` ids of section 3.1; for each local model the sha256 of its ONNX file and tokenizer file on disk (`fingerprint()`) | `[ ... ]` (the file hashes exist only once a paid or local run has loaded the models) |
+| Model ids and files | generator, embedder, reranker, entailer; `manifest.json` key `model_provenance` | `claude-haiku-5-5`, no temperature sent (`null`), `thinking` `{"type": "disabled"}` and `max_tokens` 600; the three `onnx:` ids of section 3.1; for each local model the sha256 of its ONNX file and tokenizer file on disk (`fingerprint()`) | `[ ... ]` (the file hashes exist only once a paid or local run has loaded the models) |
 | Baseline settings | passage count k per baseline (section 8.2) | 8 (agentic: 5 per search, 4 searches) | `[ ... ]` |
 | Price table | `PRICE_TABLE` in `bench/run.py` | `anthropic-2026-11` | `[ ... ]` |
 | Commit hash | repository `HEAD` at the tag | `[ ... ]` | `[ ... ]` |
@@ -255,12 +256,12 @@ Effective engine config at drafting (packaged `surface/default.json` with `draft
 
 ```json
 {"decide": {"conflict_margin": 0.1, "min_supported_fraction": 1.0, "partial_fraction": 0.5},
- "draft": {"max_context_chars": 24000, "max_sentences": 2, "max_tokens": 600, "model": "claude-haiku-5-5"},
+ "draft": {"max_context_chars": 24000, "max_sentences": 2, "max_tokens": 600, "model": "claude-haiku-5-5", "prompt": "v2"},
  "retrieve": {"dense": true, "early_stop": true, "early_stop_margin": 0.35, "expand": false, "expand_hops": 1,
               "k_dense": 50, "k_lexical": 50, "rerank": false, "rerank_in": 50, "rerank_out": 8, "rewrite": false,
               "rrf_k": 60, "second_round": false},
  "router": {"ask_threshold": 0.6, "default_intent": "lookup"},
- "verify": {"atomic_claims": false, "partial_threshold": 0.3, "support_threshold": 0.5}}
+ "verify": {"atomic_claims": false, "partial_threshold": 0.3, "support": "window_title", "support_threshold": 0.5}}
 ```
 
 The two `verify` thresholds are the values to be replaced by calibration (section 8.1). The engine runs with no router classifier, so the ask-back gate cannot fire in the benchmark.
@@ -323,6 +324,9 @@ The pilot model has no row for `hybrid`, which was added later; it is not in the
 |---|---|---|---|
 | 2026-11-11 | Banner and section 2 corrected, section 2a added: "nothing on the test split has been run" was inaccurate. | Two retrieval-only sanity checks read the test split: BM25 at k = 50 on the first 20 answerable test questions of each dataset (gold units found 20/20 each), and, on `hoh`, 100 test questions checked for the gold answer in the retrieved gold unit (86/100 with the date filter, 41/100 without). No system answered, no model was called, no design decision used the numbers; the sealed split was not read. A contamination risk for the reader to weigh. | Test split, as described in section 2a. |
 | 2026-11-11 | Temperature 0 was planned; the model rejects the parameter (HTTP 400 on the first paid smoke call, $0 spent); the parameter is no longer sent. | The Messages API answers HTTP 400 "`temperature` is deprecated for this model." for `claude-haiku-5-5`; the manifest records `"temperature": null`. | No paid answer seen; $0 spent. |
+| 2026-11-12 | The generator is called with `thinking: {"type": "disabled"}` for every system (`bench.run --thinking disabled`, the default; `--thinking default` restores the old behaviour). Each paid call now records its stop reason, content-block counts and visible characters in the ledger, and each result row records `stop_reasons`, `blocks` and `text_chars`. | **Made on dev evidence** (`results/dev-calibration/NOTES.md`, `results/dev-calibration/phase1/NOTES.md`): in the dev calibration run Haiku 5.5 spent most output tokens on adaptive thinking that `AnthropicLLM` does not read (thinking is on by default at medium effort for this model, `platform.claude.com/docs/en/build-with-claude/adaptive-thinking` and `.../effort`; `max_tokens` bounds thinking plus text, thinking tokens are billed as output tokens). Evidence: engine rows with a raw draft of 0 characters and 600 output tokens; `ABSTAIN` replies (7 characters) billed at 100 to 380 output tokens; 41 of 100 `closed_book` replies on `musique` and 34 of 100 engine replies on `multihoprag` at the cap. The documentation says the model accepts `thinking: disabled` at effort high or below; the call is untested until the next paid run. | Dev calibration run (3 x 100 dev questions, all systems). |
+| 2026-11-12 | Drafting instruction rewritten (`DRAFT_SYSTEM_V2`, section 3.4); the first one stays selectable (`draft.prompt = "v1"`). | **Made on dev evidence** (`results/dev-calibration/phase1/NOTES.md`, item B): 78 of 100 (`musique`) and 68 of 100 (`multihoprag`) engine abstentions were the model writing ABSTAIN. In 3 of the 78 and 19 of the 68 all gold passages were among those shown; the rest are retrieval gaps. The new text asks for the answer first, for combining facts across passages, and for ABSTAIN only when the answer is not in the passages. Not verified: the effect can only be measured with paid calls. | Dev calibration run, engine drafts. |
+| 2026-11-12 | The verifier scores a claim by the best entailment over title-prefixed windows of up to three consecutive sentences of each cited passage (`verify.support = "window_title"`, `locked/verify.py`); the first scoring (one joined premise of the passage texts) stays selectable (`verify.support = "current"`). Thresholds unchanged (0.5 / 0.3). | **Made on dev evidence** (`results/dev-calibration/phase1/`: `verifier_replay.json`, `verifier_paired.txt`, `NOTES.md` item C): the NLI model scored claims that restate a passage at 0.002 to 0.07 because the claim names an entity that only the passage title carries (neutral 0.99; with the title prepended entailment 0.97 to 0.99), and a joined premise is cut at 512 tokens for 16 of 194 claims. Replay on the stored dev rows at the default thresholds, pooled n = 300: penalised score 0.200 (current), 0.303 (title in the joined premise), 0.333 (this scoring), 0.347 (lexical share of content tokens); paired difference of this scoring against the current one +0.133 [+0.087, +0.180], no dataset worse; against the lexical score -0.013 [-0.037, +0.007]. The lexical score was not adopted (not distinguishable on n = 100 per dataset; it checks no meaning). The claim-level AUROC against correct versus wrong drafts is about 0.5 for every candidate (the wrong answers' claims are true of their passages). | Dev calibration run, engine replay payloads; the choice used the same 300 dev questions it is scored on (in-sample). |
 
 ## 11. Threats to validity
 

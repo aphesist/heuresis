@@ -215,3 +215,31 @@ def test_other_400_is_not_retried():
     with pytest.raises(LLMError):
         llm.complete("s", "p")
     assert len(calls) == 1 and llm.temperature_sent is True
+
+
+def test_thinking_setting_is_sent_and_stop_reason_and_blocks_are_recorded():
+    calls = []
+    reply = {
+        "content": [{"type": "thinking", "thinking": "hmm", "signature": "s"},
+                    {"type": "text", "text": "ans"}],
+        "stop_reason": "max_tokens",
+        "usage": {"input_tokens": 10, "output_tokens": 600},
+    }
+    llm, _ = make([reply], calls, thinking={"type": "disabled"})
+    text, u = llm.complete("s", "p")
+    assert json.loads(calls[0].data)["thinking"] == {"type": "disabled"}
+    assert text == "ans" and u.text_chars == 3
+    assert u.stop_reason == "max_tokens" and u.blocks == {"thinking": 1, "text": 1}
+
+
+def test_thinking_default_sends_no_field_and_a_rejection_is_not_dropped():
+    calls = []
+    llm, _ = make([OK], calls)
+    llm.complete("s", "p")
+    assert "thinking" not in json.loads(calls[0].data)
+    calls2 = []
+    bad = urllib.error.HTTPError("u", 400, "x", {}, io.BytesIO(b'{"error":"thinking is not supported"}'))
+    llm2, _ = make([bad], calls2, thinking={"type": "disabled"})
+    with pytest.raises(LLMError):
+        llm2.complete("s", "p")
+    assert len(calls2) == 1 and llm2.thinking == {"type": "disabled"}

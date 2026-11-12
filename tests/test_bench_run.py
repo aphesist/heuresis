@@ -263,8 +263,8 @@ def test_manifest_records_model_provenance(tmp_path):
     run(ds, "test", build_systems(ctx, ["closed_book"]), out, None, workers=1, dry_run=True)
     man = json.load(open(os.path.join(out, "manifest.json")))
     prov = man["model_provenance"]
-    assert prov["generator"] == {"id": "echo", "temperature": None, "max_tokens": 600,
-                                 "note": "offline fake"}
+    assert prov["generator"] == {"id": "echo", "temperature": None, "thinking": None,
+                                 "max_tokens": 600, "note": "offline fake"}
     for role, mid in (("embedder", "hash-256"), ("reranker", "overlap"), ("entailer", "rules")):
         assert prov[role]["id"] == mid and prov[role]["note"] == "offline fake"
 
@@ -322,9 +322,41 @@ def test_paid_run_reads_the_default_key_variable_and_prints_only_its_name(tmp_pa
     assert "sk-secret-value" not in json.dumps(man)
     assert man["ledger"]["path"] == ledger and man["dry_run"] is False
     assert man["model_provenance"]["generator"] == {
-        "id": "claude-haiku-5-5", "temperature": None, "max_tokens": 600,
+        "id": "claude-haiku-5-5", "temperature": None, "thinking": {"type": "disabled"},
+        "max_tokens": 600,
         "note": "not sent: the model rejects the parameter; sampling is the API default"}
+    assert made[0].thinking == {"type": "disabled"}
     assert os.path.getsize(ledger) > 0
+
+
+def test_thinking_flag_default_restores_the_model_default(tmp_path, monkeypatch):
+    R, made = _paid_env(tmp_path, monkeypatch)
+    monkeypatch.setenv("PROJECTS_ANTHROPIC_KEY", "sk-x")
+    out, ledger = str(tmp_path / "out"), str(tmp_path / "l.jsonl")
+    assert R.main(["--dataset", "tiny", "--split", "test", "--paid", "--cap", "5", "--ledger", ledger,
+                   "--out", out, "--systems", "closed_book", "--workers", "1",
+                   "--thinking", "default"]) == 0
+    assert made[0].thinking is None
+    man = json.load(open(os.path.join(out, "manifest.json")))
+    assert man["model_provenance"]["generator"]["thinking"] is None
+
+
+def test_rows_and_ledger_record_stop_reason_and_blocks(tmp_path):
+    from heuresis.bench.ledger import Ledger
+    from heuresis.model import Usage
+    from heuresis.bench.systems import add_call_record
+    led = Ledger(str(tmp_path / "l.jsonl"), 5.0, 0.0)
+    led.charge(Usage(model="claude-haiku-5-5", tokens_in=10, tokens_out=600, usd=0.0003,
+                     stop_reason="max_tokens", blocks={"thinking": 1}, text_chars=0), "closed_book")
+    led.charge(Usage(model="claude-haiku-5-5", usd=0.0), "old")  # no stop reason: old row shape
+    rows = [json.loads(x) for x in open(led.path)]
+    assert rows[0]["stop_reason"] == "max_tokens" and rows[0]["blocks"] == {"thinking": 1}
+    assert rows[0]["text_chars"] == 0 and "stop_reason" not in rows[1]
+    tot = Usage()
+    add_call_record(tot, Usage(stop_reason="end_turn", blocks={"text": 1}, text_chars=20))
+    add_call_record(tot, Usage(stop_reason="max_tokens", blocks={"thinking": 1, "text": 1}, text_chars=5))
+    assert tot.stop_reason == "end_turn,max_tokens"
+    assert tot.blocks == {"text": 2, "thinking": 1} and tot.text_chars == 25
 
 
 def test_paid_run_key_env_can_be_renamed_and_must_be_set_before_any_work(tmp_path, monkeypatch, capsys):

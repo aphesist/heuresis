@@ -33,7 +33,7 @@ from .types import Dataset, Question
 __all__ = [
     "ANSWER_FORMAT", "SYSTEM_NAMES", "Result", "System", "BenchContext", "build_context",
     "build_systems", "parse_reply", "prompts_hash", "surface_hash", "effective_engine_config",
-    "prepare_corpus", "BENCH_TEMPERATURE", "BENCH_TEMPERATURE_NOTE",
+    "prepare_corpus", "BENCH_TEMPERATURE", "BENCH_TEMPERATURE_NOTE", "BENCH_THINKING", "add_call_record",
 ]
 
 ANSWER_FORMAT = (
@@ -70,6 +70,11 @@ ENGINE_MAX_SENTENCES = 2
 #: sampling is the API default.
 BENCH_TEMPERATURE = None
 BENCH_TEMPERATURE_NOTE = "not sent: the model rejects the parameter; sampling is the API default"
+#: Every system calls the same generator with thinking turned off, so ``max_tokens`` bounds
+#: the visible answer. With the model's default (adaptive thinking on, medium effort) the
+#: dev calibration run spent most output tokens on thinking that the client never reads
+#: (results/dev-calibration/NOTES.md). ``--thinking default`` restores the old behaviour.
+BENCH_THINKING = {"type": "disabled"}
 
 
 def effective_engine_config(config: Config) -> Config:
@@ -238,6 +243,7 @@ class BenchContext:
         and "offline fake"); for the generator its id, temperature (null: not sent) and output cap."""
         gen = {"id": getattr(self.llm, "id", ""),
                "temperature": getattr(self.llm, "temperature", None),
+               "thinking": getattr(self.llm, "thinking", None),
                "max_tokens": self.max_tokens}
         if not hasattr(self.llm, "temperature"):
             gen["note"] = "offline fake"
@@ -272,6 +278,11 @@ class _Tap:
 
     def reset(self) -> None:
         self._tls.raws = []
+        self._tls.usages = []
+
+    @property
+    def usages(self) -> list:
+        return list(getattr(self._tls, "usages", []))
 
     @property
     def raws(self) -> list[str]:
@@ -282,6 +293,9 @@ class _Tap:
         if not hasattr(self._tls, "raws"):
             self._tls.raws = []
         self._tls.raws.append(text)
+        if not hasattr(self._tls, "usages"):
+            self._tls.usages = []
+        self._tls.usages.append(usage)
         return text, usage
 
 
@@ -341,6 +355,16 @@ def passages_prompt(question: str, passages: list[Passage], as_of: str | None = 
     return "\n".join(lines)
 
 
+def add_call_record(total: Usage, one: Usage) -> None:
+    """Add the per-call facts the API reported (stop reason, block counts, visible
+    characters) to a question's total: stop reasons are joined with commas, one per call."""
+    if one.stop_reason:
+        total.stop_reason = ",".join(x for x in (total.stop_reason, one.stop_reason) if x)
+    for k, n in (one.blocks or {}).items():
+        total.blocks[k] = total.blocks.get(k, 0) + n
+    total.text_chars += one.text_chars
+
+
 class _Meter:
     """Totals the model calls of one answer."""
 
@@ -358,6 +382,7 @@ class _Meter:
         self.usage.tokens_cached += u.tokens_cached
         self.usage.usd += u.usd
         self.usage.ms += u.ms
+        add_call_record(self.usage, u)
         return text
 
 
@@ -652,6 +677,8 @@ class EngineSystem(System):
         usage = Usage(model=getattr(self.ctx.llm, "id", ""),
                       tokens_in=sum(t.tokens_in for t in tr),
                       tokens_out=sum(t.tokens_out for t in tr), usd=ans.usd, ms=ans.ms)
+        for u in tap.usages:
+            add_call_record(usage, u)
         searches = sum(1 for t in tr if t.stage == "lexical") or (1 if tr else 0)
         return Result(
             status="answered" if ans.status in ("answered", "partial") else "abstained",

@@ -12,6 +12,8 @@ _MARK_RE = re.compile(r"\[[tk]\d+\]")
 _PLACEHOLDER_RE = re.compile(r"\{(k\d+)\}")
 _NUM_RE = re.compile(r"\d+(?:[.,]\d+)*")
 _AND_RE = re.compile(r"\s+and\s+", re.IGNORECASE)
+_SENT_RE = re.compile(r"(?<=[.!?])\s+|\n+")
+WINDOW_SENTENCES = 3
 
 
 # ---------------------------------------------------------------------------
@@ -107,6 +109,34 @@ def _split_atomic(text: str) -> list[str]:
     return pieces or [text]
 
 
+def sentence_windows(text: str, size: int = WINDOW_SENTENCES) -> list[str]:
+    """Every run of 1..``size`` consecutive sentences of ``text`` (the text itself when it
+    has no sentence break)."""
+    sents = [s.strip() for s in _SENT_RE.split(text) if s and s.strip()]
+    out = [" ".join(sents[i:i + k]) for i in range(len(sents))
+           for k in range(1, size + 1) if i + k <= len(sents)]
+    return out or [text]
+
+
+def _premises(support: str, cited_p: list, cited_t: list) -> list[str]:
+    """The premises the entailer scores a claim against; the claim's support is the highest
+    entailment among them.
+
+    ``current``: one premise, the cited passages' texts joined (the first version).
+    ``window_title``: for every cited passage, every window of up to three consecutive
+    sentences, each preceded by the passage title (the claim usually names the entity that
+    only the title carries, and a long joined premise is cut at the model's length limit),
+    followed by the tool values (a claim built on a tool result is read with them)."""
+    if support == "current":
+        return ["\n".join([p.text for p in cited_p] + [_render_value(t.value) for t in cited_t])]
+    tools = "\n".join(_render_value(t.value) for t in cited_t)
+    out: list[str] = []
+    for p in cited_p:
+        head = f"{p.title.strip()}. " if p.title and p.title.strip() else ""
+        out.extend(head + w + ("\n" + tools if tools else "") for w in sentence_windows(p.text))
+    return out or ([tools] if tools else [])
+
+
 def _expand(sentence: Sentence, atomic: bool) -> list[Sentence]:
     if not atomic:
         return [sentence]
@@ -134,7 +164,8 @@ def verify(draft, passages, tool_results, store, as_of: AsOf, entailer, cfg) -> 
 
     claims: list[Claim] = []
     pairs: list[tuple[str, str]] = []
-    pair_idx: list[int] = []
+    pair_idx: list[int] = []  # the claim each pair belongs to (several pairs per claim)
+    support_mode = getattr(cfg, "support", "current")
     notes: list[list[str]] = []
 
     for s in sentences:
@@ -216,17 +247,14 @@ def verify(draft, passages, tool_results, store, as_of: AsOf, entailer, cfg) -> 
         notes.append(note)
 
         if cited_p or cited_t:
-            premise = "\n".join(
-                [p.text for p in cited_p]
-                + [_render_value(t.value) for t in cited_t]
-            )
-            pairs.append((premise, hypothesis))
-            pair_idx.append(len(claims) - 1)
+            for premise in _premises(support_mode, cited_p, cited_t):
+                pairs.append((premise, hypothesis))
+                pair_idx.append(len(claims) - 1)
 
     if pairs:
         scores = entailer.entail(pairs)
         for i, sc in zip(pair_idx, scores):
-            claims[i].support = float(sc)
+            claims[i].support = max(claims[i].support, float(sc))
 
     for c, note in zip(claims, notes):
         if c.support >= cfg.support_threshold:

@@ -206,6 +206,12 @@ class Usage:
     tokens_cached: int = 0
     usd: float = 0.0
     ms: float = 0.0
+    #: Why the model stopped ("end_turn", "max_tokens", ...); "" when not reported.
+    stop_reason: str = ""
+    #: Number of content blocks by type in the reply (e.g. {"thinking": 1, "text": 1}).
+    blocks: dict = field(default_factory=dict)
+    #: Characters of visible text in the reply (the text blocks only).
+    text_chars: int = 0
 
 
 @dataclass

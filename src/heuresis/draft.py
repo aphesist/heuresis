@@ -96,7 +96,7 @@ def render(draft: Draft, tool_results: list[ToolResult]) -> str:
 
 
 def draft(llm: LLM, query: Query, passages: list[Passage], tools: list[Tool], cfg) -> Draft:
-    from .surface.prompts import DRAFT_SYSTEM, draft_prompt
+    from .surface.prompts import draft_prompt, draft_system
 
     max_sentences = int(getattr(cfg, "max_sentences", 0) or 0)
     kept = []
@@ -107,7 +107,8 @@ def draft(llm: LLM, query: Query, passages: list[Passage], tools: list[Tool], cf
     while kept and len(prompt) > cfg.max_context_chars:
         kept.pop()
         prompt = draft_prompt(query.text, query.as_of.valid, kept, tools, max_sentences)
-    raw, usage = llm.complete(DRAFT_SYSTEM, prompt, max_tokens=cfg.max_tokens)
+    raw, usage = llm.complete(draft_system(getattr(cfg, "prompt", "v2")), prompt,
+                              max_tokens=cfg.max_tokens)
     d = parse_draft(raw)
     d.raw = raw
     d.usage = usage

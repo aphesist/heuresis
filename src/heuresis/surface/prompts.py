@@ -5,7 +5,8 @@ from typing import Any, Sequence
 
 from ..model import ABSTENTIONS, Passage
 
-DRAFT_SYSTEM = (
+#: The first drafting instruction, kept verbatim so a run can A/B it (``draft.prompt = "v1"``).
+DRAFT_SYSTEM_V1 = (
     "Answer ONLY from the numbered passages. Never use outside knowledge.\n"
     "Format, one item per line:\n"
     "- Write short sentences. End EVERY sentence with the marks of the passages "
@@ -18,6 +19,39 @@ DRAFT_SYSTEM = (
     "- If the passages do not answer the question, write only "
     "`ABSTAIN <type>: <reason>` with type one of: " + ", ".join(ABSTENTIONS) + "."
 )
+
+#: The default drafting instruction (changed on dev evidence: see PREREGISTRATION.md,
+#: deviations log). It asks for an answer whenever the passages contain it, also when
+#: facts from several passages must be combined, with the answer in the first sentence.
+DRAFT_SYSTEM_V2 = (
+    "Answer ONLY from the numbered passages. Never use outside knowledge.\n"
+    "Answer whenever the passages contain the answer, also when you must combine facts "
+    "from two or more passages (for example, one passage names the person and another "
+    "gives the fact about that person). A passage that is only partly relevant, or that "
+    "does not repeat the question's wording, is no reason to abstain.\n"
+    "Format, one item per line:\n"
+    "- State the answer in the first sentence, then add only what is needed. Write short "
+    "sentences. End EVERY sentence with the marks of ALL the passages that support it, "
+    "like [t1] or [t1][t2].\n"
+    "- Never do arithmetic or date math yourself. Request it before the answer with "
+    'a line `CALL k1 calc {"expr": "..."}` (k1, k2, ... one per call), then write '
+    "{k1} where the result goes and add the mark [k1] to that sentence.\n"
+    "- Use the as-of date you are given; passages show their validity as "
+    "(title; valid from..to).\n"
+    "- Only if the answer is not in the passages, write only "
+    "`ABSTAIN <type>: <reason>` with type one of: " + ", ".join(ABSTENTIONS) + "."
+)
+
+DRAFT_SYSTEM = DRAFT_SYSTEM_V2
+PROMPTS = {"v1": DRAFT_SYSTEM_V1, "v2": DRAFT_SYSTEM_V2}
+
+
+def draft_system(name: str = "v2") -> str:
+    """The drafting instruction named by ``draft.prompt`` in the configuration."""
+    try:
+        return PROMPTS[name]
+    except KeyError:
+        raise ValueError(f"unknown drafting prompt {name!r}; have {sorted(PROMPTS)}") from None
 
 
 def _span(p: Passage) -> str:

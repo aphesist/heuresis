@@ -26,7 +26,7 @@ from ..locked.guard import locked_hash
 from ..surface.config import config_to_dict
 from .ledger import BudgetExceeded, Ledger
 from .systems import (
-    BENCH_TEMPERATURE, SYSTEM_NAMES, BenchContext, System, prompts_hash,
+    BENCH_TEMPERATURE, BENCH_THINKING, SYSTEM_NAMES, BenchContext, System, prompts_hash,
 )
 from .systems import surface_hash as _surface_hash
 from .types import Dataset, Question
@@ -119,6 +119,10 @@ def _row(q: Question, split: str, s: System, res: Any) -> dict:
         "gold_units": list(q.gold_units), "time_aware": s.time_aware,
         "exploratory": s.exploratory, "stage_ms": res.stage_ms, **g,
     }
+    if res.usage.stop_reason:  # one entry per model call, as the API reported it
+        row["stop_reasons"] = res.usage.stop_reason.split(",")
+        row["blocks"] = dict(res.usage.blocks)
+        row["text_chars"] = int(res.usage.text_chars)
     if res.replay is not None:
         row["replay"] = res.replay
     return row
@@ -277,6 +281,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                          "agentic, named with the suffix +asof (exploratory in the report)")
     ap.add_argument("--agent-rerank", action="store_true",
                     help="the agentic search tool uses hybrid_rerank instead of hybrid")
+    ap.add_argument("--thinking", choices=("disabled", "default"), default="disabled",
+                    help="'disabled' (default) sends thinking={'type': 'disabled'} on every call of "
+                         "every system, so max_tokens bounds the visible answer; 'default' sends "
+                         "nothing and leaves the model's own default (adaptive thinking on)")
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--agent-k", type=int, default=5)
     ap.add_argument("--max-actions", type=int, default=4)
@@ -310,10 +318,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if a.paid:  # built, and announced, before any work: only the variable NAME is shown
         from ..llm import AnthropicLLM
         paid_llm = AnthropicLLM(a.model or cfg.draft.model, key_env=a.key_env,
-                                temperature=BENCH_TEMPERATURE)
+                                temperature=BENCH_TEMPERATURE,
+                                thinking=BENCH_THINKING if a.thinking == "disabled" else None)
         print(f"paid run: the API key is read from the environment variable {a.key_env} "
               f"(value not shown); requests go to {paid_llm.base_url}; no temperature "
-              f"is sent", file=sys.stderr)
+              f"is sent; thinking {'disabled' if a.thinking == 'disabled' else 'left at the model default'}",
+              file=sys.stderr)
     ds = _load_dataset(a.dataset)
     os.makedirs(a.out, exist_ok=True)
     # A dry run costs nothing: no safety margin, and the ledger never stops it.
