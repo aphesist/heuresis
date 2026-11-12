@@ -1,0 +1,246 @@
+{
+  "corpus_tokens": 14432544,
+  "counts_in_corpus": {
+    "federal": {
+      "chars": 44778571,
+      "events": 54075,
+      "norms": 6552,
+      "tokens": 11194642,
+      "units": 53573
+    },
+    "tax": {
+      "chars": 12783649,
+      "events": 11072,
+      "norms": 421,
+      "tokens": 3195912,
+      "units": 11072
+    },
+    "versioned": {
+      "chars": 56625,
+      "events": 120,
+      "norms": 0,
+      "tokens": 14156,
+      "units": 60
+    },
+    "versioned_test": {
+      "chars": 111337,
+      "events": 240,
+      "norms": 0,
+      "tokens": 27834,
+      "units": 120
+    }
+  },
+  "domain": "legal_br",
+  "files": {
+    "edges.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "events.jsonl": "1ad381cdadfae6bc20fa7ce998ff66525004e2da67cbf81ad942c7a8c9957a55",
+    "provisions.json": "1f95b4160bf2a895c4e0d08c458cdf7c2ae396fe4a7dfafc47892b3057ceff11",
+    "questions.jsonl": "272e1425871da4ff92746119d6d7eefe00158840415558ddf7f3fe056c739d06",
+    "sources.jsonl": "3f35864f0f59d6c619350dae0057bb356692233c400039f24309fd45202867ee",
+    "units.jsonl": "279b46a335b6582a4eb3376000c722b531461bc3e7756be94d856c4c324c676a"
+  },
+  "licence": "tax tier: CC BY 4.0 (unicamp-dl/BR-TaxQA-R); federal tier: texts are official acts (not protected by copyright, Lei 9.610/1998 art. 8, I, as stated by ctresb/leis; scripts MIT), referenced by commit and URN, not redistributed; versioned tier: official texts of the Câmara dos Deputados portal",
+  "name": "brlaw-core-t",
+  "prompt_set": "legal_br",
+  "questions": {
+    "as_of_taxqa": "2024-12-31",
+    "splits": {
+      "dev": {
+        "ids_sha256": "bc7d55c5cfc963d158e35251a03d5786d1c3d5d842784b3cd6bea3f2bf8e89d2",
+        "n": 100
+      },
+      "temporal": {
+        "ids_sha256": "2e8a312a56c10cedada763b42b0bbd0d2ac26a251adeb407b1a1fe20906e1e58",
+        "n": 120
+      },
+      "temporal_test": {
+        "ids_sha256": "1b46b7a35f9b619b3aaceca88b68e02aacb47e3ecf4b2fa4523ecde73a3ede49",
+        "n": 240
+      },
+      "test": {
+        "ids_sha256": "ae73379dae98793769efbfa971ed4c5e28e570770d956d8c6687e124a06fbeda",
+        "n": 615
+      }
+    },
+    "taxqa": {
+      "gold_refs": 2012,
+      "gold_refs_resolved": 1823,
+      "gold_refs_unresolved": 189,
+      "questions": 715,
+      "with_article_gold": 546,
+      "with_resolved_gold": 528
+    }
+  },
+  "sources": {
+    "federal": {
+      "commit": "c9f21b4ab11aa0d7ca6fe861d75028e94219c2d6",
+      "licence_scripts": "MIT",
+      "licence_texts": "official acts, not redistributed",
+      "repo": "https://github.com/ctresb/leis"
+    },
+    "tax": {
+      "files": {
+        "questions_QA_2024_v1.1.json": "097abfc4f885ea36e512e6beae39a826b981191aa0b320960828e51ccc081585",
+        "referred_legal_documents_QA_2024_v1.1.json": "49ade2d93ed8f7361274bc93a0fa3d6572a2b938aeb1d343494acd2aa23aecd3"
+      },
+      "licence": "CC BY 4.0",
+      "repo": "unicamp-dl/BR-TaxQA-R",
+      "revision": "9f0f4263928c6152a40f888da3e63375a24bb0f3"
+    },
+    "versioned": {
+      "fetch_log": "tiers/versioned/fetch_log.json",
+      "site": "https://www2.camara.leg.br/legin/"
+    }
+  },
+  "tax_left_out": {
+    "Acordo para Evitar a Dupla Tributação em Matéria de Impostos sobre a Renda e o Capital firmado entre o Brasil e a Alemanha.txt": "no norm number and date could be read from the text or the dataset title",
+    "Acórdão do RE nº 855.091RS (Tema 808).txt": "no norm number and date could be read from the text or the dataset title",
+    "Ato Declaratório PGFN nº 3.txt": "same urn as Ato Declaratório (AD) PGFN nº 3, de 18 de setembro de 2008.txt (kept the text with more units)",
+    "Ação Direta de Inconstitucionalidade (ADI) nº 5.422, do Supremo Tribunal Federal.txt": "no norm number and date could be read from the text or the dataset title",
+    "Ação Direta de Inconstitucionalidade nº 5.583DF do Supremo Tribunal Federal (STF).txt": "no norm number and date could be read from the text or the dataset title",
+    "Constituição Federal de 1988.txt": "provided by the federal tier (ctresb/leis constituicao.md)",
+    "Convenção de Berna da União Postal Universal (UPU).txt": "no norm number and date could be read from the text or the dataset title",
+    "Convenção sobre Privilégios e Imunidades das Agências Especializadas.txt": "no norm number and date could be read from the text or the dataset title",
+    "Convenção sobre Privilégios e Imunidades das Nações Unidas.txt": "no norm number and date could be read from the text or the dataset title",
+    "Declaração de Benefícios Fiscais (DFB).txt": "no norm number and date could be read from the text or the dataset title",
+    "Declaração de Imposto de Renda Retido na Fonte (DIRF).txt": "no norm number and date could be read from the text or the dataset title",
+    "Declaração de Serviços Médicos e de Saúde (Dmed).txt": "no norm number and date could be read from the text or the dataset title",
+    "Declaração de informações sobre Atividades Imobiliárias (Dimob).txt": "no norm number and date could be read from the text or the dataset title",
+    "Declaração sobre Operações Imobiliárias (DOI).txt": "no norm number and date could be read from the text or the dataset title",
+    "Decreto nº 56.435.txt": "same urn as Convenção de Viena, Decreto nº 56.435, de 8 de junho de 1965.txt (kept the text with more units)",
+    "Decreto nº 85.801.txt": "same urn as Convênio de Criação de um Conselho de Cooperação Aduaneira.txt (kept the text with more units)",
+    "Despacho nº 3482020PGFN- ME, de 26082020.txt": "no norm number and date could be read from the text or the dataset title",
+    "Documento de Informação e Apuração do ITR (Diat).txt": "no norm number and date could be read from the text or the dataset title",
+    "Instrução Normativa RFB nº 1.500.txt": "same urn as IN RFB nº 1.500, de 2014.txt (kept the text with more units)",
+    "Instrução Normativa SRF nº 599, de 28 de dezembro de 2005.txt": "same urn as Instrução Normativa RFB nº 599.txt (kept the text with more units)",
+    "Lei n° 10.406, de 10 de janeiro de 2002 - Código Civil.txt": "same urn as Código Civil.txt (kept the text with more units)",
+    "Lei n° 10.522, de 19 de julho de 2002.txt": "no norm number and date could be read from the text or the dataset title",
+    "Lei nº 10.406.txt": "same urn as Código Civil.txt (kept the text with more units)",
+    "Lei nº 4.242.txt": "no norm number and date could be read from the text or the dataset title",
+    "Lei nº 5.172.txt": "same urn as Código Tributário Nacional (CTN).txt (kept the text with more units)",
+    "Lei nº 5.452.txt": "same urn as Consolidação das Leis do Trabalho (CLT).txt (kept the text with more units)",
+    "Lei nº 8.036.txt": "same urn as Legislação do Fundo de Garantia do Tempo de Serviço (FGTS).txt (kept the text with more units)",
+    "Lei nº 8.069.txt": "same urn as Estatuto da Criança e do Adolescente (ECA).txt (kept the text with more units)",
+    "Nota PGFN CRJ nº 1.040 2015.txt": "no norm number and date could be read from the text or the dataset title",
+    "Nota PGFN CRJ nº 1.104 2017.txt": "no norm number and date could be read from the text or the dataset title",
+    "Nota PGFN CRJ nº 981 2015.txt": "no norm number and date could be read from the text or the dataset title",
+    "Nota SEI nº 48 2018 CRJPGACETPGFN-MF.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer Cosit nº 26, de 29 de junho de 2000.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer Normativo nº 129, de 13 de setembro de 1973.txt": "same urn as Parecer Normativo CST nº 129, de 13 de setembro de 1973.txt (kept the text with more units)",
+    "Parecer PGFN nº 1.888 2008.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer PGFN nº 2118 2011.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer PGFN nº 2683 2008.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer PGFN nº 701 2016.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer PGFNCAT nº 815 2010.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer SEI Nº 110 2018 CRJPGACETPGFN-MF, aprovado pelo Despacho nº 3482020PGFN-ME, de 26 de agosto de 2020.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer SEI nº 10167 2021 ME.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer SEI nº 110 2018 CRJPGACETPGFN-MF.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer SEI nº 15069 2022 ME.txt": "no norm number and date could be read from the text or the dataset title",
+    "Parecer nº 93 2018 DECOR CGU AGU.txt": "no norm number and date could be read from the text or the dataset title",
+    "REsp nº 1.306.393DF_ Tema Repetitivo nº 535.txt": "no norm number and date could be read from the text or the dataset title",
+    "Resolução TSE nº 22.250, de 2006.txt": "no norm number and date could be read from the text or the dataset title",
+    "Sistema de Recolhimento Mensal Obrigatório (Carnê-Leão).txt": "no norm number and date could be read from the text or the dataset title",
+    "Solução de Consulta Cosit nº 264, de 25 de setembro de 2019.txt": "same urn as Solução de Consulta Cosit nº 264, de 24 de junho de 2019.txt (kept the text with more units)",
+    "Solução de Consulta SRRF03Disit nº 15, de 9 de março de 2009.txt": "no norm number and date could be read from the text or the dataset title",
+    "Solução de Consulta SRRF06Disit nº 6.007, de 25 de março de 2019.txt": "no norm number and date could be read from the text or the dataset title",
+    "Súmula Carf nº 42.txt": "no norm number and date could be read from the text or the dataset title",
+    "Súmula nº 125 do Superior Tribunal de Justiça (STJ).txt": "no norm number and date could be read from the text or the dataset title",
+    "Súmula nº 136 do Superior Tribunal de Justiça (STJ).txt": "no norm number and date could be read from the text or the dataset title"
+  },
+  "tiers_built": {
+    "federal": {
+      "by_text_version": {
+        "compilada (texto vigente)": 2243,
+        "original": 18648,
+        "publicação original": 1,
+        "republicação/retificação": 8136,
+        "texto da fonte oficial": 10,
+        "texto histórico da fonte oficial": 2
+      },
+      "by_type": {
+        "constituicao": 1,
+        "decreto.lei": 12169,
+        "emenda.constitucional": 157,
+        "lei": 16472,
+        "lei.complementar": 228,
+        "lei.delegada": 13
+      },
+      "chars": 133147377,
+      "events": 219447,
+      "files_seen": 29585,
+      "norms": 29040,
+      "norms_marked_revoked": 1174,
+      "skipped_duplicate_urn": 0,
+      "skipped_in_other_tier": 0,
+      "skipped_no_articles": 545,
+      "skipped_no_header": 0,
+      "tokens": 33286844,
+      "units": 217746,
+      "units_repeal_date_unknown": 673,
+      "units_repealed": 1701
+    },
+    "tax": {
+      "articulated_norms_without_articles": [
+        "urn:lex:br:cgpc:resolucao:2008-09-29;26",
+        "urn:lex:br:federal:decreto.lei:1973-12-31;1301",
+        "urn:lex:br:federal:decreto.lei:1976-12-27;1510",
+        "urn:lex:br:federal:decreto:1950-02-16;27784",
+        "urn:lex:br:federal:decreto:1963-07-24;52288",
+        "urn:lex:br:federal:decreto:1966-09-23;59308",
+        "urn:lex:br:federal:decreto:1966-09-23;59309",
+        "urn:lex:br:federal:decreto:1967-07-26;61078",
+        "urn:lex:br:federal:decreto:1968-01-16;62125",
+        "urn:lex:br:federal:decreto:1968-08-22;63151",
+        "urn:lex:br:federal:decreto:1970-11-12;67542",
+        "urn:lex:br:federal:decreto:1980-10-30;85306",
+        "urn:lex:br:federal:decreto:1981-05-14;86006",
+        "urn:lex:br:federal:decreto:1981-06-08;86084",
+        "urn:lex:br:federal:decreto:1982-09-13;87563",
+        "urn:lex:br:federal:decreto:1999-03-26;3000",
+        "urn:lex:br:federal:lei:1965-12-09;4886",
+        "urn:lex:br:federal:lei:2002-01-10;10406",
+        "urn:lex:br:federal:medida.provisoria:2001-08-23;2189-49",
+        "urn:lex:br:federal:medida.provisoria:2005-06-15;252",
+        "urn:lex:br:federal:medida.provisoria:2015-03-10;670",
+        "urn:lex:br:mf:portaria:1977-08-25;454",
+        "urn:lex:br:mf:portaria:1979-03-01;80",
+        "urn:lex:br:mf:portaria:1980-04-25;227",
+        "urn:lex:br:srf:instrucao.normativa:1979-12-20;84",
+        "urn:lex:br:srf:instrucao.normativa:1983-03-25;23",
+        "urn:lex:br:srf:instrucao.normativa:1988-04-21;67",
+        "urn:lex:br:srf:instrucao.normativa:1988-07-14;107",
+        "urn:lex:br:srf:instrucao.normativa:2000-12-28;118"
+      ],
+      "by_type": {
+        "ato.declaratorio": 25,
+        "ato.declaratorio.executivo": 6,
+        "ato.declaratorio.interpretativo": 12,
+        "ato.declaratorio.normativo": 13,
+        "circular": 1,
+        "decreto": 36,
+        "decreto.lei": 12,
+        "instrucao.normativa": 40,
+        "lei": 104,
+        "lei.complementar": 2,
+        "medida.provisoria": 7,
+        "nota": 2,
+        "parecer": 2,
+        "parecer.normativo": 31,
+        "portaria": 5,
+        "resolucao": 2,
+        "solucao.consulta": 109,
+        "solucao.consulta.interna": 12,
+        "solucao.divergencia": 4
+      },
+      "chars": 12829656,
+      "date_from_dataset_title": 39,
+      "docs_without_articles": 221,
+      "events": 11087,
+      "norms": 425,
+      "tokens": 3207414,
+      "units": 11087,
+      "units_repeal_date_unknown": 20,
+      "units_repealed": 0
+    }
+  }
+}
