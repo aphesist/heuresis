@@ -129,3 +129,20 @@ def test_covers_predicate():
     d = get_domain("legal_br")
     assert d.covers({"kind": "lei", "year": "1995"}) and not d.covers({"kind": "lei", "year": "1900"})
     assert not d.covers({"kind": "instrucao.normativa", "year": "2024"}) and not d.covers({"kind": "lei", "year": ""})
+
+
+def test_short_forms_without_n_sign(store):
+    assert refs(store, "IN RFB 2.178/2024, art. 2") == [("resolved", "2", IN)]
+    assert refs(store, "Lei 1/2020, art. 1") == [("resolved", "1", LEI)]
+    assert refs(store, "Em 2020 a in 2024 não é citação") == []
+
+
+def test_stub_containers_are_flagged():
+    st = Store(":memory:")
+    urn = "urn:lex:br:federal:lei:2002-01-10;10406"
+    st.add([Source(urn, "norm", 3, 3, None, {"title": "Lei nº 10.406", "names": ["Código de Teste"], "articles_missing": True})],
+           [Unit(urn + "!doc", urn, "document", None, "doc")],
+           [Event("a", urn + "!doc", "create", "2002-01-10", "só o preâmbulo", "2002-01-10")])
+    st.rebuild()
+    r = get_domain("legal_br").resolve_references("art. 186 da Lei nº 10.406/2002", st)[0]
+    assert r.status == "unit_not_found" and r.meta == {"container_incomplete": True}

@@ -1,0 +1,1150 @@
+[
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art180",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "180",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1977-12-22;6514",
+  "act_title": "Lei nº 6.514, de 22 de dezembro de 1977",
+  "change_date": "1977-12-23",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 126
+   },
+   {
+    "from": "1977-12-23",
+    "chars": 113
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art20",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "20",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:2019-09-20;13874",
+  "act_title": "Lei nº 13.874, de 20 de setembro de 2019",
+  "change_date": "2019-09-20",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 321
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art225",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "225",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1979-05-08;6637",
+  "act_title": "Lei nº 6.637, de 8 de maio de 1979",
+  "change_date": "1979-05-10",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 223
+   },
+   {
+    "from": "1979-05-10",
+    "chars": 226
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art226",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "226",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1958-12-12;3488",
+  "act_title": "Lei nº 3.488, de 12 de dezembro de 1958",
+  "change_date": "1958-12-13",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 408
+   },
+   {
+    "from": "1958-12-13",
+    "chars": 614
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art253",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "253",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1993-02-25;8630",
+  "act_title": "Lei nº 8.630, de 25 de fevereiro de 1993",
+  "change_date": "1993-02-26",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 697
+   },
+   {
+    "from": "1993-02-26",
+    "chars": 835
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art300",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "300",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1956-10-21;2924",
+  "act_title": "Lei nº 2.924, de 21 de outubro de 1956",
+  "change_date": "1956-10-24",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 503
+   },
+   {
+    "from": "1956-10-24",
+    "chars": 612
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art314",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "314",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:decreto.lei:1969-10-17;972",
+  "act_title": "Decreto-Lei nº 972, de 17 de outubro de 1969",
+  "change_date": "1969-10-21",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 261
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art318",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "318",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:2017-02-16;13415",
+  "act_title": "Lei nº 13.415, de 16 de fevereiro de 2017",
+  "change_date": "2017-02-17",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 150
+   },
+   {
+    "from": "2017-02-17",
+    "chars": 221
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art322",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "322",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1995-03-30;9013",
+  "act_title": "Lei nº 9.013, de 30 de março de 1995",
+  "change_date": "1995-03-31",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 541
+   },
+   {
+    "from": "1995-03-31",
+    "chars": 755
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art353",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "353",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1979-05-23;6651",
+  "act_title": "Lei nº 6.651, de 23 de maio de 1979",
+  "change_date": "1979-05-24",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 263
+   },
+   {
+    "from": "1979-05-24",
+    "chars": 286
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art369",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "369",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1971-07-21;5683",
+  "act_title": "Lei nº 5.683, de 21 de julho de 1971",
+  "change_date": "1971-07-22",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 279
+   },
+   {
+    "from": "1971-07-22",
+    "chars": 247
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art374",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "374",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:1989-10-24;7855",
+  "act_title": "Lei nº 7.855, de 24 de outubro de 1989",
+  "change_date": "1989-10-25",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 537
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art376",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "376",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:2001-06-27;10244",
+  "act_title": "Lei nº 10.244, de 27 de junho de 2001",
+  "change_date": "2001-06-28",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 446
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art42",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "42",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:2001-06-19;10243",
+  "act_title": "Lei nº 10.243, de 19 de junho de 2001",
+  "change_date": "2001-06-20",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 243
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art436",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "436",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:2000-12-19;10097",
+  "act_title": "Lei nº 10.097, de 19 de dezembro de 2000",
+  "change_date": "2000-12-20",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 145
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art449",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "449",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1977-10-14;6449",
+  "act_title": "Lei nº 6.449, de 14 de outubro de 1977",
+  "change_date": "1977-10-18",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 618
+   },
+   {
+    "from": "1977-10-18",
+    "chars": 558
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art453",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "453",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1975-04-29;6204",
+  "act_title": "Lei nº 6.204, de 29 de abril de 1975",
+  "change_date": "1975-04-30",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 250
+   },
+   {
+    "from": "1975-04-30",
+    "chars": 564
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art465",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "465",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1997-12-10;9528",
+  "act_title": "Lei nº 9.528, de 10 de dezembro de 1997",
+  "change_date": "1997-12-11",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 159
+   },
+   {
+    "from": "1997-12-11",
+    "chars": 252
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art470",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "470",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1975-04-17;6203",
+  "act_title": "Lei nº 6.203, de 17 de abril de 1975",
+  "change_date": "1975-04-18",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 450
+   },
+   {
+    "from": "1975-04-18",
+    "chars": 84
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art475",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "475",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1965-11-05;4824",
+  "act_title": "Lei nº 4.824, de 5 de novembro de 1965",
+  "change_date": "1965-11-08",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 707
+   },
+   {
+    "from": "1965-11-08",
+    "chars": 828
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art488",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "488",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1983-04-25;7093",
+  "act_title": "Lei nº 7.093, de 25 de abril de 1983",
+  "change_date": "1983-04-26",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 202
+   },
+   {
+    "from": "1983-04-26",
+    "chars": 524
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art508",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "508",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:2010-12-10;12347",
+  "act_title": "Lei nº 12.347, de 10 de dezembro de 2010",
+  "change_date": "2010-12-13",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 168
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art509",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "509",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:1978-05-24;6533",
+  "act_title": "Lei nº 6.533, de 24 de maio de 1978",
+  "change_date": "1978-08-19",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 424
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art510",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "510",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1968-12-12;5562",
+  "act_title": "Lei nº 5.562, de 12 de dezembro de 1968",
+  "change_date": "1968-12-16",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 442
+   },
+   {
+    "from": "1968-12-16",
+    "chars": 228
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art514",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "514",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1975-04-16;6200",
+  "act_title": "Lei nº 6.200, de 16 de abril de 1975",
+  "change_date": "1975-04-17",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 490
+   },
+   {
+    "from": "1975-04-17",
+    "chars": 786
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art52",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "52",
+  "op": "replace",
+  "act": "urn:lex:br:federal:decreto.lei:1969-10-10;926",
+  "act_title": "Decreto-Lei nº 926, de 10 de outubro de 1969",
+  "change_date": "1969-10-13",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 220
+   },
+   {
+    "from": "1969-10-13",
+    "chars": 176
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art522",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "522",
+  "op": "replace",
+  "act": "urn:lex:br:federal:decreto.lei:1946-07-23;9502",
+  "act_title": "Decreto-Lei nº 9.502, de 23 de julho de 1946",
+  "change_date": "1946-07-27",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 398
+   },
+   {
+    "from": "1946-07-27",
+    "chars": 740
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art534",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "534",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1957-09-22;3265",
+  "act_title": "Lei nº 3.265, de 22 de setembro de 1957",
+  "change_date": "1957-09-24",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 603
+   },
+   {
+    "from": "1957-09-24",
+    "chars": 982
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art565",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "565",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1956-06-18;2802",
+  "act_title": "Lei nº 2.802, de 18 de junho de 1956",
+  "change_date": "1956-06-22",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 122
+   },
+   {
+    "from": "1956-06-22",
+    "chars": 218
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art585",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "585",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1976-12-09;6386",
+  "act_title": "Lei nº 6.386, de 9 de dezembro de 1976",
+  "change_date": "1976-12-10",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 404
+   },
+   {
+    "from": "1976-12-10",
+    "chars": 540
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art593",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "593",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:2008-03-31;11648",
+  "act_title": "Lei nº 11.648, de 31 de março de 2008",
+  "change_date": "2008-03-31",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 173
+   },
+   {
+    "from": "2008-03-31",
+    "chars": 402
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art6",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "6",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:2011-12-15;12551",
+  "act_title": "Lei nº 12.551, de 15 de dezembro de 2011",
+  "change_date": "2011-12-16",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 178
+   },
+   {
+    "from": "2011-12-16",
+    "chars": 444
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art624",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "624",
+  "op": "replace",
+  "act": "urn:lex:br:federal:decreto.lei:1967-02-28;229",
+  "act_title": "Decreto-Lei nº 229, de 28 de fevereiro de 1967",
+  "change_date": "1967-02-28",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 1206
+   },
+   {
+    "from": "1967-02-28",
+    "chars": 364
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art647",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "647",
+  "op": "replace",
+  "act": "urn:lex:br:federal:decreto.lei:1946-09-09;9797",
+  "act_title": "Decreto-Lei nº 9.797, de 9 de setembro de 1946",
+  "change_date": "1946-09-11",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 246
+   },
+   {
+    "from": "1946-09-11",
+    "chars": 261
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art651",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "651",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1999-10-27;9851",
+  "act_title": "Lei nº 9.851, de 27 de outubro de 1999",
+  "change_date": "1999-10-28",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 1026
+   },
+   {
+    "from": "1999-10-28",
+    "chars": 1026
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art681",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "681",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1976-04-05;6320",
+  "act_title": "Lei nº 6.320, de 5 de abril de 1976",
+  "change_date": "1976-04-07",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 264
+   },
+   {
+    "from": "1976-04-07",
+    "chars": 144
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art694",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "694",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1968-05-24;5442",
+  "act_title": "Lei nº 5.442, de 24 de maio de 1968",
+  "change_date": "1968-05-28",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 1029
+   },
+   {
+    "from": "1968-05-28",
+    "chars": 233
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art697",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "697",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1975-12-11;6289",
+  "act_title": "Lei nº 6.289, de 11 de dezembro de 1975",
+  "change_date": "1975-12-12",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 272
+   },
+   {
+    "from": "1975-12-12",
+    "chars": 324
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art707",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "707",
+  "op": "replace",
+  "act": "urn:lex:br:federal:decreto.lei:1946-01-19;8737",
+  "act_title": "Decreto-Lei nº 8.737, de 19 de janeiro de 1946",
+  "change_date": "1946-01-26",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 1516
+   },
+   {
+    "from": "1946-01-26",
+    "chars": 1788
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art709",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "709",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:2024-03-20;14824",
+  "act_title": "Lei nº 14.824, de 20 de março de 2024",
+  "change_date": "2024-03-21",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 466
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art722",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "722",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1999-10-07;9842",
+  "act_title": "Lei nº 9.842, de 7 de outubro de 1999",
+  "change_date": "1999-10-08",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 1228
+   },
+   {
+    "from": "1999-10-08",
+    "chars": 1317
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art73",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "73",
+  "op": "replace",
+  "act": "urn:lex:br:federal:decreto.lei:1946-08-28;9666",
+  "act_title": "Decreto-Lei nº 9.666, de 28 de agosto de 1946",
+  "change_date": "1946-08-30",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 709
+   },
+   {
+    "from": "1946-08-30",
+    "chars": 1261
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art815",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "815",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:2023-08-23;14657",
+  "act_title": "Lei nº 14.657, de 23 de agosto de 2023",
+  "change_date": "2023-08-24",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 386
+   },
+   {
+    "from": "2023-08-24",
+    "chars": 887
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art819",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "819",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:2018-05-08;13660",
+  "act_title": "Lei nº 13.660, de 8 de maio de 2018",
+  "change_date": "2018-05-09",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 394
+   },
+   {
+    "from": "2018-05-09",
+    "chars": 410
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art830",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "830",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:2009-04-17;11925",
+  "act_title": "Lei nº 11.925, de 17 de abril de 2009",
+  "change_date": "2009-04-17",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 226
+   },
+   {
+    "from": "2009-04-17",
+    "chars": 436
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art831",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "831",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:2000-10-25;10035",
+  "act_title": "Lei nº 10.035, de 25 de outubro de 2000",
+  "change_date": "2000-10-26",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 193
+   },
+   {
+    "from": "2000-10-26",
+    "chars": 272
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art848",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "848",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1995-04-05;9022",
+  "act_title": "Lei nº 9.022, de 5 de abril de 1995",
+  "change_date": "1995-04-06",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 365
+   },
+   {
+    "from": "1995-04-06",
+    "chars": 377
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art859",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "859",
+  "op": "replace",
+  "act": "urn:lex:br:federal:decreto.lei:1945-02-14;7321",
+  "act_title": "Decreto-Lei nº 7.321, de 14 de fevereiro de 1945",
+  "change_date": "1945-02-16",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 395
+   },
+   {
+    "from": "1945-02-16",
+    "chars": 383
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art867",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "867",
+  "op": "replace",
+  "act": "urn:lex:br:federal:decreto.lei:1969-01-21;424",
+  "act_title": "Decreto-Lei nº 424, de 21 de janeiro de 1969",
+  "change_date": "1969-01-22",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 253
+   },
+   {
+    "from": "1969-01-22",
+    "chars": 648
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art872",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "872",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1954-07-30;2275",
+  "act_title": "Lei nº 2.275, de 30 de julho de 1954",
+  "change_date": "1954-08-02",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 546
+   },
+   {
+    "from": "1954-08-02",
+    "chars": 618
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art881",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "881",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1985-04-02;7305",
+  "act_title": "Lei nº 7.305, de 2 de abril de 1985",
+  "change_date": "1985-04-03",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 508
+   },
+   {
+    "from": "1985-04-03",
+    "chars": 500
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art888",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "888",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1970-06-26;5584",
+  "act_title": "Lei nº 5.584, de 26 de junho de 1970",
+  "change_date": "1970-06-29",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 1027
+   },
+   {
+    "from": "1970-06-29",
+    "chars": 925
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art901",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "901",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1993-03-31;8638",
+  "act_title": "Lei nº 8.638, de 31 de março de 1993",
+  "change_date": "1993-04-01",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 122
+   },
+   {
+    "from": "1993-04-01",
+    "chars": 277
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:decreto.lei:1943-05-01;5452!art918",
+  "norm": "urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+  "title": "Decreto-Lei nº 5.452, de 1º de maio de 1943",
+  "article": "918",
+  "op": "replace",
+  "act": "urn:lex:br:federal:decreto.lei:1944-03-20;6353",
+  "act_title": "Decreto-Lei nº 6.353, de 20 de março de 1944",
+  "change_date": "1944-03-22",
+  "versions": [
+   {
+    "from": "1943-11-10",
+    "chars": 661
+   },
+   {
+    "from": "1944-03-22",
+    "chars": 656
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:lei:1988-12-22;7713!art15",
+  "norm": "urn:lex:br:federal:lei:1988-12-22;7713",
+  "title": "Lei nº 7.713, de 22 de dezembro de 1988",
+  "article": "15",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:1989-06-08;7774",
+  "act_title": "Lei nº 7.774, de 8 de junho de 1989",
+  "change_date": "1989-06-09",
+  "versions": [
+   {
+    "from": "1989-01-01",
+    "chars": 743
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:lei:1988-12-22;7713!art27",
+  "norm": "urn:lex:br:federal:lei:1988-12-22;7713",
+  "title": "Lei nº 7.713, de 22 de dezembro de 1988",
+  "article": "27",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:1995-12-26;9250",
+  "act_title": "Lei nº 9.250, de 26 de dezembro de 1995",
+  "change_date": "1995-12-27",
+  "versions": [
+   {
+    "from": "1989-01-01",
+    "chars": 345
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:lei:1988-12-22;7713!art29",
+  "norm": "urn:lex:br:federal:lei:1988-12-22;7713",
+  "title": "Lei nº 7.713, de 22 de dezembro de 1988",
+  "article": "29",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:1990-12-27;8134",
+  "act_title": "Lei nº 8.134, de 27 de dezembro de 1990",
+  "change_date": "1990-12-28",
+  "versions": [
+   {
+    "from": "1989-01-01",
+    "chars": 361
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:lei:1988-12-22;7713!art43",
+  "norm": "urn:lex:br:federal:lei:1988-12-22;7713",
+  "title": "Lei nº 7.713, de 22 de dezembro de 1988",
+  "article": "43",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1989-03-09;7738",
+  "act_title": "Lei nº 7.738, de 9 de março de 1989",
+  "change_date": "1989-03-10",
+  "versions": [
+   {
+    "from": "1989-01-01",
+    "chars": 2694
+   },
+   {
+    "from": "1989-03-10",
+    "chars": 2852
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:lei:1988-12-22;7713!art46",
+  "norm": "urn:lex:br:federal:lei:1988-12-22;7713",
+  "title": "Lei nº 7.713, de 22 de dezembro de 1988",
+  "article": "46",
+  "op": "repeal",
+  "act": "urn:lex:br:federal:lei:1989-01-31;7730",
+  "act_title": "Lei nº 7.730, de 31 de janeiro de 1989",
+  "change_date": "1989-02-01",
+  "versions": [
+   {
+    "from": "1989-01-01",
+    "chars": 628
+   }
+  ]
+ },
+ {
+  "unit": "urn:lex:br:federal:lei:1988-12-22;7713!art53",
+  "norm": "urn:lex:br:federal:lei:1988-12-22;7713",
+  "title": "Lei nº 7.713, de 22 de dezembro de 1988",
+  "article": "53",
+  "op": "replace",
+  "act": "urn:lex:br:federal:lei:1989-07-10;7799",
+  "act_title": "Lei nº 7.799, de 10 de julho de 1989",
+  "change_date": "1989-07-11",
+  "versions": [
+   {
+    "from": "1989-01-01",
+    "chars": 159
+   },
+   {
+    "from": "1989-07-11",
+    "chars": 312
+   }
+  ]
+ }
+]

@@ -1,0 +1,31 @@
+{
+ "files_seen": 29585,
+ "norms": 29040,
+ "units": 217746,
+ "events": 219447,
+ "chars": 133147377,
+ "skipped_no_header": 0,
+ "skipped_no_articles": 545,
+ "skipped_duplicate_urn": 0,
+ "skipped_in_other_tier": 0,
+ "units_repealed": 1701,
+ "units_repeal_date_unknown": 673,
+ "norms_marked_revoked": 1174,
+ "by_type": {
+  "lei": 16472,
+  "lei.complementar": 228,
+  "decreto.lei": 12169,
+  "lei.delegada": 13,
+  "emenda.constitucional": 157,
+  "constituicao": 1
+ },
+ "by_text_version": {
+  "original": 18648,
+  "republica\u00e7\u00e3o/retifica\u00e7\u00e3o": 8136,
+  "compilada (texto vigente)": 2243,
+  "publica\u00e7\u00e3o original": 1,
+  "texto hist\u00f3rico da fonte oficial": 2,
+  "texto da fonte oficial": 10
+ },
+ "tokens": 33286844
+}

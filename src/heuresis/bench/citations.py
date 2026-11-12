@@ -69,9 +69,11 @@ def analyse(text: str, as_of: str | None, store: Any, domain: Any, cited_units: 
 def is_tainted(a: dict, coverage: Callable[[dict], bool] | None = None) -> bool:
     """At least one fabricated or not-in-force reference. With ``coverage``, a
     ``container_not_found`` counts only when the predicate says the corpus covers that
-    container completely (so a real norm outside the corpus is not called fabricated)."""
+    container completely (so a real norm outside the corpus is not called fabricated), and a
+    ``unit_not_found`` inside a container the corpus holds only as a stub (``container_incomplete``)
+    does not count either."""
     for r in a["refs"]:
-        if r["status"] == "unit_not_found":
+        if r["status"] == "unit_not_found" and (coverage is None or not r["meta"].get("container_incomplete")):
             return True
         if r["status"] == "container_not_found" and (coverage is None or coverage(r["meta"])):
             return True
@@ -99,6 +101,8 @@ def summarise(rows: Iterable[dict], coverage: Callable[[dict], bool] | None = No
         "references": len(refs), "references_free_text": len(text_refs),
         "references_per_answer": _share(len(refs), len(answered)),
         "counts": c,
+        "unit_not_found_in_incomplete_container": sum(
+            x["status"] == "unit_not_found" and bool(x["meta"].get("container_incomplete")) for x in refs),
         "exist_share": _share(c["resolved"], checkable),
         "container_not_found_share": _share(c["container_not_found"], checkable),
         "container_not_found_in_covered_share": _share(len(cnf_cov), checkable),
@@ -205,6 +209,71 @@ def export_support_sample(items: Sequence[dict], verdicts: dict[tuple, str | Non
 
 
 # ----------------------------------------------------------------------------
+# Dated questions: which version did the answer give?
+# ----------------------------------------------------------------------------
+
+_WORD = re.compile(r"[a-z0-9]{3,}")
+
+
+def _words(text: str) -> set[str]:
+    import unicodedata
+    t = unicodedata.normalize("NFD", _MARK.sub(" ", text or "").lower())
+    return set(_WORD.findall("".join(c for c in t if unicodedata.category(c) != "Mn")))
+
+
+def temporal_outcome(row: dict, store: Any) -> dict:
+    """Outcome of one answer to a dated question whose gold is ``<unit id>#v<seq>`` (the version in
+    force at the question's date), or nothing in force (``answerable`` false: a repealed provision).
+
+    ``abstained``; ``unit_not_cited`` (the answer names no reference to the gold unit);
+    ``gold_version`` / ``other_version`` (the answer's words are closer to the gold version's
+    distinctive words than to another version's, or the reverse); ``undetermined`` (the versions
+    differ in no word the answer used). After a repeal: ``abstained`` is right,
+    ``cited_repealed`` means the provision was given as if still in force."""
+    unit = row.get("cluster") or ""
+    golds = row.get("gold_units") or []
+    cited = {u for x in row["analysis"]["refs"] for u in x["unit_ids"]}
+    cited_unit = any(c == unit or c.startswith(unit + "!") for c in cited) if unit else False
+    if row["status"] != "answered":
+        return {"outcome": "abstained"}
+    if not row.get("answerable", True):
+        return {"outcome": "cited_repealed" if cited_unit else "answered_without_the_unit"}
+    if not golds:
+        return {"outcome": "no_gold"}
+    uid, _, seq = golds[0].partition("#v")
+    if not any(c == uid or c.startswith(uid + "!") for c in cited):
+        return {"outcome": "unit_not_cited"}
+    vs = store.versions(uid)
+    if len(vs) < 2 or not seq.isdigit() or int(seq) >= len(vs):
+        return {"outcome": "no_gold"}
+    gold = _words(vs[int(seq)].text)
+    ans = _words(row.get("text", ""))
+    hits = []
+    for i, v in enumerate(vs):
+        if i != int(seq):
+            w = _words(v.text)
+            hits.append((len(ans & (gold - w)), len(ans & (w - gold))))
+    g = sum(a for a, _ in hits)
+    o = sum(b for _, b in hits)
+    return {"outcome": "gold_version" if g > o else "other_version" if o > g else "undetermined",
+            "gold_words": g, "other_words": o}
+
+
+def summarise_temporal(analysed: Iterable[dict], store: Any) -> dict:
+    """Per system, the counts of ``temporal_outcome`` over the rows of dated questions."""
+    out: dict[str, dict] = {}
+    for r in analysed:
+        if not str(r.get("kind", "")).startswith("temporal"):
+            continue
+        o = temporal_outcome(r, store)["outcome"]
+        d = out.setdefault(r["system"], {})
+        d[o] = d.get(o, 0) + 1
+    for d in out.values():
+        d["n"] = sum(d.values())
+    return out
+
+
+# ----------------------------------------------------------------------------
 # Run folders
 # ----------------------------------------------------------------------------
 
@@ -229,7 +298,9 @@ def analyse_run(run_dir: str, db_path: str, domain: str = "legal_br") -> list[di
             a = analyse(r.get("text", "") if r["status"] == "answered" else "", r.get("as_of"), st, dom,
                         r.get("cited_units") or ())
             out.append({"system": r["system"], "qid": r["qid"], "status": r["status"], "as_of": r.get("as_of"),
-                        "kind": r.get("kind"), "text": r.get("text", ""), "analysis": a})
+                        "kind": r.get("kind"), "text": r.get("text", ""), "analysis": a,
+                        "gold_units": r.get("gold_units") or [], "answerable": r.get("answerable", True),
+                        "cluster": r.get("cluster", "")})
     finally:
         st.close()
     with open(os.path.join(run_dir, CITATIONS_FILE), "w", encoding="utf-8") as fh:
@@ -314,9 +385,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             v["support_share"] = _share(sum(x == "SUPPORTED" for x in vs), len(vs))
         export_support_sample(items, verdicts, os.path.join(a.run_dir, "citation_support_sample.csv"),
                               per_system=a.sample)
+    from ..store import Store as _Store
+    st2 = _Store(a.db)
+    try:
+        temporal = summarise_temporal(analysed, st2)
+    finally:
+        st2.close()
     with open(os.path.join(a.run_dir, SUMMARY_FILE), "w", encoding="utf-8") as fh:
-        json.dump(summary, fh, ensure_ascii=False, indent=1, sort_keys=True)
+        json.dump({"citations": summary, "temporal": temporal}, fh, ensure_ascii=False, indent=1, sort_keys=True)
     print(table(summary))
+    if temporal:
+        print("\ndated questions (which version the answer gave):")
+        for s_, d in sorted(temporal.items()):
+            print(f"  {s_}: " + ", ".join(f"{k}={v}" for k, v in sorted(d.items())))
     return 0
 
 

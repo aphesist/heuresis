@@ -28,6 +28,11 @@ corpus (see `results/brlaw/NOTES.md`), so even the restricted number is "probabl
 "certainly". The corpus does not claim to cover decretos, instruções normativas, portarias or any state or
 municipal law: a missing one of those is only counted in the unrestricted headline.
 
+**Stub texts.** Some scraped texts of BR-TaxQA-R hold only a preamble (the Código Civil file is 367 characters
+long). A norm of an articulated type whose text yields no article is flagged `articles_missing`; when the federal
+tier holds the same norm, that copy is used instead, otherwise an "article not found" inside it is reported as
+`unit_not_found_in_incomplete_container` and is not counted as fabrication in the restricted headline.
+
 The same code, `src/heuresis/bench/citations.py`, runs over every system's answer. It knows nothing about
 law: it asks the domain's optional `resolve_references` and the store.
 
@@ -130,7 +135,10 @@ lawyers), `hybrid` (retrieval as of today), `agentic`, `agentic+asof`, `engine` 
 * **`temporal`** (120 questions, its own split): built by code from the version pairs of the versioned tier,
   the same question asked as of the day before and the day of each change ("Segundo a Lei nº ..., o que dispunha o
   art. N na data de dd/mm/aaaa?"). `gold_units` is `<unit id>#v<seq>` (the version in force); after a repeal
-  nothing is in force and the question is unanswerable. No model writes questions.
+  nothing is in force and the question is unanswerable. No model writes questions. `bench.citations` scores
+  these by code (`temporal_outcome`): the answer must cite the gold unit, and its words are compared with the words
+  that distinguish the gold version from the other one (`gold_version`, `other_version`, `undetermined`,
+  `unit_not_cited`, `abstained`; after a repeal `cited_repealed` is the error).
 
 The runner's containment grade (does the gold answer string appear) is computed for these rows too but is not
 meaningful here: BR-TaxQA-R's official answers are paragraphs, and the `temporal` split has no answer string.

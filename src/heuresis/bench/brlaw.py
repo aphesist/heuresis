@@ -306,7 +306,7 @@ def norm_source(urn: str, kind: str, hdr: dict, commit: str, coverage: int = 3) 
     if hdr.get("names"):
         meta["names"] = hdr["names"]
     return {"id": urn, "kind": "norm", "authority": _AUTH.get(kind, 3), "coverage": coverage,
-            "licence": "official act (Lei 9.610/1998 art. 8, VI as stated by the repository); "
+            "licence": "official act (not protected by copyright: Lei 9.610/1998 art. 8, I, as the repository states); "
                        "not redistributed", "meta": meta}
 
 
@@ -541,6 +541,12 @@ def canonical_title(h: dict, issuer: str = "") -> str:
     return f"{name}{iss} nº {ns}, de {int(d)}{'º' if int(d) == 1 else ''} de {_MONTH_NAMES[int(m)]} de {y}"
 
 
+#: Norm types that are made of articles: a text of one of these that yields no article is a stub
+#: (the scrape kept only the preamble), so "article not found" in it says nothing about fabrication.
+ARTICULATED = {"lei", "lei.complementar", "lei.delegada", "decreto.lei", "decreto", "medida.provisoria",
+               "emenda.constitucional", "instrucao.normativa", "portaria", "resolucao"}
+
+
 def _names_for(urn: str, best: dict, left_out: dict, file_titles: dict) -> tuple[list[str], list[str]]:
     """Names and acronyms the dataset itself gives one norm: the stems of the files that hold its
     text and the acronyms its reference titles spell out (``(CTN)``, ``- RIR/2018``)."""
@@ -623,11 +629,16 @@ def build_tax(raw_dir: str, out_dir: str) -> dict:
             b = best[urn]
             h = b["h"]
             names, aliases = _names_for(urn, best, left_out, file_titles)
+            no_articles = not any(r["unit"]["kind"] == "article" for r in b["rows"])
+            incomplete = no_articles and h["kind"] in ARTICULATED
+            if incomplete:
+                st["articulated_norms_without_articles"] = st.get("articulated_norms_without_articles", [])
+                st["articulated_norms_without_articles"].append(urn)
             src = {"id": urn, "kind": "norm", "authority": _AUTH.get(h["kind"], 3), "coverage": 3,
                    "licence": f"CC BY 4.0 ({TAXQA_REPO}); the texts are scraped official acts",
                    "meta": {"title": b["title"], "type": h["kind"], "file": b["file"], "tier": "tax",
                             "date_source": h["date_source"], "revision": TAXQA_REVISION,
-                            "names": names, "aliases": aliases}}
+                            "names": names, "aliases": aliases, "articles_missing": incomplete}}
             fs.write(json.dumps(src, ensure_ascii=False, sort_keys=True) + "\n")
             st["norms"] += 1
             st["by_type"][h["kind"]] = st["by_type"].get(h["kind"], 0) + 1
@@ -759,7 +770,7 @@ def temporal_questions(provisions: list[dict]) -> list[dict]:
 CORPUS_NAME = "brlaw"
 CORPUS_FILES = ("sources.jsonl", "units.jsonl", "events.jsonl", "edges.jsonl")
 LICENCE = ("tax tier: CC BY 4.0 (unicamp-dl/BR-TaxQA-R); federal tier: texts are official acts "
-           "(Lei 9.610/1998 art. 8 as stated by ctresb/leis, scripts MIT), referenced by commit and "
+           "(not protected by copyright, Lei 9.610/1998 art. 8, I, as stated by ctresb/leis; scripts MIT), referenced by commit and "
            "URN, not redistributed; versioned tier: official texts of the Câmara dos Deputados portal")
 
 
@@ -785,7 +796,11 @@ def merge_tiers(tiers_dir: str, out_dir: str, *, federal_keep=None) -> dict:
     unit id of the other tiers. ``federal_keep(urn) -> bool`` restricts the federal tier (used to
     build the documented embedding subset). Returns per-tier counts of what the corpus holds."""
     import os
-    tax_urns = {s["id"] for s in _rows(f"{tiers_dir}/tax/sources.jsonl")}
+    fed_urns = {s["id"] for s in _rows(f"{tiers_dir}/federal/sources.jsonl")}
+    tax_src = list(_rows(f"{tiers_dir}/tax/sources.jsonl"))
+    # a tax text that is only a stub (no article could be read) gives way to the federal copy
+    stubs = {s["id"] for s in tax_src if s["meta"].get("articles_missing") and s["id"] in fed_urns}
+    tax_urns = {s["id"] for s in tax_src} - stubs
     vers_units = {u["id"] for u in _rows(f"{tiers_dir}/versioned/units.jsonl")}
     os.makedirs(out_dir, exist_ok=True)
     cnt = {t: {"norms": 0, "units": 0, "events": 0, "chars": 0} for t in ("tax", "versioned", "federal")}
@@ -798,6 +813,8 @@ def merge_tiers(tiers_dir: str, out_dir: str, *, federal_keep=None) -> dict:
         keep_units: dict[str, str] = {}
         for tier in ("tax", "versioned", "federal"):
             for s in _rows(f"{tiers_dir}/{tier}/sources.jsonl"):
+                if tier == "tax" and s["id"] in stubs:
+                    continue
                 if tier == "federal" and (s["id"] in tax_urns or (federal_keep and not federal_keep(s["id"]))):
                     skipped_fed.add(s["id"])
                     continue
@@ -807,7 +824,7 @@ def merge_tiers(tiers_dir: str, out_dir: str, *, federal_keep=None) -> dict:
                 fs.write(json.dumps(s, ensure_ascii=False, sort_keys=True) + "\n")
                 cnt[tier]["norms"] += 1
             for u in _rows(f"{tiers_dir}/{tier}/units.jsonl"):
-                if tier == "federal" and u["source_id"] in skipped_fed:
+                if (tier == "federal" and u["source_id"] in skipped_fed) or (tier == "tax" and u["source_id"] in stubs):
                     continue
                 if tier != "versioned" and u["id"] in vers_units:
                     continue

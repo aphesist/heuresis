@@ -128,3 +128,32 @@ def test_analyse_run_writes_files(store, tmp_path, monkeypatch):
     written = [json.loads(l) for l in open(tmp_path / "citations.jsonl")]
     assert "text" not in written[0] and written[0]["analysis"]["n_refs"] == 1
     assert "hybrid" in C.table(C.summary_by_system(out))
+
+
+def test_unit_not_found_in_a_stub_container_is_not_called_fabricated():
+    stub = row("answered", [ref("unit_not_found", meta={"container_incomplete": True})])
+    real = row("answered", [ref("unit_not_found")])
+    s = C.summarise([stub, real], lambda m: True)
+    assert s["unit_not_found_in_incomplete_container"] == 1
+    assert s["tainted"] == 2 and s["tainted_covered_only"] == 1   # strict: both; restricted: only the real gap
+
+
+def _trow(status, text, unit_ids, answerable=True, golds=("%s!art2#v0" % LEI,)):
+    return {"status": status, "text": text, "system": "s", "qid": "q", "cluster": f"{LEI}!art2", "kind": "temporal_replace_before",
+            "answerable": answerable, "gold_units": list(golds) if answerable else [],
+            "analysis": {"refs": [{"unit_ids": unit_ids, "status": "resolved"}], "n_refs": 1}}
+
+
+def test_temporal_outcomes(store):
+    u = f"{LEI}!art2"
+    # v0 = "texto dois antigo", v1 = "texto dois novo": the distinctive words are antigo / novo
+    assert C.temporal_outcome(_trow("answered", "O art. 2º diz texto dois antigo.", [u]), store)["outcome"] == "gold_version"
+    assert C.temporal_outcome(_trow("answered", "O art. 2º diz texto dois novo.", [u]), store)["outcome"] == "other_version"
+    assert C.temporal_outcome(_trow("answered", "O art. 2º diz algo.", [u]), store)["outcome"] == "undetermined"
+    assert C.temporal_outcome(_trow("answered", "texto dois antigo", [f"{LEI}!art1"]), store)["outcome"] == "unit_not_cited"
+    assert C.temporal_outcome(_trow("abstained", "", []), store)["outcome"] == "abstained"
+    # after a repeal nothing is in force: giving the provision as if it were is the error
+    assert C.temporal_outcome(_trow("answered", "x", [u], answerable=False), store)["outcome"] == "cited_repealed"
+    assert C.temporal_outcome(_trow("abstained", "", [], answerable=False), store)["outcome"] == "abstained"
+    s = C.summarise_temporal([_trow("answered", "texto dois antigo", [u]), _trow("abstained", "", [])], store)
+    assert s == {"s": {"gold_version": 1, "abstained": 1, "n": 2}}

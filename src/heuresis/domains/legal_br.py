@@ -118,10 +118,11 @@ def explicit_acronyms(name: str) -> list[str]:
 
 
 class _Norm:
-    __slots__ = ("urn", "kind", "authority", "date", "number", "title", "revoked")
+    __slots__ = ("urn", "kind", "authority", "date", "number", "title", "revoked", "incomplete")
 
-    def __init__(self, urn: str, title: str, revoked: bool = False):
+    def __init__(self, urn: str, title: str, revoked: bool = False, incomplete: bool = False):
         self.revoked = revoked
+        self.incomplete = incomplete
         m = _URN_FULL.match(urn)
         self.urn, self.title = urn, title
         self.authority, self.kind, self.date, self.number = m.groups() if m else ("", "", "", "")
@@ -142,7 +143,8 @@ class NormIndex:
         for s in sources:
             if s.kind != "norm":
                 continue
-            n = _Norm(s.id, s.meta.get("title", ""), bool(s.meta.get("revoked_flag")))
+            n = _Norm(s.id, s.meta.get("title", ""), bool(s.meta.get("revoked_flag")),
+                      bool(s.meta.get("articles_missing")))
             if not n.kind:
                 continue
             self.by_num.setdefault((n.kind, n.number.split("-")[0]), []).append(n)
@@ -198,9 +200,9 @@ def find_norm_mentions(text: str, index: NormIndex) -> list[dict]:
     for m in _NORM_RE.finditer(f):
         tname = m.group("type")
         kind = dict(_CITE_TYPES)[tname]
-        if tname in _SHORT_TYPES and not (m.group("nn") or tname in ("lc", "mp", "ec", "dl")):
-            continue
         issuer = m.group("issuer").strip()
+        if tname in _SHORT_TYPES and not (m.group("nn") or tname in ("lc", "mp", "ec", "dl") or issuer):
+            continue
         if issuer and kind not in _INFRALEGAL:
             continue
         if not issuer and kind in _INFRALEGAL and not m.group("nn"):
@@ -336,7 +338,9 @@ class Resolver:
             uid = f"{c.urn}!art{key}"
             if self.store.has_unit(uid):
                 return Reference(written, span[0], span[1], "resolved", container=c.urn, unit=key, unit_ids=(uid,))
-        return Reference(written, span[0], span[1], "unit_not_found", container=n["cands"][0].urn, unit=key)
+        c = n["cands"][0]
+        return Reference(written, span[0], span[1], "unit_not_found", container=c.urn, unit=key,
+                         meta={"container_incomplete": c.incomplete} if c.incomplete else {})
 
 
 class LegalBRDomain(JsonlDomain):

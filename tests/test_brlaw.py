@@ -198,3 +198,17 @@ def test_load_checks_split_hashes_and_dispatch(tmp_path):
     import pytest
     with pytest.raises(RuntimeError, match="differs from MANIFEST"):
         B.load(str(tmp_path))
+
+
+def test_a_stub_tax_text_gives_way_to_the_federal_copy(tmp_path):
+    a = "urn:lex:br:federal:lei:2002-01-10;10406"
+    src = lambda meta: {"id": a, "kind": "norm", "authority": 3, "coverage": 3, "meta": meta}
+    un = lambda uid: {"id": uid, "source_id": a, "kind": "article", "parent_id": None, "title": uid}
+    ev = lambda uid, t: {"id": uid + "@1", "unit_id": uid, "op": "create", "date": "2002-01-10", "text": t,
+                         "recorded_at": "2002-01-10", "evidence": "e", "certainty": "high", "axes": {}}
+    _tier(tmp_path / "tax", [src({"articles_missing": True})], [{**un(a + "!doc"), "kind": "document"}], [ev(a + "!doc", "stub")])
+    _tier(tmp_path / "versioned", [], [], [])
+    _tier(tmp_path / "federal", [src({})], [un(a + "!art186")], [ev(a + "!art186", "full")])
+    cnt = B.merge_tiers(str(tmp_path), str(tmp_path / "out"))
+    units = [json.loads(l)["id"] for l in open(tmp_path / "out" / "units.jsonl")]
+    assert units == [a + "!art186"] and cnt["tax"]["units"] == 0 and cnt["federal"]["norms"] == 1
