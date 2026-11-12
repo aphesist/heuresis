@@ -140,7 +140,7 @@ validated by a human sample here; the co-primary check that uses it is reported 
 * If the ledger stops a run, only the questions completed by all five systems are analysed (complete cases), and the number is reported. API or model failures after retries are error rows;
   they count against the system (not answered, hence not useful, never silently dropped), are listed per system, and a system with more than 2 % error rows is flagged.
 * Reproducibility: the resolver, the in-force check and the questions are deterministic; sampling of the model is the API default and cannot be set; repeat runs may differ.
-* **Deviations log: empty at registration.**
+* **Deviations log: empty at registration; entries are in the section "Deviations log" at the end of this file.**
 
 Threats to validity: (1) **"norm not found" can be real law outside the corpus** (decretos, medidas provisórias, resoluções, state law, ~2 to 5 % of sampled federal norms missing; stub texts), which is why the
 covered-only variant is reported; the strict primary outcome overstates fabrication for systems that cite real norms outside the corpus. (2) The versioned tier is small (60 + 120 provisions from a few base norms)
@@ -169,3 +169,9 @@ a worked example; no claim extends to other domains or to legal advice.
 questions cost about $5.02; on a `temporal`-like question $0.00047 + $0.00042 + $0.00181 + $0.00124 + $0.00108 = $0.00502, so 240 questions about $1.20. The support judge cost about $0.000136 per row in phase B
 ($0.15 for 1,100 rows): 4,275 rows about $0.58; the answer judge about $0.000086 per row ($0.0432 for 500 rows): 3,075 test rows about $0.27. **Modelled total about $7.1, which leaves about 30 % below the cap.**
 Phase B and C spent US$1.629 and US$0.4527 (`results/brlaw/phaseB/ledger.jsonl`, `results/brlaw/phaseC/ledger-c.jsonl`). The test run uses one new ledger.
+
+## Deviations log
+
+| Date | Change | Reason | Data seen at the time |
+|---|---|---|---|
+| 2026-11-12 | The registered human validation of the support judge (section 7) is replaced, by the owner's decision, by a **blind review by a stronger model from the same vendor** (Claude Opus, via a subagent with no access to the judge's verdicts). This reduces but does not remove correlated errors with the Haiku judge and the Haiku support gate; results are labelled "model-reviewed, not human-reviewed". The registered rule (support results reported as unreliable if the reviewer and the judge disagree on more than 20 % of the sample rows) is applied to the reviewer. | The owner chose an independent reviewer agent instead of a person. | The held-out run was in progress; no held-out result had been looked at. |
