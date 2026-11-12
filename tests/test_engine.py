@@ -379,3 +379,72 @@ def test_date_inside_the_range_of_a_versioned_corpus_still_applies(legal):
     assert "not used as as-of" not in next(t.note for t in a.trace if t.stage == "understand")
     p = legal.search("texto sintético redação em 1 de janeiro de 2021", scope=Scope(unit_prefix=ART2))
     assert [x.seq for x in p] == [0]
+
+
+class JudgingLLM(BodyLLM):
+    """BodyLLM for drafts; answers the optional answers_question check with `verdict`."""
+
+    def __init__(self, verdict="YES"):
+        super().__init__()
+        self.verdict, self.checks = verdict, 0
+
+    def complete(self, system, prompt, *, max_tokens=600):
+        if system.startswith("You check whether an answer addresses a question"):
+            self.checks += 1
+            assert max_tokens <= 20 and "Question:" in prompt and "[t1]" not in prompt
+            if self.verdict == "boom":
+                raise RuntimeError("down")
+            return self.verdict, Usage(model="body", tokens_in=50, tokens_out=1, usd=0.0001)
+        return super().complete(system, prompt, max_tokens=max_tokens)
+
+
+@pytest.fixture
+def judged(tmp_path):
+    def make(verdict, on):
+        llm = JudgingLLM(verdict)
+        e = Engine.open(str(tmp_path / f"j{verdict}{on}.db"), "legal_br", llm=llm)
+        e.ingest(str(FIX))
+        e.config.verify.answers_question = on
+        return e, llm
+    return make
+
+
+def test_answers_question_is_off_by_default_and_makes_no_call(judged):
+    assert load_config().verify.answers_question is False
+    e, llm = judged("NO", False)
+    a = ask2(e)
+    assert a.status == "answered" and llm.checks == 0
+    assert all(t.stage != "answers_question" for t in a.trace)
+    e.close()
+
+
+def test_answers_question_yes_keeps_the_answer_and_records_the_call(judged):
+    e, llm = judged("YES", True)
+    a = ask2(e)
+    assert a.status == "answered" and llm.checks == 1
+    t = [t for t in a.trace if t.stage == "answers_question"][0]
+    assert t.tokens_in == 50 and t.usd == pytest.approx(0.0001) and t.note == "answers_question: YES"
+    assert a.usd >= 0.0001
+    e.close()
+
+
+def test_answers_question_no_turns_the_answer_into_an_unsupported_abstention(judged):
+    e, llm = judged("NO", True)
+    a = ask2(e)
+    assert a.status == "abstained" and a.abstention.type == "unsupported" and a.text == ""
+    assert any(t.stage == "answers_question" and t.note == "answers_question: NO" for t in a.trace)
+    assert a.claims  # the verified claims are kept for the record
+    e.close()
+
+
+def test_answers_question_unreadable_reply_keeps_the_answer_and_error_is_a_model_failure(judged):
+    from heuresis.engine import trace_failure
+    e, _ = judged("maybe", True)
+    a = ask2(e)
+    assert a.status == "answered"
+    assert [t.note for t in a.trace if t.stage == "answers_question"] == ["answers_question: unreadable, kept"]
+    e.close()
+    e2, _ = judged("boom", True)
+    a2 = ask2(e2)
+    assert a2.status == "abstained" and trace_failure(a2.trace)[0] == "model"
+    e2.close()

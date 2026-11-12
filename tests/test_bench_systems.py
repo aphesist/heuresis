@@ -260,3 +260,13 @@ def test_fingerprint_hashes_the_files_on_disk(tmp_path):
     assert m.fingerprint()["onnx_sha256"] == hashlib.sha256(b"onnx bytes").hexdigest()
     assert S.fingerprint_of(m)["id"] == "onnx:x/y"
     assert S.fingerprint_of(None)["note"] == "not used"
+
+
+def test_draft_raws_drop_the_answers_question_reply_only_when_that_call_ran():
+    from heuresis.bench.systems import _draft_raws
+    from heuresis.model import StageTrace
+    ran = [StageTrace("draft", 1.0, 10, 5), StageTrace("answers_question", 1.0, 50, 1, 0.0, 0, "x")]
+    assert _draft_raws(["draft text", "NO"], ran) == ["draft text"]
+    failed = [StageTrace("draft", 1.0, 10, 5), StageTrace("answers_question", 1.0, 0, 0, 0.0, 0, "model error: X")]
+    assert _draft_raws(["draft text"], failed) == ["draft text"]
+    assert _draft_raws(["draft text"], [StageTrace("draft", 1.0, 10, 5)]) == ["draft text"]

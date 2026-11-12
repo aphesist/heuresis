@@ -89,3 +89,24 @@ def test_drafting_prompt_v2_is_default_and_v1_stays_selectable():
     from heuresis.bench import systems as S
     a = S.surface_hash(load_config())
     assert S.surface_hash(cfg) != a  # the choice of prompt is part of the surface hash
+
+
+def test_source_label_and_the_one_shared_passage_line():
+    from heuresis.bench import systems as S
+    from heuresis.surface.prompts import passage_line, source_label
+
+    assert source_label("multihoprag:sporting-news") == "Sporting News"
+    assert source_label("multihoprag:the_age") == "The Age"
+    assert source_label("cnbc") == "Cnbc"          # no colon: the id itself, capitalised
+    assert source_label("") == "" and source_label(":") == ":"   # nothing readable: the id
+    p = Passage("u1", 0, "Some  text\nhere.", title="Art 1", valid_from="2020-01-01", mark="t1",
+                source_id="multihoprag:sporting-news")
+    line = "[t1] (Art 1; source: Sporting News; valid 2020-01-01..) Some text here."
+    assert passage_line("t1", p) == line
+    # the engine's draft prompt and the baselines' prompts render the same line
+    assert line in draft_prompt("Q?", None, [p], [])
+    assert line in S.passages_prompt("Q?", [p])
+    assert S._passage_line("t1", p) == line
+    # no source id: no source part
+    q = Passage("u2", 0, "x", title="T", mark="t2")
+    assert passage_line("t2", q) == "[t2] (T; valid ..) x"

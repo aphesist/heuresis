@@ -49,6 +49,10 @@ class VerifyCfg:
     #: title-prefixed sentence windows of the cited passages) or "current" (the first
     #: version: one joined premise of the cited passages' texts).
     support: str = "window_title"
+    #: OFF by default (an A/B arm): after verification, on answered questions only, one
+    #: model call asks whether the answer states what the question asks for; NO turns the
+    #: answer into an abstention of type "unsupported".
+    answers_question: bool = False
 
 
 @dataclass

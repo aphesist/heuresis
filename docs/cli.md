@@ -79,6 +79,17 @@ arguments are passed through to `heuresis.bench.run.main` / `report.main`.
 - **Replay data.** Each engine row stores the raw draft, the passages shown, the tool results and the
   per-claim entailment scores before thresholding (`replay`), for `bench.calibrate`.
 
+### Judge-assisted secondary grade (`python -m heuresis.bench.judge RUN_DIR [RUN_DIR ...]`)
+
+Secondary and exploratory; the containment grade stays the primary measure and is never changed.
+For every answered row of every system that the containment grader marked wrong on an answerable
+question, the generator's model (thinking off, tag `judge` in the shared ledger) is asked whether the
+answer states the same answer as a gold answer (EQUIVALENT / NOT_EQUIVALENT). Verdicts are written to
+`RUN_DIR/judge.jsonl` (resumable), never into `results.jsonl`; `bench.report` then adds Table 1b
+(correct and penalised score under the judge-assisted grade, rows flipped per system). Without
+`--paid` it only prints how many rows it would judge; `--paid` needs `--cap`, `--ledger` and the key
+variable, as for `bench.run`. Dev run folders only (it refuses any other split).
+
 ### Threshold calibration (`python -m heuresis.bench.calibrate RUN_DIR [RUN_DIR ...]`)
 
 Prints the penalised score of the engine at each of the 45 pairs (`support_threshold`,

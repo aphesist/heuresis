@@ -282,7 +282,40 @@ def build(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
                 p["perm_p_holm"] = qp
                 res[key][s] = p
     res["pareto"] = pareto(res)
+    jm = judge_metrics(out_dir, by, order, iters, seed)
+    if jm:
+        res["judge"] = jm
     return res
+
+
+def judge_metrics(out_dir: str, by: dict[str, list[dict]], order: list[str], iters: int,
+                  seed: int) -> dict | None:
+    """Secondary, exploratory: the outcomes with the judge's EQUIVALENT verdicts counted as
+    correct (``bench.judge``), read from ``judge.jsonl`` beside the results. The primary
+    grade in ``systems`` is untouched. ``None`` when there is no judge file."""
+    from .judge import load_verdicts
+    verd = load_verdicts(out_dir)
+    if not verd:
+        return None
+    out: dict[str, Any] = {}
+    for s in order:
+        rows = by[s]
+        new, flipped, judged, unreadable = [], 0, 0, 0
+        for r in rows:
+            v = verd.get((s, r["qid"]))
+            if v is not None:
+                judged += 1
+                unreadable += v.get("verdict") is None
+            if v is not None and v.get("verdict") == "EQUIVALENT" and r.get("outcome") == "wrong" \
+                    and r.get("status") == "answered":
+                r = {**r, "outcome": "correct", "correct": True, "score": 1.0}
+                flipped += 1
+            new.append(r)
+        m = system_metrics(new, iters, seed)
+        out[s] = {"n": m["n"], "judged": judged, "unreadable": unreadable, "flipped": flipped,
+                  "counts": m["counts"], "wilson_correct": m["wilson"]["correct"],
+                  "penalised_score": m["penalised_score"]}
+    return out
 
 
 def _pct(x: float | None, d: int = 1) -> str:
@@ -333,6 +366,24 @@ def render(res: dict) -> str:
         cell = lambda k: f"{_pct(w[k]['p'])} [{_pct(w[k]['lo'])}, {_pct(w[k]['hi'])}]"
         L.append(f"| {s} | {m['n']} | {cell('correct')} | {cell('wrong')} | {cell('abstained')} | "
                  f"{_ci_s(m['penalised_score'])} |")
+    jd = res.get("judge")
+    if jd:
+        L += ["", f"## Table 1b. Secondary, exploratory: judge-assisted grade ({sp})", "",
+              "The containment grade of Table 1 is the primary measure and is unchanged. For every answered "
+              "row of every system that it marked wrong, `claude-haiku-5-5` (the generator's model family, "
+              "thinking off) was asked whether the answer states the same answer as a gold answer; "
+              "EQUIVALENT counts as correct here. The same rule applies to all systems.", "",
+              "| system | n | judged | flipped to correct | correct (judge-assisted) | penalised score (judge-assisted) | penalised score (primary) |",
+              "|---|---|---|---|---|---|---|"]
+        for s, m in sysm.items():
+            name = s.replace(" (exploratory)", "")
+            j = jd.get(name)
+            if not j:
+                continue
+            w = j["wilson_correct"]
+            L.append(f"| {s} | {j['n']} | {j['judged']} | {j['flipped']} | "
+                     f"{_pct(w['p'])} [{_pct(w['lo'])}, {_pct(w['hi'])}] | {_ci_s(j['penalised_score'])} | "
+                     f"{_ci_s(m['penalised_score'])} |")
     L += ["", f"## Table 2. Selective answering ({sp}; AURC over answered questions, lower is better)",
           "", "| system | n | accuracy | coverage | selective accuracy | AURC | abstains on unanswerable | mean answer chars |",
           "|---|---|---|---|---|---|---|---|"]

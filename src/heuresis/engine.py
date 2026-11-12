@@ -78,7 +78,7 @@ def trace_failure(trace: list[StageTrace]) -> tuple[str, str] | None:
     ``("verifier", note)`` for a failed verification (the local entailer). ``None`` when
     every stage ran. A budget stop is not a failure of the model."""
     for t in trace:
-        if t.stage in ("draft", "draft_followup"):
+        if t.stage in ("draft", "draft_followup", "answers_question"):
             if t.note == NOTE_BUDGET:
                 return "budget", f"{t.stage}: {t.note}"
             if t.note.startswith(NOTE_MODEL_ERROR):
@@ -378,11 +378,41 @@ class Engine:
             keep = [s for s in d.sentences if s.text not in bad]
             text = draft_mod.render(dataclasses.replace(d, sentences=keep), results)
         trace.append(StageTrace("assemble", _ms(t0)))
+        if status in ("answered", "partial") and getattr(self.config.verify, "answers_question", False):
+            verdict, err = self._answers_question(question, text, trace)
+            if err is not None:
+                return finish(*err, query=query, claims=claims)
+            if verdict is False:
+                return finish("abstained", "unsupported",
+                              "The answer does not state what the question asks for.",
+                              query=query, claims=claims)
         if status in ("answered", "partial"):
             return finish(status, claims=claims, text=text, grade=grade, query=query)
         kind = ab.type if ab else "unsupported"
         return finish(status, kind, ab.message if ab else "", ab.searched if ab else [],
                       query=query, claims=claims)
+
+    def _answers_question(self, question: str, text: str, trace: list[StageTrace]):
+        """The optional stage: one model call, YES or NO. Returns (verdict, finish-args):
+        verdict is False only for a clear NO; an unreadable reply keeps the answer."""
+        from .surface.prompts import ANSWERS_QUESTION_SYSTEM, answers_question_prompt
+        t0 = time.perf_counter()
+        try:
+            raw, u = self.llm.complete(ANSWERS_QUESTION_SYSTEM,
+                                       answers_question_prompt(question, text), max_tokens=10)
+        except BudgetExceeded:
+            trace.append(StageTrace("answers_question", _ms(t0), note=NOTE_BUDGET))
+            return None, ("abstained", "budget")
+        except Exception as e:
+            trace.append(StageTrace("answers_question", _ms(t0),
+                                    note=f"{NOTE_MODEL_ERROR}: {type(e).__name__}"))
+            return None, ("abstained", "unsupported", "The model call failed.")
+        word = (raw or "").strip().upper().split()[:1]
+        verdict = False if word and word[0].startswith("NO") else True
+        note = "answers_question: " + ("NO" if verdict is False else "YES" if word and word[0].startswith("YES")
+                                       else "unreadable, kept")
+        trace.append(StageTrace("answers_question", _ms(t0), u.tokens_in, u.tokens_out, u.usd, 0, note))
+        return verdict, None
 
     def _draft(self, llm: Any, query: Query, passages: list[Passage], tools: list[Any],
                trace: list[StageTrace], stage: str):

@@ -27,6 +27,7 @@ from ..model import Answer, AsOf, Passage, Query, Scope, StageTrace, Usage
 from ..retrieve import cascade
 from ..store import Store
 from ..surface.config import Config, config_to_dict, load_config
+from ..surface.prompts import passage_line, source_label
 from .ledger import BudgetExceeded, Ledger, LedgerLLM
 from .types import Dataset, Question
 
@@ -104,7 +105,7 @@ def prompts_hash() -> str:
     build the baselines' prompts (shared helpers, the single-shot, closed-book, oracle,
     long-context and agentic ``_answer`` methods)."""
     sources = [inspect.getsource(f) for f in (
-        _span, _passage_line, passages_prompt, ClosedBook._answer, _Retrieving._answer,
+        _span, _passage_line, passage_line, source_label, passages_prompt, ClosedBook._answer, _Retrieving._answer,
         Agentic._answer, LongContext._answer, Oracle._answer)]
     parts = [ANSWER_FORMAT, CLOSED_SYSTEM, PASSAGES_SYSTEM, LONG_SYSTEM, AGENT_SYSTEM,
              AGENT_MORE, AGENT_LAST] + sources
@@ -328,7 +329,7 @@ def _span(p: Passage) -> str:
 
 
 def _passage_line(mark: str, p: Passage) -> str:
-    return f"[{mark}] ({p.title}; {_span(p)}) {' '.join(p.text.split())}"
+    return passage_line(mark, p)  # the one shared rendering (surface/prompts.py)
 
 
 def _fit(passages: list[Passage], max_chars: int) -> list[Passage]:
@@ -635,6 +636,7 @@ def _replay_payload(q: Question, ans: Answer, raws: list[str], cfg: Config) -> d
     return {
         "version": 1, "verified": verified,
         "engine_status": ans.status, "grade": float(ans.grade),
+        "answers_question": next((t.note for t in ans.trace if t.stage == "answers_question"), None),
         "abstention": ans.abstention.type if ans.abstention else None,
         "thresholds": {"support": cfg.verify.support_threshold,
                        "partial": cfg.verify.partial_threshold},
@@ -654,6 +656,14 @@ def _replay_payload(q: Question, ans: Answer, raws: list[str], cfg: Config) -> d
                                for k in ("exists", "valid_at_date", "numbers_traced")}}
                    for c in ans.claims],
     }
+
+
+def _draft_raws(raws: list[str], trace: list[StageTrace]) -> list[str]:
+    """The raw replies of the draft calls only: the optional ``answers_question`` call, when
+    it ran, is the last reply and is not a draft."""
+    if any(t.stage == "answers_question" and (t.tokens_in or t.tokens_out) for t in trace):
+        return raws[:-1]
+    return raws
 
 
 class EngineSystem(System):
@@ -691,7 +701,7 @@ class EngineSystem(System):
             note=f"engine status={ans.status}"
                  + (f"; abstention={ans.abstention.type}" if ans.abstention else ""),
             error=("" if fail is None else f"{fail[0]} failure: {fail[1]}"),
-            replay=_replay_payload(q, ans, tap.raws, self.ctx.engine_config()))
+            replay=_replay_payload(q, ans, _draft_raws(tap.raws, tr), self.ctx.engine_config()))
 
 
 _CLASSES: dict[str, Callable[..., System]] = {

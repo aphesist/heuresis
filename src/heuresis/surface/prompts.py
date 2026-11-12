@@ -1,6 +1,7 @@
 """Drafting prompt. This is the main token cost: keep it compact."""
 from __future__ import annotations
 
+import re
 from typing import Any, Sequence
 
 from ..model import ABSTENTIONS, Passage
@@ -58,6 +59,26 @@ def _span(p: Passage) -> str:
     return f"valid {p.valid_from or ''}..{p.valid_to or ''}"
 
 
+def source_label(source_id: str) -> str:
+    """A readable label for a source id: the part after the first colon, split at hyphens,
+    underscores and spaces and capitalised ("multihoprag:sporting-news" -> "Sporting News");
+    the id itself when nothing readable is left."""
+    tail = (source_id or "").split(":", 1)[-1]
+    words = [w for w in re.split(r"[-_\s]+", tail) if w]
+    return " ".join(w[:1].upper() + w[1:] for w in words) or (source_id or "")
+
+
+def passage_line(mark: str, p: Passage) -> str:
+    """The one rendering of a passage in every prompt of every system (the engine's draft
+    prompt and the baselines', the agentic search results and the oracle alike), so that
+    they cannot drift apart: mark, title, source, validity, then the text."""
+    parts = [p.title]
+    if p.source_id:
+        parts.append(f"source: {source_label(p.source_id)}")
+    parts.append(_span(p))
+    return f"[{mark}] ({'; '.join(parts)}) {' '.join(p.text.split())}"
+
+
 def draft_prompt(
     question: str,
     as_of: str | None,
@@ -71,12 +92,24 @@ def draft_prompt(
     lines.append("Passages:")
     if passages:
         for i, p in enumerate(passages, 1):
-            mark = p.mark or f"t{i}"
-            text = " ".join(p.text.split())
-            lines.append(f"[{mark}] ({p.title}; {_span(p)}) {text}")
+            lines.append(passage_line(p.mark or f"t{i}", p))
     else:
         lines.append("(none)")
     lines.append(f"Question: {question}")
     if max_sentences > 0:
         lines.append(f"Answer in at most {max_sentences} short sentences.")
     return "\n".join(lines)
+
+
+ANSWERS_QUESTION_SYSTEM = (
+    "You check whether an answer addresses a question. Reply with exactly one word: YES if "
+    "the answer states what the question asks for (the specific person, number, date, place, "
+    "thing, or yes/no it requests), NO if it only states something else, an intermediate "
+    "fact, a partial answer, or repeats the question. Do not judge whether the answer is true."
+)
+
+
+def answers_question_prompt(question: str, answer: str) -> str:
+    """The user prompt of the optional ``verify.answers_question`` stage (marks removed)."""
+    clean = re.sub(r"\[[tk]\d+\]", "", answer)
+    return f"Question: {question}\nAnswer: {' '.join(clean.split())}\nDoes the answer state what the question asks for? YES or NO."
