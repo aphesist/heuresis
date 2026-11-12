@@ -18,6 +18,7 @@ _CALL_RE = re.compile(r"^CALL\s+(\S+)\s+(\S+)\s*(.*)$", re.IGNORECASE)
 _ABSTAIN_RE = re.compile(r"^ABSTAIN\b\s*([A-Za-z_]*)\s*[:\-]?\s*(.*)$", re.IGNORECASE)
 _BULLET_RE = re.compile(r"^\s*(?:[-*•]+|\d+[.)])\s+")
 _PLACEHOLDER_RE = re.compile(r"\{(k\d+)\}")
+_SEARCH_RE = re.compile(r"^\s*SEARCH\s*:\s*(.+?)\s*$", re.IGNORECASE)
 
 
 def _extract_marks(chunk: str) -> tuple[str, list[str], list[str]]:
@@ -109,6 +110,26 @@ def draft(llm: LLM, query: Query, passages: list[Passage], tools: list[Tool], cf
         prompt = draft_prompt(query.text, query.as_of.valid, kept, tools, max_sentences)
     raw, usage = llm.complete(draft_system(getattr(cfg, "prompt", "v2")), prompt,
                               max_tokens=cfg.max_tokens)
+    d = parse_draft(raw)
+    d.raw = raw
+    d.usage = usage
+    return d
+
+
+def parse_search(raw: str) -> str | None:
+    """The query of a reply whose first non-empty line is ``SEARCH: <query>``, else None (the
+    reply is an answer or an abstention). Never raises."""
+    try:
+        first = next((ln for ln in (raw or "").splitlines() if ln.strip()), "")
+        m = _SEARCH_RE.match(first.strip().strip("`").strip())
+        return m.group(1).strip().strip("`").strip() or None if m else None
+    except Exception:
+        return None
+
+
+def draft_from_prompt(llm: LLM, system: str, prompt: str, cfg) -> Draft:
+    """One model call over a prompt the caller built; the reply parsed as a draft."""
+    raw, usage = llm.complete(system, prompt, max_tokens=cfg.max_tokens)
     d = parse_draft(raw)
     d.raw = raw
     d.usage = usage

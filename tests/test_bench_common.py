@@ -54,7 +54,8 @@ def questions():
 def make_dataset(tmp_path, corpus_tokens=120):
     corpus = write_corpus(tmp_path / "corpus")
     return Dataset(name="tiny", corpus_dir=corpus,
-                   questions={"dev": questions(), "test": questions()[:4]},
+                   questions={"dev": questions(), "test": questions()[:4],
+                              "dev2": questions()[2:9]},
                    licence="test", corpus_tokens=corpus_tokens, meta={})
 
 

@@ -14,8 +14,9 @@ and ``locked.decide.decide`` to those stored scores. No model and no entailer is
 * Tie-break (PREREGISTRATION.md section 8.1, still marked **proposed** there; kept as
   written): among pairs with the same pooled score, the higher ``support_threshold``,
   then the higher ``partial_threshold`` (the more conservative setting).
-* Only dev. :func:`grid` and the command line refuse a run folder whose manifest split is
-  not ``"dev"``.
+* Only the dev splits (``dev``, and ``dev2`` since the redesign). :func:`grid` and the command
+  line refuse a run folder whose manifest split is not the one asked for, and any other split
+  (``test``, ``sealed``) outright.
 
 Command line: ``python -m heuresis.bench.calibrate RUN_DIR [RUN_DIR ...]``.
 """
@@ -27,7 +28,7 @@ import sys
 from typing import Any, Sequence
 
 from .. import draft as draft_mod
-from ..locked.decide import decide
+from ..locked.decide import decide, deterministic_failure
 from ..model import Claim, Passage, ToolResult
 from ..surface.config import Config, config_from_dict, load_config
 from . import report
@@ -97,7 +98,9 @@ def replay(row: dict, support_threshold: float, partial_threshold: float,
     if status == "answered":
         text = draft_mod.render(d, results)
     elif status == "partial":
-        bad = {c.text for c in claims if c.label == "unsupported"}
+        graded = getattr(_decide_cfg(cfg), "mode", "strict") == "grade"
+        bad = {c.text for c in claims
+               if (deterministic_failure(c) if graded else c.label == "unsupported")}
         keep = [s for s in d.sentences if s.text not in bad]
         text = draft_mod.render(dataclasses.replace(d, sentences=keep), results)
     return status, text, g
@@ -119,29 +122,36 @@ def outcome_of(row: dict, status: str, text: str) -> dict:
     return grade(_question(row), run_status(status), text)
 
 
-def _load_dev(out_dirs: Sequence[str], split: str) -> list[tuple[dict, Config, str]]:
-    if split != "dev":
-        raise CalibrationRefused(f"calibration uses the dev split only, not {split!r}")
+#: Splits that calibration and replay may read: the tuning splits, never test or sealed.
+CALIBRATION_SPLITS = ("dev", "dev2")
+
+
+def _load_dev(out_dirs: Sequence[str], split: str,
+              system: str = "engine") -> list[tuple[dict, Config, str]]:
+    if split not in CALIBRATION_SPLITS:
+        raise CalibrationRefused(
+            f"calibration uses the dev splits {CALIBRATION_SPLITS} only, not {split!r}")
     items: list[tuple[dict, Config, str]] = []
     for d in out_dirs:
         manifest, rows, _ = report.load(d)
-        if manifest.get("split") != "dev":
+        if manifest.get("split") != split:
             raise CalibrationRefused(
-                f"{d}: manifest split is {manifest.get('split')!r}, not 'dev'; refusing")
-        cfg = config_from_dict(manifest["engine_config"]) if manifest.get("engine_config") \
-            else load_config()
+                f"{d}: manifest split is {manifest.get('split')!r}, not {split!r}; refusing")
+        own = (manifest.get("engine_configs") or {}).get(system) or manifest.get("engine_config")
+        cfg = config_from_dict(own) if own else load_config()
         for r in rows:
-            if r.get("system") != "engine":
+            if r.get("system") != system:
                 continue
-            if r.get("split", "dev") != "dev":
+            if r.get("split", "dev") != split:
                 raise CalibrationRefused(f"{d}: a row of split {r.get('split')!r}; refusing")
             items.append((r, cfg, d))
     if not items:
-        raise CalibrationRefused("no engine rows in the given run folders")
+        raise CalibrationRefused(f"no {system} rows in the given run folders")
     return items
 
 
-def grid(out_dir: str | Sequence[str], split: str = "dev") -> tuple[list[dict], dict]:
+def grid(out_dir: str | Sequence[str], split: str = "dev",
+         system: str = "engine") -> tuple[list[dict], dict]:
     """Penalised score of the engine at every threshold pair, pooled over the run folders.
 
     Returns ``(table, best)``. ``table`` has one dict per pair (45), in ascending
@@ -152,7 +162,7 @@ def grid(out_dir: str | Sequence[str], split: str = "dev") -> tuple[list[dict], 
     ``packaged`` (the row at the packaged pair, when it is in the grid) and ``tie_break``.
     """
     dirs = [out_dir] if isinstance(out_dir, str) else list(out_dir)
-    items = _load_dev(dirs, split)
+    items = _load_dev(dirs, split, system)
     cache: dict[tuple[int, str, str], dict] = {}
     table: list[dict] = []
     for s in THRESHOLDS:
@@ -204,9 +214,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                                  description="Grid of the two verification thresholds, replayed "
                                              "from stored drafts. Dev run folders only.")
     ap.add_argument("run_dir", nargs="+", help="run folders written by heuresis.bench.run on dev")
+    ap.add_argument("--split", default="dev", choices=CALIBRATION_SPLITS,
+                    help="the split of the run folders (default: dev)")
+    ap.add_argument("--system", default="engine", choices=("engine", "engine_single"),
+                    help="which engine's rows to replay (default: engine; the thresholds only "
+                         "matter for engine_single, whose decision mode is strict)")
     a = ap.parse_args(argv)
     try:
-        table, best = grid(a.run_dir, "dev")
+        table, best = grid(a.run_dir, a.split, a.system)
     except CalibrationRefused as e:
         print(f"error: {e}", file=sys.stderr)
         return 2

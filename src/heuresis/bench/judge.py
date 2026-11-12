@@ -31,6 +31,8 @@ __all__ = ["JUDGE_SYSTEM", "judge_prompt", "parse_verdict", "candidates", "judge
            "load_verdicts", "main"]
 
 JUDGE_FILE = "judge.jsonl"
+#: The splits the judge may read: the tuning splits only, never test or sealed.
+DEV_SPLITS = ("dev", "dev2")
 _MARK = re.compile(r"\[[tk]\d+\]")
 
 JUDGE_SYSTEM = (
@@ -83,8 +85,9 @@ def judge_folder(run_dir: str, questions: dict[str, Any], llm: Any, *, workers: 
     """Judge one dev run folder. ``questions`` maps question id to a ``Question`` (dev only);
     ``llm`` is the metered generator. Returns counts. A budget stop ends the folder cleanly."""
     manifest, rows, _ = report.load(run_dir)
-    if manifest.get("split") != "dev":
-        raise ValueError(f"{run_dir}: manifest split is {manifest.get('split')!r}, not 'dev'; refusing")
+    if manifest.get("split") not in DEV_SPLITS:
+        raise ValueError(f"{run_dir}: manifest split is {manifest.get('split')!r}, not one of "
+                         f"{DEV_SPLITS}; refusing")
     cand = candidates(rows)
     done = load_verdicts(run_dir)
     todo = [r for r in cand if done.get((r["system"], r["qid"]), {}).get("verdict") is None]
@@ -155,12 +158,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     rc = 0
     for d in a.run_dir:
         manifest, _rows, _ = report.load(d)
-        if manifest.get("split") != "dev":
-            print(f"error: {d}: manifest split is {manifest.get('split')!r}, not 'dev'; refusing",
-                  file=sys.stderr)
+        if manifest.get("split") not in DEV_SPLITS:
+            print(f"error: {d}: manifest split is {manifest.get('split')!r}, not one of "
+                  f"{DEV_SPLITS}; refusing", file=sys.stderr)
             return 2
         ds = _load_dataset(manifest["dataset"])
-        qs = {q.id: q for q in ds.questions["dev"]}
+        qs = {q.id: q for q in ds.questions[manifest["split"]]}
         st = judge_folder(d, qs, llm, workers=a.workers, max_tokens=a.max_tokens, dry_run=not a.paid)
         print(json.dumps({"run_dir": d, **st}))
         if st["stopped"]:

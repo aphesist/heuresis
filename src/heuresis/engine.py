@@ -3,7 +3,10 @@
 Stage names written to ``Answer.trace``: ``understand``, the retrieval stages
 (``lexical``, ``dense``, ``expand``, ``rerank``, appended by the cascade),
 ``retrieve`` (summary), ``draft``, ``tools``, ``draft_followup`` (only after a
-``sql`` call), ``verify``, ``decide`` and ``assemble``.
+``sql`` call), ``verify``, ``decide`` and ``assemble``. In the ``search`` answer mode
+every model turn is a ``draft`` stage (one per turn; a turn that asks for a search says so
+in its note) and every search the model asks for is a ``search`` stage, so the cost of an
+answer is the sum of its stages.
 """
 from __future__ import annotations
 
@@ -21,7 +24,7 @@ from .domains import get_domain
 from .fakes import EchoLLM, RuleEntailer
 from .ingest import ingest as _ingest
 from .llm import BudgetExceeded
-from .locked.decide import decide
+from .locked.decide import decide, deterministic_failure
 from .locked.verify import verify as _verify
 from .model import (
     Abstention,
@@ -320,13 +323,21 @@ class Engine:
             return finish("abstained", "outside_coverage", query=query,
                           searched=sorted({p.source_id for p in passages}))
 
-        # 3. draft
+        # 3. draft (one call over one retrieval) or search (the model may ask for more)
         tools = self._tools()
-        if not afford(None):
-            return finish("abstained", "budget", query=query)
-        d, err = self._draft(self.llm, query, passages, tools, trace, "draft")
-        if err is not None:
-            return finish(*err, query=query)
+        if self.config.answer.mode == "search":
+            d, err, followup = self._answer_search(query, passages, tools, trace, afford)
+            if err is not None:
+                return finish(*err, query=query)
+        else:
+            if not afford(None):
+                return finish("abstained", "budget", query=query)
+            d, err = self._draft(self.llm, query, passages, tools, trace, "draft")
+            if err is not None:
+                return finish(*err, query=query)
+
+            def followup(llm: Any):
+                return self._draft(llm, query, passages, tools, trace, "draft_followup")
         last_cost = d.usage.usd
 
         # 4. tools
@@ -340,8 +351,7 @@ class Engine:
             if ran_sql:
                 if not afford(last_cost):
                     return finish("abstained", "budget", query=query)
-                d2, err = self._draft(_Appender(self.llm, self._results_text(results)), query,
-                                      passages, tools, trace, "draft_followup")
+                d2, err = followup(_Appender(self.llm, self._results_text(results)))
                 if err is not None:
                     return finish(*err, query=query)
                 d = d2
@@ -366,6 +376,14 @@ class Engine:
         # Conflict/divergence detection is not implemented in this version.
         status, grade, ab = decide(claims, passages, query, self.config.decide, self.store,
                                    declined=d.declined)
+        graded = getattr(self.config.decide, "mode", "strict") == "grade"
+        if graded and status in ("answered", "partial"):
+            # Entailment only grades here: a sentence kept despite low support is marked
+            # "partial" (not "unsupported") so that its citations still count.
+            for c in claims:
+                if c.label == "unsupported" and not deterministic_failure(c):
+                    c.label = "partial"
+                    c.note = "; ".join(x for x in (c.note, "low support: graded, not removed") if x)
         trace.append(StageTrace("decide", _ms(t0), note=status))
 
         # 6. assemble
@@ -374,7 +392,8 @@ class Engine:
         if status == "answered":
             text = draft_mod.render(d, results)
         elif status == "partial":
-            bad = {c.text for c in claims if c.label == "unsupported"}
+            bad = {c.text for c in claims
+                   if (deterministic_failure(c) if graded else c.label == "unsupported")}
             keep = [s for s in d.sentences if s.text not in bad]
             text = draft_mod.render(dataclasses.replace(d, sentences=keep), results)
         trace.append(StageTrace("assemble", _ms(t0)))
@@ -417,9 +436,15 @@ class Engine:
     def _draft(self, llm: Any, query: Query, passages: list[Passage], tools: list[Any],
                trace: list[StageTrace], stage: str):
         """One model call. Returns (draft, None) or (None, finish-args)."""
+        return self._turn(stage, trace,
+                          lambda: draft_mod.draft(llm, query, passages, tools, self.config.draft))
+
+    def _turn(self, stage: str, trace: list[StageTrace], call: Any):
+        """Run one model call (``call()`` returns a Draft) and trace it. Returns
+        (draft, None) or (None, finish-args); a model failure never propagates."""
         t0 = time.perf_counter()
         try:
-            d = draft_mod.draft(llm, query, passages, tools, self.config.draft)
+            d = call()
         except BudgetExceeded:
             trace.append(StageTrace(stage, _ms(t0), note=NOTE_BUDGET))
             return None, ("abstained", "budget")
@@ -427,7 +452,81 @@ class Engine:
             trace.append(StageTrace(stage, _ms(t0), note=f"{NOTE_MODEL_ERROR}: {type(e).__name__}"))
             return None, ("abstained", "unsupported", "The model call failed.")
         u = d.usage
-        note = "declined" if d.declined else ("no sentences" if not d.sentences else "")
+        asked = draft_mod.parse_search(d.raw)
+        note = (f"search requested: {asked[:80]}" if asked
+                else "declined" if d.declined else ("no sentences" if not d.sentences else ""))
         trace.append(StageTrace(stage, _ms(t0), u.tokens_in, u.tokens_out, u.usd,
                                 len(d.sentences), note))
         return d, None
+
+    def _answer_search(self, query: Query, passages: list[Passage], tools: list[Any],
+                       trace: list[StageTrace], afford: Any):
+        """The ``search`` answer mode. ``passages`` is the first retrieval (marks t1..tn);
+        it is replaced, in place, by every passage the model was shown, in order, so the
+        verifier sees exactly what the model saw. Returns (draft, None, followup) or
+        (None, finish-args, None); ``followup(llm)`` repeats the last turn with an extended
+        prompt (after a ``sql`` call) and returns what ``_turn`` returns."""
+        from .surface.prompts import SEARCH_SYSTEM, search_prompt
+        acfg, dcfg = self.config.answer, self.config.draft
+        max_s = max(0, int(acfg.max_searches))
+        max_sent = int(getattr(dcfg, "max_sentences", 0) or 0)
+        rounds: list[tuple[str, list[Passage]]] = [("", list(passages))]
+        shown = {(p.unit_id, p.seq) for p in passages}
+        n_shown = len(passages)
+
+        def build(left: int) -> str:
+            return search_prompt(query.text, query.as_of.valid, rounds, left, max_s, tools,
+                                 max_sent)
+
+        # The first retrieval is fitted as in single mode: the tail is dropped, never cut.
+        while rounds[0][1] and len(build(max_s)) > dcfg.max_context_chars:
+            rounds[0][1].pop()
+        left, last_cost = max_s, None
+        while True:
+            if not afford(last_cost):
+                return None, ("abstained", "budget"), None
+            prompt = build(left)
+            d, err = self._turn("draft", trace, lambda: draft_mod.draft_from_prompt(
+                self.llm, SEARCH_SYSTEM, prompt, dcfg))
+            if err is not None:
+                return None, err, None
+            last_cost = d.usage.usd
+            asked = draft_mod.parse_search(d.raw)
+            if asked is None:
+                passages[:] = [p for _, ps in rounds for p in ps]
+
+                def followup(llm: Any, _prompt: str = prompt):
+                    return self._turn("draft_followup", trace, lambda: draft_mod.draft_from_prompt(
+                        llm, SEARCH_SYSTEM, _prompt, dcfg))
+                return d, None, followup
+            if left <= 0:
+                trace[-1].note += "; none left"
+                return None, ("abstained", "unsupported",
+                              "The model asked to search with no searches left."), None
+            t0 = time.perf_counter()
+            sub: list[StageTrace] = []
+            wide = dataclasses.replace(self.config.retrieve,
+                                       rerank_out=int(acfg.search_k) + len(shown))
+            found = retrieve_mod.cascade(self.store, dataclasses.replace(query, text=asked),
+                                         wide, embedder=self.embedder,
+                                         reranker=self.reranker, trace=sub)
+            new: list[Passage] = []
+            for p in found:
+                if (p.unit_id, p.seq) in shown or len(new) >= int(acfg.search_k):
+                    continue
+                new.append(dataclasses.replace(p, mark=f"t{n_shown + len(new) + 1}"))
+            kept: list[Passage] = []
+            rounds.append((asked, kept))
+            for p in new:  # drop, never cut: stop at the first passage that no longer fits
+                kept.append(p)
+                if len(build(left - 1)) > dcfg.max_context_chars:
+                    kept.pop()
+                    break
+            for p in kept:
+                shown.add((p.unit_id, p.seq))
+            n_shown += len(kept)
+            left -= 1
+            trace.append(StageTrace(
+                "search", _ms(t0), n_out=len(kept),
+                note=f"{max_s - left}/{max_s}: {asked[:120]}; found={len(found)}; new={len(new)}; "
+                     f"shown={len(kept)}; " + "; ".join(f"{t.stage}: {t.note}" for t in sub)[:200]))

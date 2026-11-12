@@ -397,3 +397,23 @@ def test_set_overrides_a_config_value_and_the_manifest_records_it(tmp_path, monk
     for bad in ("draft.nope=1", "nosection.x=1", "draft=1", "draft.prompt"):
         assert R.main(["--dataset", "tiny", "--split", "test", "--out", str(tmp_path / "o3"),
                        "--set", bad]) == 2
+
+
+def test_manifest_records_each_engines_effective_config(tmp_path):
+    ds = make_dataset(tmp_path)
+    out = str(tmp_path / "out")
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"))
+    run(ds, "dev2", build_systems(ctx, ["bm25", "engine", "engine_single"]), out, None, workers=2,
+        dry_run=True, limit=3)
+    man = json.load(open(os.path.join(out, "manifest.json")))
+    assert man["split"] == "dev2"
+    ec = man["engine_configs"]
+    assert set(ec) == {"engine", "engine_single"}
+    assert (ec["engine"]["answer"]["mode"], ec["engine"]["decide"]["mode"]) == ("search", "grade")
+    assert (ec["engine_single"]["answer"]["mode"], ec["engine_single"]["decide"]["mode"]) == ("single", "strict")
+    assert ec["engine"]["draft"]["max_sentences"] == 2 and man["engine_config"] == ec["engine"]
+    by = {s["name"]: s for s in man["systems"]}
+    assert by["engine_single"]["exploratory"] is True and by["engine"]["exploratory"] is False
+    assert by["engine"]["answer_mode"] == "search" and by["engine_single"]["answer_mode"] == "single"
+    names = {r["system"] for r in rows(out)}
+    assert names == {"bm25", "engine", "engine_single"}

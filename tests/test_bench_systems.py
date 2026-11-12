@@ -6,6 +6,7 @@ from heuresis.bench import systems as S
 from heuresis.bench.ledger import Ledger
 from heuresis.bench.systems import SYSTEM_NAMES, build_context, build_systems, parse_reply
 from heuresis.fakes import EchoLLM
+from heuresis.surface.config import config_to_dict, load_config
 from test_bench_common import Recorder, make_dataset, questions
 
 
@@ -161,7 +162,7 @@ class CountingReranker:
 
 def test_system_order_and_hybrid_has_no_reranker(tmp_path):
     assert SYSTEM_NAMES == ("closed_book", "bm25", "vector", "hybrid", "hybrid_rerank",
-                            "agentic", "long_context", "engine", "oracle")
+                            "agentic", "long_context", "engine", "oracle", "engine_single")
     ds = make_dataset(tmp_path)
     rr = CountingReranker()
     ctx = build_context(ds, str(tmp_path / "s.sqlite"), reranker=rr)
@@ -281,3 +282,68 @@ def test_variants_of_limits_the_time_aware_copies():
         names = lambda **kw: [s.name for s in build_systems(ctx, ["bm25", "hybrid", "engine"], **kw)]
         assert names(time_aware_variants=True) == ["bm25", "hybrid", "engine", "bm25+asof", "hybrid+asof"]
         assert names(time_aware_variants=True, variants_of=["hybrid"]) == ["bm25", "hybrid", "engine", "hybrid+asof"]
+
+
+# ---------------------------------------------------------------- engine variants (search / single)
+
+
+def test_effective_engine_config_variants():
+    base = load_config()
+    eng = S.effective_engine_config(base)
+    single = S.effective_engine_config(base, "engine_single")
+    assert (eng.answer.mode, eng.decide.mode) == ("search", "grade")  # the engine's own default
+    assert (single.answer.mode, single.decide.mode) == ("single", "strict")
+    assert eng.draft.max_sentences == single.draft.max_sentences == S.ENGINE_MAX_SENTENCES
+    assert (base.answer.mode, base.decide.mode) == ("search", "grade") and base.draft.max_sentences == 0
+    # everything else is the same
+    d1, d2 = config_to_dict(eng), config_to_dict(single)
+    assert {k for k in d1 if d1[k] != d2[k]} == {"answer", "decide"}
+    with pytest.raises(ValueError):
+        S.effective_engine_config(base, "nope")
+
+
+def test_engine_single_is_an_exploratory_system_with_its_own_engine(tmp_path):
+    ds = make_dataset(tmp_path)
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"))
+    eng, single = build_systems(ctx, ["engine", "engine_single"])
+    assert (eng.name, eng.exploratory, single.name, single.exploratory) == \
+        ("engine", False, "engine_single", True)
+    assert ctx.engine("engine").config.answer.mode == "search"
+    assert ctx.engine("engine_single").config.answer.mode == "single"
+    assert ctx.engine("engine_single").config.decide.mode == "strict"
+    assert ctx.engine("engine") is ctx.engine("engine")
+    assert eng.describe()["answer_mode"] == "search" and single.describe()["decide_mode"] == "strict"
+    assert ctx.engine_tap("engine") is not ctx.engine_tap("engine_single")
+
+
+def test_engine_counts_calls_and_searches_like_agentic(tmp_path):
+    ds = make_dataset(tmp_path)
+    replies = iter(["SEARCH: Beta river length",
+                    "The Beta river is 120 kilometres long [t1]."])
+    rec = Recorder(lambda s, p: next(replies), usd=0.01)
+    lg = Ledger(str(tmp_path / "l.jsonl"), 10.0)
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"), llm=rec, ledger=lg)
+    ctx.config.retrieve.rerank_out = 1  # a first retrieval too narrow to hold the answer
+    eng = build_systems(ctx, ["engine"])[0]
+    q = questions()[0]
+    r = eng.answer(q)
+    assert r.calls == 2 and r.searches == 2  # one model call per turn; first retrieval + 1 search
+    assert r.usage.usd == pytest.approx(0.02) and lg.by_tag() == pytest.approx({"engine": 0.02})
+    assert r.usage.tokens_in == sum(len(p.split()) for p in rec.prompts)
+    assert len(r.usage.stop_reason) == 0  # the recorder reports none; the totals still add up
+    assert "Searches used: 1 of 4." in rec.prompts[1]
+    assert "searches" not in r.note and r.replay["draft_raws"] == [
+        "SEARCH: Beta river length", "The Beta river is 120 kilometres long [t1]."]
+    assert r.replay["draft_raw"].startswith("The Beta river")
+
+
+def test_engine_single_makes_one_call_and_one_retrieval_and_is_metered_apart(tmp_path):
+    ds = make_dataset(tmp_path)
+    rec = Recorder(lambda s, p: "The Beta river is 120 kilometres long [t1].", usd=0.01)
+    lg = Ledger(str(tmp_path / "l.jsonl"), 10.0)
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"), llm=rec, ledger=lg)
+    single = build_systems(ctx, ["engine_single"])[0]
+    r = single.answer(questions()[0])
+    assert (r.calls, r.searches, r.status) == (1, 1, "answered")
+    assert lg.by_tag() == pytest.approx({"engine_single": 0.01})
+    assert "Searches used" not in rec.prompts[0]

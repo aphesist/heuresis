@@ -75,7 +75,7 @@ def test_answered_and_grade_arithmetic():
 def test_partial():
     cl = [claim(), claim("unsupported", 0.1, marks=("t2",))]
     ps = [passage(), passage(unit="u2", mark="t2", coverage=1)]
-    st, g, ab = decide(cl, ps, Q, DecideCfg())
+    st, g, ab = decide(cl, ps, Q, DecideCfg(mode="strict"))
     assert st == "partial" and ab is None
     assert g == 0.9  # unsupported sentence's citations do not lower the grade
 
@@ -89,7 +89,7 @@ def test_min_supported_fraction_relaxed():
 def test_unsupported_abstention_with_searched():
     cl = [claim("unsupported", 0.1), claim("unsupported", 0.1), claim()]
     ps = [passage(title="Doc A"), passage(unit="u9", mark="t2", title="")]
-    st, g, ab = decide(cl, ps, Q, DecideCfg())
+    st, g, ab = decide(cl, ps, Q, DecideCfg(mode="strict"))
     assert (st, g, ab.type) == ("abstained", 0.0, "unsupported")
     assert ab.searched == ["Doc A", "u9"]
 
@@ -127,3 +127,68 @@ def test_divergent_never_without_store_or_equal_authority_or_distinct_units():
     cl, ps, store = _conflict_setup()
     ps[1].unit_id = "u1"
     assert decide(cl, ps, Q, DecideCfg(), store)[0] == "answered"
+
+
+# --- decide.mode = "grade": entailment grades, only deterministic failures remove -----------------
+
+GRADE = DecideCfg(mode="grade")
+
+
+def test_default_mode_is_grade():
+    assert DecideCfg().mode == "grade"
+
+
+def test_grade_keeps_low_entailment_and_grades_it():
+    cl = [claim("unsupported", 0.1)]  # the entailer says no; the checks pass
+    st, g, ab = decide(cl, [passage()], Q, GRADE)
+    assert (st, ab) == ("answered", None) and g == 0.1
+    # strict still withholds the same answer
+    assert decide(cl, [passage()], Q, DecideCfg(mode="strict"))[0] == "abstained"
+
+
+def test_grade_is_min_over_kept_sentences_and_citations():
+    cl = [claim("supported", 0.9), claim("unsupported", 0.2)]
+    ps = [passage(certainty="high", coverage=4)]
+    assert decide(cl, ps, Q, GRADE)[1] == 0.2
+    ps = [passage(certainty="low", coverage=4)]
+    assert decide(cl, ps, Q, GRADE)[1] == 0.2 and decide([claim(support=0.9)], ps, Q, GRADE)[1] == 0.33
+
+
+def test_grade_drops_each_deterministic_failure_and_keeps_the_rest():
+    for bad in ({"exists": False}, {"valid_at_date": False}, {"numbers_traced": False}):
+        cl = [claim("supported", 0.9), claim("unsupported", 0.9, marks=("t2",), **bad)]
+        st, g, ab = decide(cl, [passage()], Q, GRADE)
+        assert (st, ab) == ("partial", None), bad
+        assert g == 0.9  # the dropped sentence's score and citations do not enter the grade
+
+
+def test_grade_withholds_when_every_sentence_fails_a_deterministic_check():
+    cl = [claim("unsupported", 0.9, valid_at_date=False), claim("unsupported", 0.9, valid_at_date=False)]
+    st, g, ab = decide(cl, [passage()], Q, GRADE)
+    assert (st, g, ab.type) == ("abstained", 0.0, "not_valid_at_date")
+    cl = [claim("unsupported", 0.9, exists=False)]
+    assert decide(cl, [passage()], Q, GRADE)[2].type == "unsupported"
+    cl = [claim("unsupported", 0.9, valid_at_date=False, numbers_traced=False)]
+    assert decide(cl, [passage()], Q, GRADE)[2].type == "unsupported"
+
+
+def test_grade_uncited_sentence_is_kept_with_grade_zero():
+    c = Claim("The answer is blue.", [], [], 0.0, "unsupported",
+              {"exists": False, "valid_at_date": True, "supported": False, "numbers_traced": True})
+    st, g, ab = decide([c], [passage()], Q, GRADE)
+    assert (st, g, ab) == ("answered", 0.0, None)
+    # but an uncited number is still a deterministic failure
+    c.checks["numbers_traced"] = False
+    assert decide([c], [passage()], Q, GRADE)[0] == "abstained"
+
+
+def test_grade_model_abstention_still_wins():
+    st, g, ab = decide([claim()], [passage()], Q, GRADE, declined="no_source")
+    assert (st, ab.type) == ("abstained", "no_source")
+
+
+def test_deterministic_failure_predicate():
+    from heuresis.locked.decide import deterministic_failure
+    assert not deterministic_failure(claim("unsupported", 0.0))
+    assert deterministic_failure(claim(exists=False)) and deterministic_failure(claim(valid_at_date=False))
+    assert deterministic_failure(claim(numbers_traced=False))

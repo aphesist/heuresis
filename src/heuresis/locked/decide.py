@@ -61,8 +61,43 @@ def _has_conflict(claims, passages, store) -> bool:
     return False
 
 
+def deterministic_failure(claim: Claim) -> bool:
+    """True when a claim fails a check that does not depend on a model's judgement: a cited
+    mark that does not exist, a cited version not in force at the as-of date, or a number
+    found in no cited passage or tool result. A sentence with no marks at all has no cited
+    mark to fail; it is not a deterministic failure here (it simply has no support, so its
+    grade is 0), although its numbers still have to be traced."""
+    ch = claim.checks
+    cited = bool(claim.passage_marks or claim.tool_marks)
+    unresolved = cited and not ch.get("exists", True)
+    return bool(unresolved or not ch.get("valid_at_date", True)
+                or not ch.get("numbers_traced", True))
+
+
+def _abstain_unverifiable(claims, searched):
+    failing = [c for c in claims if deterministic_failure(c)]
+    if failing and all(
+        not c.checks.get("valid_at_date", True)
+        and c.checks.get("exists", True)
+        and c.checks.get("numbers_traced", True)
+        for c in failing
+    ):
+        return (
+            "abstained",
+            0.0,
+            Abstention("not_valid_at_date", "No cited source was in force at the date.", searched),
+        )
+    return "abstained", 0.0, Abstention("unsupported", "The draft could not be verified.", searched)
+
+
 def decide(claims, passages, query, cfg, store=None, *, declined: str | None = None):
-    """Return (status, grade, abstention)."""
+    """Return (status, grade, abstention).
+
+    ``cfg.mode == "strict"``: a sentence below the support threshold is removed and too many
+    removals withhold the answer. ``"grade"`` (the default): only deterministic failures
+    (:func:`deterministic_failure`) remove a sentence, and the answer is withheld only when
+    every sentence fails one or the model itself abstained; entailment support does not
+    remove anything, it sets the grade."""
     searched = _searched(passages)
     if declined:
         return "abstained", 0.0, Abstention(declined, "The drafter declined to answer.", searched)
@@ -78,6 +113,13 @@ def decide(claims, passages, query, cfg, store=None, *, declined: str | None = N
             _grade(kept, passages),
             Abstention("conflict", "Sources of equal authority disagree.", searched),
         )
+
+    if getattr(cfg, "mode", "strict") == "grade":
+        kept = [c for c in claims if not deterministic_failure(c)]
+        if not kept:
+            return _abstain_unverifiable(claims, searched)
+        status = "answered" if len(kept) == len(claims) else "partial"
+        return status, _grade(kept, passages), None
 
     supported = [c for c in claims if c.label == "supported"]
     frac = len(supported) / len(claims)

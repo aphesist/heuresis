@@ -1,4 +1,4 @@
-from heuresis.draft import draft, parse_draft, render
+from heuresis.draft import draft, draft_from_prompt, parse_draft, parse_search, render
 from heuresis.fakes import EchoLLM
 from heuresis.model import AsOf, Passage, Query, ToolResult
 from heuresis.surface.config import DraftCfg
@@ -124,3 +124,20 @@ def test_draft_passes_max_sentences():
         llm = Rec()
         draft(llm, Query("limit?"), passages(1), [], DraftCfg(max_sentences=n))
         assert ("Answer in at most 3 short sentences." in llm.prompt) is expect
+
+
+def test_parse_search():
+    assert parse_search("SEARCH: Orlov pilot") == "Orlov pilot"
+    assert parse_search("  search :  who piloted it?  \n") == "who piloted it?"
+    assert parse_search("\n\nSEARCH: a b\nignored second line") == "a b"
+    assert parse_search("`SEARCH: quoted`") == "quoted"
+    # an answer, an abstention, a tool call or an empty reply is not a search
+    for raw in ("The answer is 5 [t1].", "ABSTAIN no_source: x", 'CALL k1 calc {"expr": "1"}',
+                "", "SEARCH:", "SEARCH:   ", "The SEARCH: later in the line", None):
+        assert parse_search(raw) is None, raw
+
+
+def test_draft_from_prompt_calls_once_and_parses():
+    llm = EchoLLM(["Done [t1]."])
+    d = draft_from_prompt(llm, "system text", "any prompt", DraftCfg())
+    assert d.raw == "Done [t1]." and d.sentences[0].passage_marks == ["t1"] and d.usage.model == "echo"

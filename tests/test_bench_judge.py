@@ -96,3 +96,11 @@ def test_dev_only_and_dry_run_and_paid_needs_the_ledger(tmp_path, capsys, monkey
     assert judge.main([out2, "--paid", "--cap", "1"]) == 2
     monkeypatch.delenv("PROJECTS_ANTHROPIC_KEY", raising=False)
     assert judge.main([out2, "--paid", "--cap", "1", "--ledger", str(tmp_path / "l.jsonl")]) == 2
+
+
+def test_dev2_folders_may_be_judged(tmp_path, monkeypatch):
+    ds, out = make_run(tmp_path / "d2", split="dev2")
+    qs = {q.id: q for q in ds.questions["dev2"]}
+    st = judge.judge_folder(out, qs, Judge(), workers=1)
+    assert st["candidates"] > 0 and st["judged"] == st["candidates"]
+    assert judge.DEV_SPLITS == ("dev", "dev2")

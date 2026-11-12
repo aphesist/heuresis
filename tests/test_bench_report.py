@@ -108,7 +108,8 @@ def test_end_to_end_dry_run(tmp_path):
     res = report.write(out, iters=200)
     assert res["dry_run"] and set(res["systems"]) == {
         "closed_book", "bm25", "vector", "hybrid", "hybrid_rerank", "agentic", "long_context",
-        "engine", "oracle"}
+        "engine", "oracle", "engine_single"}
+    assert set(res["exploratory_paired"]) == {"engine_single"}
     assert set(res["paired"]) == {"closed_book", "bm25", "vector", "hybrid", "hybrid_rerank",
                                   "agentic", "long_context"}
     assert all(m["n"] == 12 for m in res["systems"].values())
@@ -235,3 +236,13 @@ def test_error_rows_are_complete_case_members_and_wrong(tmp_path):
     assert res["complete_case"]["n_common"] == 2
     assert res["paired"]["bm25"]["score_diff"]["est"] == 1.0  # engine +1 vs bm25 (+1, -1) mean 0
     assert res["systems"]["bm25"]["errors"] == 1
+
+
+def test_engine_single_is_exploratory_not_in_the_family(tmp_path):
+    out = str(tmp_path)
+    rs = hand_rows() + [dict(r, system="engine_single", exploratory=True)
+                        for r in hand_rows() if r["system"] == "engine"]
+    write(out, rs, systems=("engine", "bm25", "engine_single"))
+    res = report.write(out, iters=100)
+    assert set(res["paired"]) == {"bm25"} and set(res["exploratory_paired"]) == {"engine_single"}
+    assert report.is_exploratory("engine_single") and not report.in_family("engine_single")

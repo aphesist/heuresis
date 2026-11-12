@@ -56,16 +56,36 @@ class VerifyCfg:
 
 
 @dataclass
+class AnswerCfg:
+    #: "search" (default): the model sees the passages of the engine's cascade and may ask
+    #: for more with ``SEARCH: <query>``; every search runs the cascade with the question's
+    #: own as-of date and scope. "single": one draft over one retrieval (the earlier design).
+    mode: str = "search"
+    #: Hard cap on model-requested searches in "search" mode.
+    max_searches: int = 4
+    #: New passages shown per search (the cascade is run wide enough to find this many that
+    #: were not shown before).
+    search_k: int = 5
+
+
+@dataclass
 class DecideCfg:
     min_supported_fraction: float = 1.0
     partial_fraction: float = 0.5
     conflict_margin: float = 0.1
+    #: "grade" (default): entailment support only sets the answer's grade; a sentence is
+    #: dropped, or the answer withheld, only for a deterministic failure (a cited mark that
+    #: does not exist, a cited version not in force at the as-of date, a number found in no
+    #: cited passage or tool result) or when the model itself abstains. "strict": the
+    #: earlier design, where sentences below the support threshold are removed too.
+    mode: str = "grade"
 
 
 @dataclass
 class Config:
     router: RouterCfg = field(default_factory=RouterCfg)
     retrieve: RetrieveCfg = field(default_factory=RetrieveCfg)
+    answer: AnswerCfg = field(default_factory=AnswerCfg)
     draft: DraftCfg = field(default_factory=DraftCfg)
     verify: VerifyCfg = field(default_factory=VerifyCfg)
     decide: DecideCfg = field(default_factory=DecideCfg)

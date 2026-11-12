@@ -1,6 +1,7 @@
 """The mutable configuration surface (config and prompts)."""
 from .config import (
     Config,
+    AnswerCfg,
     DecideCfg,
     DraftCfg,
     RetrieveCfg,
@@ -13,6 +14,6 @@ from .config import (
 from .prompts import DRAFT_SYSTEM, DRAFT_SYSTEM_V1, DRAFT_SYSTEM_V2, draft_prompt, draft_system
 
 __all__ = [
-    "Config", "RouterCfg", "RetrieveCfg", "DraftCfg", "VerifyCfg", "DecideCfg",
+    "Config", "RouterCfg", "RetrieveCfg", "AnswerCfg", "DraftCfg", "VerifyCfg", "DecideCfg",
     "load_config", "config_to_dict", "config_from_dict", "DRAFT_SYSTEM", "draft_prompt",
 ]

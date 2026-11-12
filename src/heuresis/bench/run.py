@@ -174,6 +174,10 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
     if ctx is not None:
         manifest["config"] = config_to_dict(ctx.config)
         manifest["engine_config"] = config_to_dict(ctx.engine_config())
+        # The effective configuration of each engine system that is in this run.
+        manifest["engine_configs"] = {
+            s.name: config_to_dict(ctx.engine_config(s.name))
+            for s in systems if s.name in ("engine", "engine_single")}
         manifest["surface_hash"] = surface_hash(ctx)
         manifest["models"] = ctx.models()
         manifest["model_provenance"] = ctx.provenance()

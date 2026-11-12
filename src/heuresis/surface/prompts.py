@@ -101,6 +101,55 @@ def draft_prompt(
     return "\n".join(lines)
 
 
+#: The instruction of the "search" answer mode (``answer.mode = "search"``). One model call per
+#: turn: the model either answers in the draft format or replies with one ``SEARCH:`` line.
+#: Every search is run by the engine with the question's own as-of date and scope.
+SEARCH_SYSTEM = (
+    "Answer ONLY from the numbered passages. Never use outside knowledge. They are what was in "
+    "force at the as-of date, and so is everything a search returns.\n"
+    "If the passages lack the answer, or only a step of it (for a multi-step question, first "
+    "find the entity, then the fact about it), reply with exactly one line `SEARCH: <query>` and "
+    "nothing else; a good query is short and names what you still need. Otherwise answer, "
+    "combining passages when needed.\n"
+    "Format, one item per line:\n"
+    "- State the answer in the first sentence, then add only what is needed. Write short "
+    "sentences. End EVERY sentence with the marks of ALL the passages that support it, like "
+    "[t1] or [t1][t2].\n"
+    "- Never do arithmetic or date math yourself. Request it before the answer with a line "
+    '`CALL k1 calc {"expr": "..."}` (k1, k2, ... one per call), then write {k1} where the '
+    "result goes and add the mark [k1] to that sentence.\n"
+    "- Abstain only when no search remains and the answer is still not in the passages: write "
+    "only `ABSTAIN <type>: <reason>` with type one of: " + ", ".join(ABSTENTIONS) + "."
+)
+
+SEARCH_MORE = "Answer now, or reply with exactly one line `SEARCH: <query>`."
+SEARCH_LAST = "No searches remain. Answer from the passages, or ABSTAIN."
+
+
+def search_prompt(question: str, as_of: str | None, rounds: Sequence[tuple[str, Sequence[Passage]]],
+                  searches_left: int, max_searches: int, tools: Sequence[Any] = (),
+                  max_sentences: int = 0) -> str:
+    """The user prompt of the "search" mode. ``rounds[0]`` is the passages of the engine's
+    first retrieval (its query text is ignored); each later round is (query, the passages
+    that search added, not shown before). Passages carry their marks and are rendered by
+    ``passage_line``, as in every other prompt."""
+    lines = [f"As-of date: {as_of or 'today'}"]
+    if tools:
+        lines.append("Tools: " + "; ".join(f"{t.name} ({t.description})" for t in tools))
+    lines.append("Passages:")
+    first = rounds[0][1] if rounds else ()
+    lines += [passage_line(p.mark, p) for p in first] or ["(none)"]
+    for i, (query, found) in enumerate(rounds[1:], 1):
+        lines.append(f"Search {i}: {query}")
+        lines += [passage_line(p.mark, p) for p in found] or ["(no new passages)"]
+    lines.append(f"Question: {question}")
+    lines.append(f"Searches used: {max_searches - searches_left} of {max_searches}.")
+    if max_sentences > 0:
+        lines.append(f"Answer in at most {max_sentences} short sentences.")
+    lines.append(SEARCH_MORE if searches_left > 0 else SEARCH_LAST)
+    return "\n".join(lines)
+
+
 ANSWERS_QUESTION_SYSTEM = (
     "You check whether an answer addresses a question. Reply with exactly one word: YES if "
     "the answer states what the question asks for (the specific person, number, date, place, "

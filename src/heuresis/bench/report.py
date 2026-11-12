@@ -53,10 +53,12 @@ REFERENCE = "engine"
 EXCLUDED = ("oracle",)
 COST_COMPARE = ("agentic", "hybrid")
 EXPLORATORY_SUFFIX = "+asof"
+#: Exploratory by name: the earlier engine design, kept measurable (see ``bench.systems``).
+EXPLORATORY_NAMES = ("engine_single",)
 
 
 def is_exploratory(name: str) -> bool:
-    return name.endswith(EXPLORATORY_SUFFIX)
+    return name.endswith(EXPLORATORY_SUFFIX) or name in EXPLORATORY_NAMES
 
 
 def _as_error_outcome(r: dict) -> dict:
@@ -451,9 +453,10 @@ def render(res: dict) -> str:
                 L.append(f"| {s} | {_usd(c['est'])} [{_usd(c['lo'])}, {_usd(c['hi'])}] |")
             L.append("")
     if res.get("exploratory_paired"):
-        L += [f"## Table 6. Exploratory: `{res['reference']}` against the time-aware variants "
-              f"({sp}; paired on shared questions)",
-              "", "The `+asof` systems search as of the question date. They are exploratory: not part "
+        L += [f"## Table 6. Exploratory: `{res['reference']}` against the time-aware variants and "
+              f"the earlier engine design ({sp}; paired on shared questions)",
+              "", "The `+asof` systems search as of the question date; `engine_single` is the earlier "
+              "engine (one draft, entailment as a gate). They are exploratory: not part "
               "of the confirmatory family of Table 5, and Holm here adjusts only across the rows below.",
               "", "| variant | n | score diff | permutation p | Holm p | engine only | variant only | McNemar p | min detectable diff |",
               "|---|---|---|---|---|---|---|---|---|"]

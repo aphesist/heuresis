@@ -32,7 +32,7 @@ from .ledger import BudgetExceeded, Ledger, LedgerLLM
 from .types import Dataset, Question
 
 __all__ = [
-    "ANSWER_FORMAT", "SYSTEM_NAMES", "Result", "System", "BenchContext", "build_context",
+    "ANSWER_FORMAT", "SYSTEM_NAMES", "EXPLORATORY_SYSTEMS", "Result", "System", "BenchContext", "build_context",
     "build_systems", "parse_reply", "prompts_hash", "surface_hash", "effective_engine_config",
     "prepare_corpus", "BENCH_TEMPERATURE", "BENCH_TEMPERATURE_NOTE", "BENCH_THINKING", "add_call_record",
 ]
@@ -58,7 +58,10 @@ AGENT_MORE = "Reply with exactly one line `SEARCH: <query>` to search again, or 
 AGENT_LAST = "No searches remain. Answer now."
 
 SYSTEM_NAMES = ("closed_book", "bm25", "vector", "hybrid", "hybrid_rerank", "agentic",
-                "long_context", "engine", "oracle")
+                "long_context", "engine", "oracle", "engine_single")
+#: Extra systems that are exploratory by construction (not in the confirmatory family):
+#: ``engine_single`` is the earlier engine design (one draft, entailment as a gate).
+EXPLORATORY_SYSTEMS = ("engine_single",)
 #: Systems that also get a time-aware copy (suffix ``+asof``) under ``time_aware_variants``.
 VARIANT_BASES = ("bm25", "vector", "hybrid", "hybrid_rerank", "agentic")
 VARIANT_SUFFIX = "+asof"
@@ -78,11 +81,19 @@ BENCH_TEMPERATURE_NOTE = "not sent: the model rejects the parameter; sampling is
 BENCH_THINKING = {"type": "disabled"}
 
 
-def effective_engine_config(config: Config) -> Config:
-    """The configuration the engine system runs with: a copy of ``config`` that asks for
-    the same answer length as the baselines. ``config`` itself is not changed."""
+def effective_engine_config(config: Config, variant: str = "engine") -> Config:
+    """The configuration an engine system runs with: a copy of ``config`` that asks for the
+    same answer length as the baselines. ``engine`` runs ``config`` as it is (by default
+    ``answer.mode = "search"``, ``decide.mode = "grade"``); ``engine_single`` forces the
+    earlier design (``answer.mode = "single"``, ``decide.mode = "strict"``). ``config``
+    itself is not changed."""
     cfg = copy.deepcopy(config)
     cfg.draft.max_sentences = ENGINE_MAX_SENTENCES
+    if variant == "engine_single":
+        cfg.answer.mode = "single"
+        cfg.decide.mode = "strict"
+    elif variant != "engine":
+        raise ValueError(f"unknown engine variant {variant!r}")
     return cfg
 
 
@@ -181,21 +192,18 @@ class BenchContext:
         self._tls = threading.local()
         self._open_lock = threading.Lock()
         self._llms: dict[str, Any] = {}
-        self._tap: _Tap | None = None
+        self._taps: dict[str, _Tap] = {}
 
-    def engine_config(self) -> Config:
-        """The configuration the engine system runs with: a copy of ``config`` that asks
-        for the same answer length as the baselines. ``config`` itself is not changed."""
-        return effective_engine_config(self.config)
+    def engine_config(self, variant: str = "engine") -> Config:
+        """The configuration an engine system runs with (see ``effective_engine_config``)."""
+        return effective_engine_config(self.config, variant)
 
-    @property
-    def engine_tap(self) -> "_Tap":
+    def engine_tap(self, variant: str = "engine") -> "_Tap":
         """Keeps the raw replies of the engine's model calls (per thread). Exists once
-        ``engine()`` has been called."""
-        if self._tap is None:
-            self.engine()
-        assert self._tap is not None
-        return self._tap
+        ``engine(variant)`` has been called."""
+        if variant not in self._taps:
+            self.engine(variant)
+        return self._taps[variant]
 
     @property
     def max_tokens(self) -> int:
@@ -217,17 +225,20 @@ class BenchContext:
             self._tls.store = st
         return st
 
-    def engine(self):
-        eng = getattr(self._tls, "engine", None)
+    def engine(self, variant: str = "engine"):
+        engines = getattr(self._tls, "engines", None)
+        if engines is None:
+            engines = self._tls.engines = {}
+        eng = engines.get(variant)
         if eng is None:
             from ..engine import Engine  # imported late: the engine is optional for baselines
             with self._open_lock:
-                if self._tap is None:
-                    self._tap = _Tap(self.llm_for("engine"))
-                eng = Engine.open(self.db_path, "jsonl", config=self.engine_config(),
-                                  llm=self._tap, embedder=self.embedder,
+                if variant not in self._taps:
+                    self._taps[variant] = _Tap(self.llm_for(variant))
+                eng = Engine.open(self.db_path, "jsonl", config=self.engine_config(variant),
+                                  llm=self._taps[variant], embedder=self.embedder,
                                   reranker=self.reranker, entailer=self.entailer)
-            self._tls.engine = eng
+            engines[variant] = eng
         return eng
 
     def models(self) -> dict:
@@ -673,10 +684,15 @@ class EngineSystem(System):
     def __init__(self, ctx: BenchContext, **_: Any):
         super().__init__(ctx, time_aware=True)
 
+    def params(self) -> dict:
+        cfg = self.ctx.engine_config(self.name)
+        return {"answer_mode": cfg.answer.mode, "max_searches": cfg.answer.max_searches,
+                "decide_mode": cfg.decide.mode}
+
     def _answer(self, q: Question) -> Result:
         from ..engine import trace_failure
-        eng = self.ctx.engine()
-        tap = self.ctx.engine_tap
+        eng = self.ctx.engine(self.name)
+        tap = self.ctx.engine_tap(self.name)
         tap.reset()
         ans: Answer = eng.ask(q.text, as_of=AsOf(valid=q.as_of) if q.as_of else None)
         tr: list[StageTrace] = ans.trace
@@ -689,7 +705,10 @@ class EngineSystem(System):
                       tokens_out=sum(t.tokens_out for t in tr), usd=ans.usd, ms=ans.ms)
         for u in tap.usages:
             add_call_record(usage, u)
-        searches = sum(1 for t in tr if t.stage == "lexical") or (1 if tr else 0)
+        # Retrievals, counted as for the baselines: the first one, plus every search the model
+        # asked for (single-shot systems report 1; agentic counts its SEARCH actions).
+        searches = (1 if any(t.stage == "retrieve" for t in tr) else 0) \
+            + sum(1 for t in tr if t.stage == "search")
         return Result(
             status="answered" if ans.status in ("answered", "partial") else "abstained",
             text=ans.text, confidence=min(1.0, max(0.0, float(ans.grade))),
@@ -701,13 +720,23 @@ class EngineSystem(System):
             note=f"engine status={ans.status}"
                  + (f"; abstention={ans.abstention.type}" if ans.abstention else ""),
             error=("" if fail is None else f"{fail[0]} failure: {fail[1]}"),
-            replay=_replay_payload(q, ans, _draft_raws(tap.raws, tr), self.ctx.engine_config()))
+            replay=_replay_payload(q, ans, _draft_raws(tap.raws, tr),
+                                   self.ctx.engine_config(self.name)))
+
+
+class EngineSingle(EngineSystem):
+    """The earlier engine design, kept measurable: one draft over one retrieval, entailment
+    as a gate (``answer.mode = "single"``, ``decide.mode = "strict"``). Exploratory."""
+
+    name = "engine_single"
+    exploratory = True
 
 
 _CLASSES: dict[str, Callable[..., System]] = {
     "closed_book": ClosedBook, "bm25": BM25, "vector": Vector, "hybrid": Hybrid,
     "hybrid_rerank": HybridRerank,
     "agentic": Agentic, "long_context": LongContext, "engine": EngineSystem, "oracle": Oracle,
+    "engine_single": EngineSingle,
 }
 
 

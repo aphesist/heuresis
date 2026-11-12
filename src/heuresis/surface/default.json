@@ -18,20 +18,29 @@
     "rewrite": false,
     "second_round": false
   },
+  "answer": {
+    "mode": "search",
+    "max_searches": 4,
+    "search_k": 5
+  },
   "draft": {
     "model": "claude-haiku-5-5",
     "max_tokens": 600,
     "max_context_chars": 24000,
-    "max_sentences": 0
+    "max_sentences": 0,
+    "prompt": "v2"
   },
   "verify": {
     "support_threshold": 0.5,
     "partial_threshold": 0.3,
-    "atomic_claims": false
+    "atomic_claims": false,
+    "support": "window_title",
+    "answers_question": false
   },
   "decide": {
     "min_supported_fraction": 1.0,
     "partial_fraction": 0.5,
-    "conflict_margin": 0.1
+    "conflict_margin": 0.1,
+    "mode": "grade"
   }
 }
