@@ -63,14 +63,12 @@ def _has_conflict(claims, passages, store) -> bool:
 
 def deterministic_failure(claim: Claim) -> bool:
     """True when a claim fails a check that does not depend on a model's judgement: a cited
-    mark that does not exist, a cited version not in force at the as-of date, or a number
-    found in no cited passage or tool result. A sentence with no marks at all has no cited
-    mark to fail; it is not a deterministic failure here (it simply has no support, so its
-    grade is 0), although its numbers still have to be traced."""
+    mark that does not exist, a sentence with no citation mark at all (the engine promises
+    that every sentence it returns cites a source or a tool result), a cited version not in
+    force at the as-of date, or a number found in no cited passage or tool result. All of
+    these are the ``exists``, ``valid_at_date`` and ``numbers_traced`` checks of the verifier."""
     ch = claim.checks
-    cited = bool(claim.passage_marks or claim.tool_marks)
-    unresolved = cited and not ch.get("exists", True)
-    return bool(unresolved or not ch.get("valid_at_date", True)
+    return bool(not ch.get("exists", True) or not ch.get("valid_at_date", True)
                 or not ch.get("numbers_traced", True))
 
 

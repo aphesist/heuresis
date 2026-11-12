@@ -172,14 +172,13 @@ def test_grade_withholds_when_every_sentence_fails_a_deterministic_check():
     assert decide(cl, [passage()], Q, GRADE)[2].type == "unsupported"
 
 
-def test_grade_uncited_sentence_is_kept_with_grade_zero():
+def test_grade_uncited_sentence_is_dropped_and_an_all_uncited_answer_abstains():
     c = Claim("The answer is blue.", [], [], 0.0, "unsupported",
               {"exists": False, "valid_at_date": True, "supported": False, "numbers_traced": True})
     st, g, ab = decide([c], [passage()], Q, GRADE)
-    assert (st, g, ab) == ("answered", 0.0, None)
-    # but an uncited number is still a deterministic failure
-    c.checks["numbers_traced"] = False
-    assert decide([c], [passage()], Q, GRADE)[0] == "abstained"
+    assert (st, g, ab.type) == ("abstained", 0.0, "unsupported")
+    st, g, ab = decide([claim(), c], [passage()], Q, GRADE)
+    assert (st, ab) == ("partial", None)  # the cited sentence survives, the uncited one is dropped
 
 
 def test_grade_model_abstention_still_wins():

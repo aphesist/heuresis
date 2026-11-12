@@ -85,8 +85,8 @@ a few times for a hard one, see step 3), and everything after it is local again.
    - `"grade"` (the default since the redesign): verification grades, it does not gate. A sentence is
      removed, or the answer withheld, only for a **deterministic failure**: a cited mark that does not
      exist, a cited version not in force at the as-of date, or a number found in no cited passage or
-     tool result (an uncited sentence has no mark to fail; it is kept with support 0, so it pulls the
-     grade to 0). The model's own `ABSTAIN` still abstains, and if every sentence fails a deterministic
+     tool result; a sentence with no citation mark at all fails too, so that every sentence the engine
+     returns cites a source or a tool result). The model's own `ABSTAIN` still abstains, and if every sentence fails a deterministic
      check the answer is an abstention (`not_valid_at_date` when all failed only the date check, else
      `unsupported`). Entailment support no longer removes anything; a kept sentence below the support
      threshold is labelled `partial` and keeps its citations.

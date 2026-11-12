@@ -22,7 +22,7 @@ the tail of a search's new passages. The passages in `Answer.passages` are exact
 
 **A2. `decide.mode`** (`src/heuresis/locked/decide.py`, so `locked_hash()` changed). `"strict"` is today's
 rule. `"grade"` (new default): a sentence is dropped, or the answer withheld, only for a deterministic
-failure (`deterministic_failure`: a cited mark that does not exist, a cited version not in force at the
+failure (`deterministic_failure`: a cited mark that does not exist or a sentence with no mark, a cited version not in force at the
 as-of date, a number found in no cited passage or tool result) or when the model abstains; if every
 sentence fails one the answer is an abstention (`not_valid_at_date` if all failed only the date check, else
 `unsupported`). Entailment support (`verify.support = window_title`, unchanged) sets only the grade (min of
@@ -91,7 +91,7 @@ after the engine commit).
 ## Hashes (`PYTHONPATH=src python3 -m heuresis.cli hash`)
 
 ```
-locked:  9787cb22dd3751c0b7f53a2d2398c49154860789fbb07071aaa320ec8d2681c0
+locked:  f13783b57968b2b8b9313bb31d89f83aac1ea417520a9de70676aa890d52ad53
 surface: 547d7f32387e2e4aff33eaa5ff39a388b52084f3680e54515ccc3d1433d878b3
 prompts: c025db9efc35daf759babe28848d6db14a0f8c2fbc853ea21cd60e01505d3a7b
 ```
@@ -144,11 +144,7 @@ excludes retries after API errors, and any repeat run.
 
 - **`locked/decide.py` changed.** The decision rule is in the locked folder, so `locked_hash()` changed; this
   is what the redesign asked for, and it is logged in `PREREGISTRATION.md` (deviations log, section 7).
-- **An uncited sentence is kept in grade mode** (with support 0, so grade 0). The brief names three
-  deterministic failures (a cited mark that does not exist, a version not in force, an untraced number); a
-  sentence with no marks has no mark to fail. The old rule counted it as failing `exists`. If a reply carries
-  no citations at all, `engine` answers with grade 0 instead of abstaining; its numbers are still traced.
-  Changing this is one line in `locked/decide.py:deterministic_failure`.
+- **An uncited sentence fails `exists` in grade mode** (changed after the phase A review: it is dropped, and an answer with no cited sentence is an `unsupported` abstention). `locked_hash()` is now `f13783b5...`.
 - **Not in the brief:** `answer.search_k` (5 new passages per search, as `agentic`'s `--agent-k`).
 - **README status was stale** ("no paid model call has been made"): corrected to say that paid calls were
   made on the dev split only (US$5.78 of the cap).

@@ -302,3 +302,15 @@ def test_the_model_abstaining_is_still_an_abstention_in_grade_mode(tmp_path, cor
     a = eng.ask(Q, as_of=AsOf(valid="2021-06-01"))
     assert a.status == "abstained" and a.abstention.type == "no_source"
     eng.close()
+
+
+def test_grade_mode_drops_an_uncited_sentence(tmp_path, corpus):
+    eng, llm = make(tmp_path, corpus, ["The rocket was launched from the Alpha base [t1]. It is a fact."],
+                    rerank_out=8)
+    a = eng.ask(Q, as_of=AsOf(valid="2021-06-01"))
+    assert a.status == "partial" and "fact" not in a.text
+    eng.close()
+    eng, llm = make(tmp_path / "n", corpus, ["The rocket was launched from the Alpha base."], rerank_out=8)
+    a = eng.ask(Q, as_of=AsOf(valid="2021-06-01"))
+    assert a.status == "abstained" and a.abstention.type == "unsupported" and a.text == ""
+    eng.close()
