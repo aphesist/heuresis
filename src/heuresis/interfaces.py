@@ -7,6 +7,7 @@ implement the same protocols.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Any, Protocol, Sequence, runtime_checkable
 
 import numpy as np
@@ -93,3 +94,41 @@ class Domain(Protocol):
     def abstention_text(self, kind: str, query: Query) -> str | None:
         """Domain wording for an abstention type, or None for the default."""
         ...
+
+
+@dataclass(frozen=True)
+class Reference:
+    """A citation found in free text by a domain's resolver.
+
+    ``status`` is ``resolved`` (the cited unit exists: ``unit_ids`` names it), ``norm_only`` (the
+    text cites a whole norm that exists, no unit), ``unit_not_found`` (the container exists, the
+    unit named does not) or ``container_not_found`` (nothing in the corpus matches the container).
+    ``container`` is the id of the containing source when it was found, ``unit`` the unit key as
+    written."""
+
+    text: str
+    start: int
+    end: int
+    status: str
+    container: str = ""
+    unit: str = ""
+    unit_ids: tuple[str, ...] = ()
+    #: What the text said about the container, e.g. ``{"kind": "lei", "number": "9250", "year": "1995"}``.
+    meta: dict = field(default_factory=dict, compare=False, hash=False)
+
+
+REFERENCE_STATUSES = ("resolved", "norm_only", "unit_not_found", "container_not_found")
+
+
+@runtime_checkable
+class ReferenceResolver(Protocol):
+    """OPTIONAL capability of a domain: find the citations of a text and resolve them against
+    the store. Domains without it are unaffected (see ``domain_references``)."""
+
+    def resolve_references(self, text: str, store: Any) -> list[Reference]: ...
+
+
+def domain_references(domain: Any, text: str, store: Any) -> list[Reference]:
+    """References found by ``domain``'s optional resolver; nothing when it has none."""
+    fn = getattr(domain, "resolve_references", None)
+    return list(fn(text, store)) if callable(fn) else []

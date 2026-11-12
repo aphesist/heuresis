@@ -625,7 +625,11 @@ def _add_dev2_record(cdir: str, n_dev2: int, n_dev: int, n_test: int, n_sealed: 
 def load(name: str, root: str = "data", *, n_test: int = 500, n_dev: int = 100,
          n_sealed: int = 300, seed: int = SEED, n_dev2: int = N_DEV2) -> Dataset:
     """Build the corpus if needed and return the dataset with its splits: dev, test and
-    sealed (hash-checked against the manifest) and dev2."""
+    sealed (hash-checked against the manifest) and dev2. ``brlaw`` (the legal-citation test) is
+    built by ``bench.brlaw`` and has the splits dev, test and temporal."""
+    if name == "brlaw":
+        from . import brlaw
+        return brlaw.load(root)
     cdir = build(name, root, n_test=n_test, n_dev=n_dev, n_sealed=n_sealed, seed=seed,
                  n_dev2=n_dev2)
     manifest = _read_manifest(cdir)

@@ -23,6 +23,7 @@ from . import tools as tools_mod
 from .domains import get_domain
 from .fakes import EchoLLM, RuleEntailer
 from .ingest import ingest as _ingest
+from .references import has_resolver, trace_claims
 from .llm import BudgetExceeded
 from .locked.decide import decide, deterministic_failure
 from .locked.verify import verify as _verify
@@ -101,7 +102,9 @@ def _span(p: Passage) -> str:
 
 class Engine:
     def __init__(self, store: Store, domain: Any, config: Config, llm: Any, embedder: Any,
-                 reranker: Any, entailer: Any, classifier: Any):
+                 reranker: Any, entailer: Any, classifier: Any, references_traced: bool | None = None):
+        #: The ``references_traced`` gate: None = on when the domain has a reference resolver.
+        self.references_traced = references_traced
         self.store = store
         self.domain = domain
         self.config = config
@@ -117,7 +120,8 @@ class Engine:
     @classmethod
     def open(cls, path: str, domain: Any = None, *, config: Config | None = None,
              llm: Any = None, embedder: Any = None, reranker: Any = None,
-             entailer: Any = None, classifier: Any = None) -> "Engine":
+             entailer: Any = None, classifier: Any = None,
+             references_traced: bool | None = None) -> "Engine":
         store = Store(str(path))
         try:
             stored = store.meta_get("domain")
@@ -134,7 +138,8 @@ class Engine:
             raise
         eng = cls(store, dom, config or load_config(),
                   llm if llm is not None else EchoLLM(), embedder, reranker,
-                  entailer if entailer is not None else RuleEntailer(), classifier)
+                  entailer if entailer is not None else RuleEntailer(), classifier,
+                  references_traced)
         eng.store.meta_set("domain", dom.name)
         if dom.name in _STATEFUL_DOMAINS:
             for p in eng._paths():
@@ -227,6 +232,16 @@ class Engine:
         ps = [p if p.mark else dataclasses.replace(p, mark=f"t{i}")
               for i, p in enumerate(passages, 1)]
         return _verify(d, ps, [], self.store, as_of or AsOf(), self.entailer, self.config.verify)
+
+    def _labelled(self, passages: list[Passage]) -> list[Passage]:
+        """Passages as the verifier should read them. For a domain with a reference resolver the
+        passage's title (its label, e.g. norm and article) is prepended to the text: the label is
+        part of what the drafter was shown, and a sentence that cites a provision by its number and
+        year ("art. 8º da Lei nº 9.250/1995") must not fail the numbers check because those
+        numbers are in the label and not in the provision's words. Other domains: unchanged."""
+        if self.references_traced is False or not has_resolver(self.domain):
+            return passages
+        return [dataclasses.replace(p, text=f"{p.title}. {p.text}") if p.title else p for p in passages]
 
     def unit(self, unit_id: str, as_of: AsOf | None = None) -> Version | None:
         return self.store.text_at(unit_id, as_of or AsOf())
@@ -365,13 +380,17 @@ class Engine:
         # 5. verify, decide
         t0 = time.perf_counter()
         try:
-            claims = _verify(d, passages, results, self.store, query.as_of, self.entailer,
-                             self.config.verify)
+            claims = _verify(d, self._labelled(passages), results, self.store, query.as_of,
+                             self.entailer, self.config.verify)
         except Exception as e:
             trace.append(StageTrace("verify", _ms(t0), note=f"{NOTE_VERIFY_ERROR}: {type(e).__name__}"))
             return finish("abstained", "unsupported", "The draft could not be verified.",
                           query=query)
-        trace.append(StageTrace("verify", _ms(t0), n_out=len(claims)))
+        n_untraced = 0
+        if self.references_traced is not False and has_resolver(self.domain):
+            n_untraced = trace_claims(claims, passages, self.domain, self.store)
+        trace.append(StageTrace("verify", _ms(t0), n_out=len(claims),
+                                note=f"references_traced: {n_untraced} sentence(s) failed" if n_untraced else ""))
         t0 = time.perf_counter()
         # Conflict/divergence detection is not implemented in this version.
         status, grade, ab = decide(claims, passages, query, self.config.decide, self.store,

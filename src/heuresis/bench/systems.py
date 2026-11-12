@@ -57,6 +57,62 @@ AGENT_SYSTEM = (
 AGENT_MORE = "Reply with exactly one line `SEARCH: <query>` to search again, or answer now."
 AGENT_LAST = "No searches remain. Answer now."
 
+# --- Portuguese prompts of the legal-citation test (selected by the dataset's ``prompt_set``) ---
+#: The Wikipedia-QA constants above are untouched (their hash is pinned); a dataset whose
+#: ``meta["prompt_set"]`` is ``"legal_br"`` gets these instead, through ``LegalPrompts`` below.
+LEGAL_FORMAT = (
+    "Responda em português, em no máximo três frases curtas. Em cada frase cite o dispositivo legal "
+    "em que ela se apoia (norma, número/ano e artigo, por exemplo \"art. 8º da Lei nº 9.250/1995\"). "
+    "Se a informação não for suficiente, responda exatamente ABSTAIN; termine com uma linha "
+    "`CONFIDENCE: <0-100>`."
+)
+LEGAL_CLOSED = "Responda à pergunta com o seu próprio conhecimento. " + LEGAL_FORMAT
+LEGAL_PASSAGES = (
+    "Responda SOMENTE com base nos dispositivos fornecidos, sem usar conhecimento externo, e cite apenas "
+    "dispositivos fornecidos. " + LEGAL_FORMAT
+)
+LEGAL_AGENT = (
+    "Você responde perguntas sobre uma coleção de normas com uma ferramenta de busca. Para buscar, "
+    "responda com exatamente uma linha `SEARCH: <consulta>` e nada mais. Você pode buscar no máximo {n} "
+    "vezes; depois disso deve responder. Ao responder, use SOMENTE os dispositivos encontrados, sem usar "
+    "conhecimento externo, e cite apenas dispositivos encontrados. " + LEGAL_FORMAT
+)
+LEGAL_ENGINE_SUFFIX = (
+    "\nResponda em português. Em cada frase, além da marca [tN], cite a norma (tipo, número/ano) e o "
+    "artigo, por exemplo \"art. 8º da Lei nº 9.250/1995\", e cite somente dispositivos que lhe foram "
+    "mostrados."
+)
+LEGAL_ENGINE_SENTENCES = 3
+_AGENT_N = re.compile(r"at most (\d+) times")
+
+
+def legal_system(system: str) -> str:
+    """The Portuguese counterpart of a baseline instruction (the engine's own instruction gets the
+    citation request appended)."""
+    if system == CLOSED_SYSTEM:
+        return LEGAL_CLOSED
+    if system == PASSAGES_SYSTEM or system == LONG_SYSTEM:
+        return LEGAL_PASSAGES
+    if system.startswith(AGENT_SYSTEM.split("{n}")[0]):
+        m = _AGENT_N.search(system)
+        return LEGAL_AGENT.format(n=int(m.group(1)) if m else 4)
+    return system + LEGAL_ENGINE_SUFFIX
+
+
+class LegalPrompts:
+    """Wraps a generator so that every instruction it gets is the legal one."""
+
+    def __init__(self, inner: Any):
+        self.inner = inner
+        self.id = getattr(inner, "id", "")
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.inner, name)
+
+    def complete(self, system: str, prompt: str, *, max_tokens: int = 600):
+        return self.inner.complete(legal_system(system), prompt, max_tokens=max_tokens)
+
+
 SYSTEM_NAMES = ("closed_book", "bm25", "vector", "hybrid", "hybrid_rerank", "agentic",
                 "long_context", "engine", "oracle", "engine_single")
 #: Extra systems that are exploratory by construction (not in the confirmatory family):
@@ -194,9 +250,17 @@ class BenchContext:
         self._llms: dict[str, Any] = {}
         self._taps: dict[str, _Tap] = {}
 
+    @property
+    def legal(self) -> bool:
+        """True for a dataset that selects the Portuguese citation prompts."""
+        return self.dataset.meta.get("prompt_set") == "legal_br"
+
     def engine_config(self, variant: str = "engine") -> Config:
         """The configuration an engine system runs with (see ``effective_engine_config``)."""
-        return effective_engine_config(self.config, variant)
+        cfg = effective_engine_config(self.config, variant)
+        if self.legal:
+            cfg.draft.max_sentences = LEGAL_ENGINE_SENTENCES
+        return cfg
 
     def engine_tap(self, variant: str = "engine") -> "_Tap":
         """Keeps the raw replies of the engine's model calls (per thread). Exists once
@@ -211,10 +275,9 @@ class BenchContext:
 
     def llm_for(self, tag: str) -> Any:
         """The shared generator, metered under ``tag`` when a ledger is set."""
-        if self.ledger is None:
-            return self.llm
         if tag not in self._llms:
-            self._llms[tag] = LedgerLLM(self.llm, self.ledger, tag, self.estimate_usd)
+            base = self.llm if self.ledger is None else LedgerLLM(self.llm, self.ledger, tag, self.estimate_usd)
+            self._llms[tag] = LegalPrompts(base) if self.legal else base
         return self._llms[tag]
 
     def store(self) -> Store:
@@ -235,7 +298,8 @@ class BenchContext:
             with self._open_lock:
                 if variant not in self._taps:
                     self._taps[variant] = _Tap(self.llm_for(variant))
-                eng = Engine.open(self.db_path, "jsonl", config=self.engine_config(variant),
+                eng = Engine.open(self.db_path, self.dataset.meta.get("domain", "jsonl"),
+                                  config=self.engine_config(variant),
                                   llm=self._taps[variant], embedder=self.embedder,
                                   reranker=self.reranker, entailer=self.entailer)
             engines[variant] = eng

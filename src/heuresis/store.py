@@ -502,6 +502,20 @@ class Store:
             r["id"], r["kind"], r["authority"], r["coverage"], r["licence"], json.loads(r["meta"])
         )
 
+    def sources(self, kind: str | None = None) -> list[Source]:
+        """Every source (optionally of one kind), in id order. Read-only; used by domain
+        plug-ins that need to know which sources a corpus holds."""
+        q, args = "SELECT * FROM sources", ()
+        if kind is not None:
+            q, args = q + " WHERE kind=?", (kind,)
+        return [Source(r["id"], r["kind"], r["authority"], r["coverage"], r["licence"],
+                       json.loads(r["meta"]))
+                for r in self._con.execute(q + " ORDER BY id", args)]
+
+    def has_unit(self, unit_id: str) -> bool:
+        """True when a unit with this id exists (whatever its versions)."""
+        return self._con.execute("SELECT 1 FROM units WHERE id=?", (unit_id,)).fetchone() is not None
+
     def stats(self) -> dict:
         def n(t: str) -> int:
             return self._con.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
