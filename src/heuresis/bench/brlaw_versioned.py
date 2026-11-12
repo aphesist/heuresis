@@ -301,7 +301,20 @@ def select_provisions(prov: list[dict], limit: int | None) -> list[dict]:
     return sorted((p for p in prov if p["unit"] in keep), key=lambda p: p["unit"])
 
 
-def build_versioned(raw_dir: str, out_dir: str, base_urls=BASE_NORMS, limit: int | None = 60) -> dict:
+def _write_tier(out_dir: str, prov: list[dict], units: list[dict], events: list[dict], sources: dict) -> None:
+    os.makedirs(out_dir, exist_ok=True)
+    used = {u["source_id"] for u in units}
+    srcs = [v for k, v in sources.items() if v and k in used]
+    for name, rows in (("sources", srcs), ("units", units), ("events", events)):
+        with open(os.path.join(out_dir, name + ".jsonl"), "w", encoding="utf-8") as fh:
+            for r in rows:
+                fh.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
+    with open(os.path.join(out_dir, "provisions.json"), "w", encoding="utf-8") as fh:
+        json.dump(prov, fh, ensure_ascii=False, indent=1)
+
+
+def build_versioned(raw_dir: str, out_dir: str, base_urls=BASE_NORMS, limit: int | None = 60,
+                    test_limit: int | None = 120) -> dict:
     log: list[dict] = []
     os.makedirs(out_dir, exist_ok=True)
     sources: dict[str, dict] = {}
@@ -411,21 +424,24 @@ def build_versioned(raw_dir: str, out_dir: str, base_urls=BASE_NORMS, limit: int
     st["candidates_by_act"] = {}
     for p in prov:
         st["candidates_by_act"][p["act_title"]] = st["candidates_by_act"].get(p["act_title"], 0) + 1
-    prov = select_provisions(prov, limit)
+    all_prov, all_units, all_events = prov, units, events
+    prov = select_provisions(all_prov, limit)
     keep = {p["unit"] for p in prov}
-    units = [u for u in units if u["id"] in keep]
-    events = [e for e in events if e["unit_id"] in keep]
+    units = [u for u in all_units if u["id"] in keep]
+    events = [e for e in all_events if e["unit_id"] in keep]
     st["provisions"] = len(prov)
     st["replaced"] = sum(p["op"] == "replace" for p in prov)
     st["repealed"] = sum(p["op"] == "repeal" for p in prov)
     st["acts"] = {p["act"]: p["act_title"] for p in prov}
-    sources = {k: v for k, v in sources.items() if v and k in {u["source_id"] for u in units}}
-    for name, rows in (("sources", sources.values()), ("units", units), ("events", events)):
-        with open(os.path.join(out_dir, name + ".jsonl"), "w", encoding="utf-8") as fh:
-            for r in rows:
-                fh.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
-    with open(os.path.join(out_dir, "provisions.json"), "w", encoding="utf-8") as fh:
-        json.dump(prov, fh, ensure_ascii=False, indent=1)
+    _write_tier(out_dir, prov, units, events, sources)
+    # The qualifying candidates that were not selected: a held-out tier, written to its own folder
+    # (``<out_dir>_test``), selected by the same rule and never read by this code.
+    unused = [p for p in all_prov if p["unit"] not in keep]
+    tprov = select_provisions(unused, test_limit)
+    tkeep = {p["unit"] for p in tprov}
+    st["candidates_unused"], st["test_provisions"] = len(unused), len(tprov)
+    _write_tier(out_dir + "_test", tprov, [u for u in all_units if u["id"] in tkeep],
+                [e for e in all_events if e["unit_id"] in tkeep], sources)
     seen, uniq = set(), []
     for r in log:
         k = (r.get("url"), r.get("sha256"))

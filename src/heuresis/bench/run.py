@@ -296,6 +296,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     help="override one packaged config value for this run (repeatable), e.g. "
                          "--set draft.prompt=v1 or --set verify.answers_question=true; the value is read "
                          "as JSON when it parses, else as text; the manifest records the resulting config")
+    ap.add_argument("--legal-prompt", choices=("v1", "v2"), default="v2",
+                    help="legal datasets only: v2 (default) = one-claim-per-sentence instruction and the "
+                         "model support gate for the engine; v1 = the first legal instruction")
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--agent-k", type=int, default=5)
     ap.add_argument("--max-actions", type=int, default=4)
@@ -370,9 +373,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         emb = models_local.load_embedder(a.embedder) if a.embedder else models_local.load_embedder()
         rr = models_local.load_reranker(a.reranker) if a.reranker else models_local.load_reranker()
         ent = models_local.load_entailer(a.entailer) if a.entailer else models_local.load_entailer()
+    support_llm = None
+    if a.paid:  # the support gate's own model object: same model, thinking always disabled
+        from ..llm import AnthropicLLM
+        support_llm = AnthropicLLM(a.model or cfg.draft.model, key_env=a.key_env,
+                                   temperature=BENCH_TEMPERATURE, thinking=BENCH_THINKING)
     ctx = build_context(ds, os.path.join(a.out, "store.sqlite"), llm=llm, embedder=emb,
                         reranker=rr, entailer=ent, config=cfg, ledger=ledger,
-                        estimate_usd=a.estimate_usd)
+                        estimate_usd=a.estimate_usd, legal_prompt=a.legal_prompt,
+                        support_llm=support_llm)
     systems = build_systems(ctx, [s for s in a.systems.split(",") if s], k=a.k,
                             agent_k=a.agent_k, max_actions=a.max_actions,
                             time_aware=a.time_aware, long_context_limit=a.long_context_limit,

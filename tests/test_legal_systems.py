@@ -98,3 +98,35 @@ def test_end_to_end_dry_run_and_citation_metric(tmp_path):
     summary = citations.summary_by_system(analysed)
     assert set(summary) == {s.name for s in systems} and "tainted_share" in summary["engine"]
     assert os.path.exists(os.path.join(out, "citations.jsonl"))
+
+
+def test_legal_prompt_versions_and_the_engine_support_gate(tmp_path):
+    rec = Rec()
+    ds = legal_dataset(tmp_path)
+    v2 = build_context(ds, str(tmp_path / "a.db"), llm=rec)                       # default: v2
+    assert v2.engine_config().verify.support == "llm" and v2.engine_config("engine_single").verify.support != "llm"
+    v2.llm_for("engine").complete("engine instruction", "p")
+    assert rec.systems[-1] == "engine instruction" + S.LEGAL_ENGINE_SUFFIX_V2
+    assert "SOMENTE o que o dispositivo citado diz" in S.LEGAL_ENGINE_SUFFIX_V2
+    v1 = build_context(ds, str(tmp_path / "b.db"), llm=rec, legal_prompt="v1")
+    assert v1.engine_config().verify.support == "window_title"
+    v1.llm_for("engine").complete("engine instruction", "p")
+    assert rec.systems[-1] == "engine instruction" + S.LEGAL_ENGINE_SUFFIX
+    # the baselines are the same under both versions, and the old datasets never get the gate
+    for ctx in (v1, v2):
+        ctx.llm_for("closed_book").complete(S.CLOSED_SYSTEM, "p")
+        assert rec.systems[-1] == S.LEGAL_CLOSED
+    old = build_context(make_dataset(tmp_path / "o"), str(tmp_path / "o.db"), llm=rec)
+    assert old.engine_config().verify.support == "window_title"
+
+
+def test_engine_system_runs_with_the_gate_in_dry_run(tmp_path):
+    ds = legal_dataset(tmp_path)
+    ctx = build_context(ds, str(tmp_path / "s.sqlite"))
+    out = str(tmp_path / "out")
+    lg = Ledger(str(tmp_path / "l.jsonl"), 10.0, dry_run=True)
+    run(ds, "dev", build_systems(ctx, ["engine"]), out, lg, workers=1, dry_run=True)
+    rows = [json.loads(l) for l in open(os.path.join(out, "results.jsonl"))]
+    assert len(rows) == 2 and all(r["status"] in ("answered", "abstained") and not r.get("error") for r in rows)
+    man = json.load(open(os.path.join(out, "manifest.json")))
+    assert man["engine_config"]["verify"]["support"] == "llm"

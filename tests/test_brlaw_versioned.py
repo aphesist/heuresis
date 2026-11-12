@@ -71,3 +71,13 @@ def test_select_provisions_is_deterministic_and_spreads_over_acts():
     assert len(sel) == 10 and sel == V.select_provisions(list(reversed(prov)), 10)
     assert len({p["act"] for p in sel}) == 5 and {p["act"] for p in sel} == {f"a{i}" for i in range(5)}
     assert V.select_provisions(prov, None) is prov
+
+
+def test_unused_candidates_form_the_held_out_selection():
+    prov = [{"unit": f"u{i}", "act": f"a{i % 7}"} for i in range(70)]
+    main = V.select_provisions(prov, 10)
+    keep = {p["unit"] for p in main}
+    unused = [p for p in prov if p["unit"] not in keep]
+    test = V.select_provisions(unused, 20)
+    assert len(test) == 20 and not {p["unit"] for p in test} & keep
+    assert V.select_provisions(unused, 500) == unused   # all of them when under the cap

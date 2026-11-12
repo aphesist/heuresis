@@ -82,11 +82,21 @@ LEGAL_ENGINE_SUFFIX = (
     "artigo, por exemplo \"art. 8º da Lei nº 9.250/1995\", e cite somente dispositivos que lhe foram "
     "mostrados."
 )
+#: The engine's drafting instruction of the second legal prompt version: one claim per sentence,
+#: only what the cited provision says (``--legal-prompt v1`` selects the first, above).
+LEGAL_ENGINE_SUFFIX_V2 = (
+    "\nResponda em português, com uma afirmação por frase. Cada frase deve dizer SOMENTE o que o "
+    "dispositivo citado diz, usando as palavras-chave dele: não generalize além do dispositivo e não "
+    "complete com conhecimento externo. Em cada frase, além da marca [tN], cite a norma (tipo, "
+    "número/ano) e o artigo, por exemplo \"art. 8º da Lei nº 9.250/1995\", e cite somente dispositivos "
+    "que lhe foram mostrados. Se a resposta exigir um passo que os dispositivos não afirmam, diga o que "
+    "falta ou responda ABSTAIN."
+)
 LEGAL_ENGINE_SENTENCES = 3
 _AGENT_N = re.compile(r"at most (\d+) times")
 
 
-def legal_system(system: str) -> str:
+def legal_system(system: str, engine_suffix: str | None = None) -> str:
     """The Portuguese counterpart of a baseline instruction (the engine's own instruction gets the
     citation request appended)."""
     if system == CLOSED_SYSTEM:
@@ -96,21 +106,22 @@ def legal_system(system: str) -> str:
     if system.startswith(AGENT_SYSTEM.split("{n}")[0]):
         m = _AGENT_N.search(system)
         return LEGAL_AGENT.format(n=int(m.group(1)) if m else 4)
-    return system + LEGAL_ENGINE_SUFFIX
+    return system + (LEGAL_ENGINE_SUFFIX if engine_suffix is None else engine_suffix)
 
 
 class LegalPrompts:
     """Wraps a generator so that every instruction it gets is the legal one."""
 
-    def __init__(self, inner: Any):
+    def __init__(self, inner: Any, engine_suffix: str | None = None):
         self.inner = inner
+        self.engine_suffix = engine_suffix
         self.id = getattr(inner, "id", "")
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self.inner, name)
 
     def complete(self, system: str, prompt: str, *, max_tokens: int = 600):
-        return self.inner.complete(legal_system(system), prompt, max_tokens=max_tokens)
+        return self.inner.complete(legal_system(system, self.engine_suffix), prompt, max_tokens=max_tokens)
 
 
 SYSTEM_NAMES = ("closed_book", "bm25", "vector", "hybrid", "hybrid_rerank", "agentic",
@@ -235,7 +246,12 @@ def prepare_corpus(corpus_dir: str, db_path: str, embedder: Any) -> dict:
 class BenchContext:
     def __init__(self, dataset: Dataset, db_path: str, *, llm: Any, embedder: Any,
                  reranker: Any, entailer: Any = None, config: Config | None = None,
-                 ledger: Ledger | None = None, estimate_usd: float = 0.01):
+                 ledger: Ledger | None = None, estimate_usd: float = 0.01,
+                 legal_prompt: str = "v2", support_llm: Any = None):
+        #: "v2" (default for a legal dataset): the one-claim-per-sentence instruction and the model
+        #: support gate for the engine; "v1": the first legal instruction and entailment support.
+        self.legal_prompt = legal_prompt
+        self.support_llm = support_llm
         self.dataset = dataset
         self.db_path = str(db_path)
         self.llm = llm
@@ -260,7 +276,17 @@ class BenchContext:
         cfg = effective_engine_config(self.config, variant)
         if self.legal:
             cfg.draft.max_sentences = LEGAL_ENGINE_SENTENCES
+            if self.legal_prompt == "v2" and variant == "engine":
+                cfg.verify.support = "llm"
         return cfg
+
+    def support_llm_for(self, tag: str) -> Any:
+        """The model of the engine's support gate: ``support_llm`` (thinking disabled in a paid run),
+        metered under ``tag``; the generator itself when none was given."""
+        base = self.support_llm if self.support_llm is not None else self.llm
+        if self.ledger is None:
+            return base
+        return LedgerLLM(base, self.ledger, tag, self.estimate_usd)
 
     def engine_tap(self, variant: str = "engine") -> "_Tap":
         """Keeps the raw replies of the engine's model calls (per thread). Exists once
@@ -277,7 +303,8 @@ class BenchContext:
         """The shared generator, metered under ``tag`` when a ledger is set."""
         if tag not in self._llms:
             base = self.llm if self.ledger is None else LedgerLLM(self.llm, self.ledger, tag, self.estimate_usd)
-            self._llms[tag] = LegalPrompts(base) if self.legal else base
+            suffix = LEGAL_ENGINE_SUFFIX_V2 if self.legal_prompt == "v2" else None
+            self._llms[tag] = LegalPrompts(base, suffix) if self.legal else base
         return self._llms[tag]
 
     def store(self) -> Store:
@@ -301,7 +328,9 @@ class BenchContext:
                 eng = Engine.open(self.db_path, self.dataset.meta.get("domain", "jsonl"),
                                   config=self.engine_config(variant),
                                   llm=self._taps[variant], embedder=self.embedder,
-                                  reranker=self.reranker, entailer=self.entailer)
+                                  reranker=self.reranker, entailer=self.entailer,
+                                  support_llm=self.support_llm_for(variant + "_support")
+                                  if self.engine_config(variant).verify.support == "llm" else None)
             engines[variant] = eng
         return eng
 
@@ -378,7 +407,8 @@ class _Tap:
 def build_context(dataset: Dataset, db_path: str, *, llm: Any = None, embedder: Any = None,
                   reranker: Any = None, entailer: Any = None, config: Config | None = None,
                   ledger: Ledger | None = None, estimate_usd: float = 0.01,
-                  prepare: bool = True) -> BenchContext:
+                  prepare: bool = True, legal_prompt: str = "v2",
+                  support_llm: Any = None) -> BenchContext:
     """Defaults to the offline fakes. Ingests and embeds the corpus into ``db_path``."""
     from ..fakes import HashEmbedder, OverlapReranker, RuleEntailer
     ctx = BenchContext(
@@ -388,6 +418,7 @@ def build_context(dataset: Dataset, db_path: str, *, llm: Any = None, embedder: 
         reranker=reranker if reranker is not None else OverlapReranker(),
         entailer=entailer if entailer is not None else RuleEntailer(),
         config=config, ledger=ledger, estimate_usd=estimate_usd,
+        legal_prompt=legal_prompt, support_llm=support_llm,
     )
     if prepare:
         prepare_corpus(dataset.corpus_dir, db_path, ctx.embedder)
@@ -728,7 +759,9 @@ def _replay_payload(q: Question, ans: Answer, raws: list[str], cfg: Config) -> d
         "claims": [{"text": c.text, "passage_marks": list(c.passage_marks),
                     "tool_marks": list(c.tool_marks), "support": float(c.support),
                     "checks": {k: bool(c.checks.get(k, True))
-                               for k in ("exists", "valid_at_date", "numbers_traced")}}
+                               for k in ("exists", "valid_at_date", "numbers_traced",
+                                         "references_traced", "llm_support")
+                               if k in ("exists", "valid_at_date", "numbers_traced") or k in c.checks}}
                    for c in ans.claims],
     }
 

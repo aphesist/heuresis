@@ -144,6 +144,48 @@ The runner's containment grade (does the gold answer string appear) is computed 
 meaningful here: BR-TaxQA-R's official answers are paragraphs, and the `temporal` split has no answer string.
 The measures of this test are the ones of `bench.citations`.
 
+
+## The support gate and the second legal prompt (phase C)
+
+Phase B showed the engine's citations are real and in force, but a model judge found its sentences **less** supported
+by the cited provision (60 % on dev against 79-86 % for the retrieval baselines): it generalised. Two generic/legal changes
+address that; both are selectable and the old behaviour stays.
+
+* **`verify.support = "llm"`** (`src/heuresis/support_llm.py`; `window_title` stays the default and selectable). After
+  drafting, one call per answer (thinking disabled, small `max_tokens`) gives each kept sentence and the text of the
+  passages it cites, which are the versions in force at the as-of date (retrieval only returns those), and returns
+  `SUPPORTED`, `PARTIAL` or `NOT_SUPPORTED` per sentence. `NOT_SUPPORTED` drops the sentence like any other failed check,
+  `PARTIAL` keeps it and sets its support to 0.4 (so the answer's grade falls), an unreadable reply keeps it; if nothing
+  survives the answer is an `unsupported` abstention. The call is a traced stage (`support_llm`) with its own tokens and cost.
+* **`--legal-prompt v2`** (default for a legal dataset; `v1` selects the first): the engine's drafting instruction asks for one
+  claim per sentence, only what the cited provision says, in its key words, no generalisation, and to say what is missing
+  when a step is not stated. Selected by the dataset attribute `prompt_set`; the Wikipedia/news prompts and their hashes are
+  untouched (a test pins them). For a legal dataset with v2 the engine runs with `verify.support = "llm"`; the baselines' prompts
+  are the same under v1 and v2.
+
+**The two model prompts, side by side.** They are different texts on purpose. Both are called on the same model family
+(`claude-haiku-5-5`), so their errors may be correlated: agreement between them is **not** evidence that a sentence is
+supported, which is why the human-check sample matters.
+
+| Engine's support gate (`support_llm.SUPPORT_GATE_SYSTEM`) | Benchmark support judge (`bench/citations.SUPPORT_SYSTEM`) |
+|---|---|
+| You are the last check of a system that answers questions from a corpus. You get the draft's numbered sentences; under each one, the passages it cites. For each sentence decide whether the cited passages, read as written, back what the sentence asserts.<br>SUPPORTED: every assertion of the sentence is stated by, or follows directly from, the cited passages.<br>PARTIAL: the main assertion is backed, but the sentence also generalises, adds a detail, or states a conclusion the passages do not.<br>NOT_SUPPORTED: the passages do not state what the sentence asserts, or say something different.<br>Judge only against the passages shown, never against what you know. Reply with one line per sentence, exactly `<number>: <VERDICT>`, and nothing else. | You check a legal citation. You get the text of a provision, as in force on a date, and a sentence from an answer that cites it. Reply with exactly one word: SUPPORTED if the provision, as worded, states or clearly entails what the sentence claims about it; NOT_SUPPORTED if it does not (it says something different, is silent on the point, or the sentence adds content the provision does not contain). |
+
+The gate sees all kept sentences of one answer at once, three labels, the passages it cites and the as-of date; the judge sees one
+(sentence, provision) pair and two labels and is run by the benchmark afterwards over the text a user receives.
+
+The engine's v2 drafting instruction (appended to its own system prompt):
+
+> Responda em português, com uma afirmação por frase. Cada frase deve dizer SOMENTE o que o dispositivo citado diz, usando as palavras-chave dele: não generalize além do dispositivo e não complete com conhecimento externo. Em cada frase, além da marca [tN], cite a norma (tipo, número/ano) e o artigo, por exemplo "art. 8º da Lei nº 9.250/1995", e cite somente dispositivos que lhe foram mostrados. Se a resposta exigir um passo que os dispositivos não afirmam, diga o que falta ou responda ABSTAIN.
+
+## Held-out dated questions (`temporal_test`)
+
+`build_versioned` writes, besides the 60 provisions of the `temporal` split, a second tier folder (`versioned_test`) with the
+qualifying candidates that were **not** selected (234 qualifying, 60 used, 174 unused; the same selection rule, capped at 120: 120
+provisions, 240 questions). They are built by the same code from real downloaded wordings and are merged only into the corpora
+built with `include_test=True` (`brlaw-t`, `brlaw-core-t`), which carry the split `temporal_test`; the corpora of phases A and B
+are unchanged. Its question ids hash is in each such corpus's manifest. No system has been run on it and its contents were not read.
+
 ## Limits
 
 * The tax tier's texts are single-version, as scraped; the federal tier's are mostly original publications.

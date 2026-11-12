@@ -627,7 +627,7 @@ def load(name: str, root: str = "data", *, n_test: int = 500, n_dev: int = 100,
     """Build the corpus if needed and return the dataset with its splits: dev, test and
     sealed (hash-checked against the manifest) and dev2. ``brlaw`` (the legal-citation test) is
     built by ``bench.brlaw`` and has the splits dev, test and temporal."""
-    if name in ("brlaw", "brlaw-core"):
+    if name.startswith("brlaw"):
         from . import brlaw
         return brlaw.load(root, name)
     cdir = build(name, root, n_test=n_test, n_dev=n_dev, n_sealed=n_sealed, seed=seed,

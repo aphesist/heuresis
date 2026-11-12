@@ -48,6 +48,8 @@ class VerifyCfg:
     #: How a claim's support is scored: "window_title" (default: the best entailment over
     #: title-prefixed sentence windows of the cited passages) or "current" (the first
     #: version: one joined premise of the cited passages' texts).
+    #: A third value, "llm", adds one model call per answer that judges each sentence against
+    #: the passages it cites (see ``support_llm.py``); the entailer scoring is as "window_title".
     support: str = "window_title"
     #: OFF by default (an A/B arm): after verification, on answered questions only, one
     #: model call asks whether the answer states what the question asks for; NO turns the

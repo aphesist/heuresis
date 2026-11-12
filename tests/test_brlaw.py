@@ -212,3 +212,21 @@ def test_a_stub_tax_text_gives_way_to_the_federal_copy(tmp_path):
     cnt = B.merge_tiers(str(tmp_path), str(tmp_path / "out"))
     units = [json.loads(l)["id"] for l in open(tmp_path / "out" / "units.jsonl")]
     assert units == [a + "!art186"] and cnt["tax"]["units"] == 0 and cnt["federal"]["norms"] == 1
+
+
+def test_held_out_tier_is_merged_only_on_request_and_has_its_own_split(tmp_path):
+    def mk(urn):
+        return {"id": urn, "kind": "norm", "authority": 3, "coverage": 3, "meta": {}}
+    un = lambda uid, src: {"id": uid, "source_id": src, "kind": "article", "parent_id": None, "title": uid}
+    ev = lambda uid, t: {"id": uid + "@1", "unit_id": uid, "op": "create", "date": "2001-01-01", "text": t,
+                         "recorded_at": "2001-01-01", "evidence": "e", "certainty": "high", "axes": {}}
+    a = "urn:lex:br:federal:lei:2001-01-01;1"
+    _tier(tmp_path / "tax", [], [], [])
+    _tier(tmp_path / "federal", [mk(a)], [un(a + "!art1", a), un(a + "!art2", a)], [ev(a + "!art1", "f1"), ev(a + "!art2", "f2")])
+    _tier(tmp_path / "versioned", [mk(a)], [un(a + "!art1", a)], [ev(a + "!art1", "v1")])
+    _tier(tmp_path / "versioned_test", [mk(a)], [un(a + "!art2", a)], [ev(a + "!art2", "t1")])
+    plain = B.merge_tiers(str(tmp_path), str(tmp_path / "o1"))
+    withtest = B.merge_tiers(str(tmp_path), str(tmp_path / "o2"), include_test=True)
+    texts = lambda d: {json.loads(l)["unit_id"]: json.loads(l)["text"] for l in open(tmp_path / d / "events.jsonl")}
+    assert texts("o1") == {a + "!art1": "v1", a + "!art2": "f2"} and "versioned_test" not in plain
+    assert texts("o2") == {a + "!art1": "v1", a + "!art2": "t1"} and withtest["versioned_test"]["units"] == 1

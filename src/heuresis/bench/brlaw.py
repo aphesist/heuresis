@@ -790,7 +790,7 @@ def _sha(path: str) -> str:
     return h.hexdigest()
 
 
-def merge_tiers(tiers_dir: str, out_dir: str, *, federal_keep=None) -> dict:
+def merge_tiers(tiers_dir: str, out_dir: str, *, federal_keep=None, include_test: bool = False) -> dict:
     """Merge the three tier folders into one corpus folder. A norm present in the tax tier is
     dropped from the federal tier (same URN); a provision of the versioned tier replaces the same
     unit id of the other tiers. ``federal_keep(urn) -> bool`` restricts the federal tier (used to
@@ -801,9 +801,10 @@ def merge_tiers(tiers_dir: str, out_dir: str, *, federal_keep=None) -> dict:
     # a tax text that is only a stub (no article could be read) gives way to the federal copy
     stubs = {s["id"] for s in tax_src if s["meta"].get("articles_missing") and s["id"] in fed_urns}
     tax_urns = {s["id"] for s in tax_src} - stubs
-    vers_units = {u["id"] for u in _rows(f"{tiers_dir}/versioned/units.jsonl")}
+    vtiers = ["versioned"] + (["versioned_test"] if include_test else [])
+    vers_units = {u["id"] for t in vtiers for u in _rows(f"{tiers_dir}/{t}/units.jsonl")}
     os.makedirs(out_dir, exist_ok=True)
-    cnt = {t: {"norms": 0, "units": 0, "events": 0, "chars": 0} for t in ("tax", "versioned", "federal")}
+    cnt = {t: {"norms": 0, "units": 0, "events": 0, "chars": 0} for t in ["tax", *vtiers, "federal"]}
     seen_src: set[str] = set()
     skipped_fed: set[str] = set()
     with open(f"{out_dir}/sources.jsonl", "w", encoding="utf-8") as fs, \
@@ -811,7 +812,7 @@ def merge_tiers(tiers_dir: str, out_dir: str, *, federal_keep=None) -> dict:
             open(f"{out_dir}/events.jsonl", "w", encoding="utf-8") as fe, \
             open(f"{out_dir}/edges.jsonl", "w", encoding="utf-8"):
         keep_units: dict[str, str] = {}
-        for tier in ("tax", "versioned", "federal"):
+        for tier in ("tax", *vtiers, "federal"):
             for s in _rows(f"{tiers_dir}/{tier}/sources.jsonl"):
                 if tier == "tax" and s["id"] in stubs:
                     continue
@@ -826,7 +827,7 @@ def merge_tiers(tiers_dir: str, out_dir: str, *, federal_keep=None) -> dict:
             for u in _rows(f"{tiers_dir}/{tier}/units.jsonl"):
                 if (tier == "federal" and u["source_id"] in skipped_fed) or (tier == "tax" and u["source_id"] in stubs):
                     continue
-                if tier != "versioned" and u["id"] in vers_units:
+                if tier not in vtiers and u["id"] in vers_units:
                     continue
                 if u["id"] in keep_units:
                     continue
@@ -845,7 +846,8 @@ def merge_tiers(tiers_dir: str, out_dir: str, *, federal_keep=None) -> dict:
 
 
 def build_corpus(root: str, leis_dir: str, leis_commit: str, raw_hf: str, *, name: str = CORPUS_NAME,
-                 federal_keep=None, versioned_limit: int | None = 60, refetch: bool = False) -> str:
+                 federal_keep=None, versioned_limit: int | None = 60, refetch: bool = False,
+                 include_test: bool = False) -> str:
     """Build the three tiers (unless present), merge them into ``<root>/corpora/<name>`` and write
     the questions and ``MANIFEST.json``. Idempotent. Returns the corpus dir."""
     import os
@@ -863,14 +865,14 @@ def build_corpus(root: str, leis_dir: str, leis_commit: str, raw_hf: str, *, nam
         st = build_federal(leis_dir, f"{tiers}/federal", leis_commit)
         with open(fed_stats, "w", encoding="utf-8") as fh:
             json.dump(st, fh, indent=1)
-    if refetch or not os.path.exists(f"{tiers}/versioned/provisions.json"):
+    if refetch or not os.path.exists(f"{tiers}/versioned_test/provisions.json"):
         st = V.build_versioned(os.path.join(root, "raw", "brlaw"), f"{tiers}/versioned", limit=versioned_limit)
         with open(f"{tiers}/versioned_stats.json", "w", encoding="utf-8") as fh:
             json.dump(st, fh, ensure_ascii=False, indent=1)
     cdir = os.path.join(root, "corpora", name)
     tmp = cdir + ".tmp"
     shutil.rmtree(tmp, ignore_errors=True)
-    counts = merge_tiers(tiers, tmp, federal_keep=federal_keep)
+    counts = merge_tiers(tiers, tmp, federal_keep=federal_keep, include_test=include_test)
     with open(tax_stats, encoding="utf-8") as fh:
         tax = json.load(fh)
     unit_ids = {u["id"] for u in _rows(f"{tmp}/units.jsonl")}
@@ -879,6 +881,10 @@ def build_corpus(root: str, leis_dir: str, leis_commit: str, raw_hf: str, *, nam
     with open(f"{tiers}/versioned/provisions.json", encoding="utf-8") as fh:
         prov = json.load(fh)
     splits["temporal"] = temporal_questions(prov)
+    if include_test:
+        # held out: built from the qualifying candidates the ``temporal`` split did not use
+        with open(f"{tiers}/versioned_test/provisions.json", encoding="utf-8") as fh:
+            splits["temporal_test"] = temporal_questions(json.load(fh))
     with open(f"{tmp}/questions.jsonl", "w", encoding="utf-8") as fh:
         for sp, rs in splits.items():
             for r in rs:

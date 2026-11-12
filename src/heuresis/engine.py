@@ -24,6 +24,7 @@ from .domains import get_domain
 from .fakes import EchoLLM, RuleEntailer
 from .ingest import ingest as _ingest
 from .references import has_resolver, trace_claims
+from . import support_llm as support_mod
 from .llm import BudgetExceeded
 from .locked.decide import decide, deterministic_failure
 from .locked.verify import verify as _verify
@@ -82,7 +83,7 @@ def trace_failure(trace: list[StageTrace]) -> tuple[str, str] | None:
     ``("verifier", note)`` for a failed verification (the local entailer). ``None`` when
     every stage ran. A budget stop is not a failure of the model."""
     for t in trace:
-        if t.stage in ("draft", "draft_followup", "answers_question"):
+        if t.stage in ("draft", "draft_followup", "answers_question", "support_llm"):
             if t.note == NOTE_BUDGET:
                 return "budget", f"{t.stage}: {t.note}"
             if t.note.startswith(NOTE_MODEL_ERROR):
@@ -102,7 +103,10 @@ def _span(p: Passage) -> str:
 
 class Engine:
     def __init__(self, store: Store, domain: Any, config: Config, llm: Any, embedder: Any,
-                 reranker: Any, entailer: Any, classifier: Any, references_traced: bool | None = None):
+                 reranker: Any, entailer: Any, classifier: Any, references_traced: bool | None = None,
+                 support_llm: Any = None):
+        #: The model of the support gate (``verify.support = "llm"``); None = the drafting model.
+        self.support_llm = support_llm
         #: The ``references_traced`` gate: None = on when the domain has a reference resolver.
         self.references_traced = references_traced
         self.store = store
@@ -121,7 +125,7 @@ class Engine:
     def open(cls, path: str, domain: Any = None, *, config: Config | None = None,
              llm: Any = None, embedder: Any = None, reranker: Any = None,
              entailer: Any = None, classifier: Any = None,
-             references_traced: bool | None = None) -> "Engine":
+             references_traced: bool | None = None, support_llm: Any = None) -> "Engine":
         store = Store(str(path))
         try:
             stored = store.meta_get("domain")
@@ -139,7 +143,7 @@ class Engine:
         eng = cls(store, dom, config or load_config(),
                   llm if llm is not None else EchoLLM(), embedder, reranker,
                   entailer if entailer is not None else RuleEntailer(), classifier,
-                  references_traced)
+                  references_traced, support_llm)
         eng.store.meta_set("domain", dom.name)
         if dom.name in _STATEFUL_DOMAINS:
             for p in eng._paths():
@@ -392,6 +396,10 @@ class Engine:
             n_untraced = trace_claims(claims, passages, self.domain, self.store)
         trace.append(StageTrace("verify", _ms(t0), n_out=len(claims),
                                 note=f"references_traced: {n_untraced} sentence(s) failed" if n_untraced else ""))
+        if getattr(self.config.verify, "support", "") == "llm" and not d.declined:
+            err = self._llm_support(claims, passages, query, trace)
+            if err is not None:
+                return finish(*err, query=query, claims=claims)
         t0 = time.perf_counter()
         # Conflict/divergence detection is not implemented in this version.
         status, grade, ab = decide(claims, passages, query, self.config.decide, self.store,
@@ -430,6 +438,36 @@ class Engine:
         kind = ab.type if ab else "unsupported"
         return finish(status, kind, ab.message if ab else "", ab.searched if ab else [],
                       query=query, claims=claims)
+
+    def _llm_support(self, claims: list[Claim], passages: list[Passage], query: Query,
+                     trace: list[StageTrace]):
+        """The model support gate: one call over the sentences that passed the deterministic
+        checks. Returns None, or finish-args when the call fails or the budget stops it."""
+        by_mark = {p.mark: p for p in passages if p.mark}
+        items = []
+        for c in claims:
+            cited = [by_mark[m] for m in c.passage_marks if m in by_mark]
+            if cited and not deterministic_failure(c):
+                items.append((len(items) + 1, c, cited))
+        if not items:
+            return None
+        t0 = time.perf_counter()
+        try:
+            raw, u = (self.support_llm or self.llm).complete(
+                support_mod.SUPPORT_GATE_SYSTEM,
+                support_mod.gate_prompt(items, query.as_of.valid), max_tokens=20 + 12 * len(items))
+        except BudgetExceeded:
+            trace.append(StageTrace("support_llm", _ms(t0), note=NOTE_BUDGET))
+            return ("abstained", "budget")
+        except Exception as e:
+            trace.append(StageTrace("support_llm", _ms(t0), note=f"{NOTE_MODEL_ERROR}: {type(e).__name__}"))
+            return ("abstained", "unsupported", "The support check failed.")
+        counts = support_mod.apply_verdicts(items, support_mod.parse_gate(raw))
+        trace.append(StageTrace("support_llm", _ms(t0), u.tokens_in, u.tokens_out, u.usd,
+                                counts["NOT_SUPPORTED"],
+                                "S=%d P=%d N=%d unreadable=%d" % (counts["SUPPORTED"], counts["PARTIAL"],
+                                                                  counts["NOT_SUPPORTED"], counts["unreadable"])))
+        return None
 
     def _answers_question(self, question: str, text: str, trace: list[StageTrace]):
         """The optional stage: one model call, YES or NO. Returns (verdict, finish-args):
