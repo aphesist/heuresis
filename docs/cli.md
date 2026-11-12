@@ -69,6 +69,8 @@ arguments are passed through to `heuresis.bench.run.main` / `report.main`.
   thinking stays on and its tokens count against `max_tokens`). The manifest records `"temperature": null`
   with a note, the `thinking` setting, the model id and the output cap. Every call's stop reason and
   content-block counts go to the ledger, and each result row records `stop_reasons`, `blocks` and `text_chars`.
+- **Config overrides.** `--set SECTION.KEY=VALUE` (repeatable) overrides one packaged config value for the run, e.g.
+  `--set draft.prompt=v1`; the manifest records the resulting `engine_config`.
 - **Errors.** An API or model failure after the client's retries is written as a row with
   `status: "error"` for every system (the engine included), retried when the runner restarts, and
   counted by the report as a wrong answer for that system. A budget stop is never an error: the run

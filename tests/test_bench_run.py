@@ -381,3 +381,19 @@ def test_paid_run_key_env_can_be_renamed_and_must_be_set_before_any_work(tmp_pat
     cap = capsys.readouterr()
     assert made[0].key_env == "MY_BENCH_KEY" and "MY_BENCH_KEY" in cap.err
     assert "sk-other-secret" not in cap.out + cap.err
+
+
+def test_set_overrides_a_config_value_and_the_manifest_records_it(tmp_path, monkeypatch, capsys):
+    R, made = _paid_env(tmp_path, monkeypatch)
+    out = str(tmp_path / "out")
+    assert R.main(["--dataset", "tiny", "--split", "test", "--out", out, "--systems", "engine",
+                   "--set", "draft.prompt=v1", "--set", "verify.answers_question=true"]) == 0
+    man = json.load(open(os.path.join(out, "manifest.json")))
+    assert man["engine_config"]["draft"]["prompt"] == "v1"
+    assert man["engine_config"]["verify"]["answers_question"] is True
+    base = json.load(open(os.path.join(str(tmp_path / "o2"), "manifest.json"))) if R.main(
+        ["--dataset", "tiny", "--split", "test", "--out", str(tmp_path / "o2"), "--systems", "engine"]) == 0 else None
+    assert base["engine_config"]["draft"]["prompt"] == "v2" and base["surface_hash"] != man["surface_hash"]
+    for bad in ("draft.nope=1", "nosection.x=1", "draft=1", "draft.prompt"):
+        assert R.main(["--dataset", "tiny", "--split", "test", "--out", str(tmp_path / "o3"),
+                       "--set", bad]) == 2

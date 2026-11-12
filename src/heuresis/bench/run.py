@@ -285,6 +285,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                     help="'disabled' (default) sends thinking={'type': 'disabled'} on every call of "
                          "every system, so max_tokens bounds the visible answer; 'default' sends "
                          "nothing and leaves the model's own default (adaptive thinking on)")
+    ap.add_argument("--set", dest="overrides", action="append", default=[], metavar="SECTION.KEY=VALUE",
+                    help="override one packaged config value for this run (repeatable), e.g. "
+                         "--set draft.prompt=v1 or --set verify.answers_question=true; the value is read "
+                         "as JSON when it parses, else as text; the manifest records the resulting config")
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--agent-k", type=int, default=5)
     ap.add_argument("--max-actions", type=int, default=4)
@@ -314,6 +318,28 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     from ..surface.config import load_config
     cfg = load_config()
+    if a.overrides:
+        from ..surface.config import config_from_dict, config_to_dict
+        d = config_to_dict(cfg)
+        for item in a.overrides:
+            try:
+                path, raw = item.split("=", 1)
+                section, key = path.split(".", 1)
+                if section not in d or key not in d[section]:
+                    raise KeyError(path)
+            except (ValueError, KeyError):
+                print(f"error: --set {item!r}: expected an existing SECTION.KEY=VALUE", file=sys.stderr)
+                return 2
+            try:
+                value = json.loads(raw)
+            except ValueError:
+                value = raw
+            d[section][key] = value
+        try:
+            cfg = config_from_dict(d)
+        except ValueError as e:
+            print(f"error: --set: {e}", file=sys.stderr)
+            return 2
     paid_llm = None
     if a.paid:  # built, and announced, before any work: only the variable NAME is shown
         from ..llm import AnthropicLLM
