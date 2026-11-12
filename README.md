@@ -1,4 +1,4 @@
-# heuresis
+<a href="https://github.com/aphesist/heuresis"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/header-dark.svg"><img src="assets/readme/header-light.svg" alt="heuresis" width="100%"></picture></a>
 
 *Retrieve what was in force, cite it, and abstain when you cannot.*
 
