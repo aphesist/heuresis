@@ -131,6 +131,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--key-env", default="PROJECTS_ANTHROPIC_KEY", metavar="NAME")
     ap.add_argument("--model", default=None)
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--max-tokens", type=int, default=20,
+                    help="output cap of each judge call (default 20: ten cuts NOT_EQUIVALENT)")
     a = ap.parse_args(argv)
     if a.paid and (a.cap_usd is None or not a.ledger):
         print("error: --paid needs --cap USD and --ledger PATH (the one shared ledger)", file=sys.stderr)
@@ -159,7 +161,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 2
         ds = _load_dataset(manifest["dataset"])
         qs = {q.id: q for q in ds.questions["dev"]}
-        st = judge_folder(d, qs, llm, workers=a.workers, dry_run=not a.paid)
+        st = judge_folder(d, qs, llm, workers=a.workers, max_tokens=a.max_tokens, dry_run=not a.paid)
         print(json.dumps({"run_dir": d, **st}))
         if st["stopped"]:
             rc = 1

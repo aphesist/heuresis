@@ -270,3 +270,14 @@ def test_draft_raws_drop_the_answers_question_reply_only_when_that_call_ran():
     failed = [StageTrace("draft", 1.0, 10, 5), StageTrace("answers_question", 1.0, 0, 0, 0.0, 0, "model error: X")]
     assert _draft_raws(["draft text"], failed) == ["draft text"]
     assert _draft_raws(["draft text"], [StageTrace("draft", 1.0, 10, 5)]) == ["draft text"]
+
+
+def test_variants_of_limits_the_time_aware_copies():
+    from heuresis.bench.systems import build_context, build_systems
+    from test_bench_common import make_dataset
+    import tempfile, pathlib
+    with tempfile.TemporaryDirectory() as d:
+        ctx = build_context(make_dataset(pathlib.Path(d)), str(pathlib.Path(d) / "s.sqlite"))
+        names = lambda **kw: [s.name for s in build_systems(ctx, ["bm25", "hybrid", "engine"], **kw)]
+        assert names(time_aware_variants=True) == ["bm25", "hybrid", "engine", "bm25+asof", "hybrid+asof"]
+        assert names(time_aware_variants=True, variants_of=["hybrid"]) == ["bm25", "hybrid", "engine", "hybrid+asof"]

@@ -715,13 +715,15 @@ def build_systems(ctx: BenchContext, names: tuple[str, ...] | list[str] = SYSTEM
                   k: int = 8, agent_k: int = 5, max_actions: int = 4,
                   time_aware: bool = False, long_context_limit: int = 90_000,
                   agent_rerank: bool = False,
-                  time_aware_variants: bool = False) -> list[System]:
+                  time_aware_variants: bool = False,
+                  variants_of: tuple[str, ...] | list[str] | None = None) -> list[System]:
     """Build the named systems. ``time_aware`` applies to baselines 2-6 only.
 
     ``agent_rerank`` picks the agentic search tool's retriever: ``hybrid`` (default) or
     ``hybrid_rerank``. With ``time_aware_variants`` a time-aware copy of each of
     ``VARIANT_BASES`` that was asked for is appended, named with the suffix ``+asof``
-    and marked exploratory, so one run holds both."""
+    and marked exploratory, so one run holds both. ``variants_of`` limits those copies to the
+    named systems (default: every one asked for that is in ``VARIANT_BASES``)."""
     def make(n: str, aware: bool) -> System:
         if n == "closed_book":
             return ClosedBook(ctx)
@@ -741,7 +743,7 @@ def build_systems(ctx: BenchContext, names: tuple[str, ...] | list[str] = SYSTEM
         out.append(make(n, time_aware))
     if time_aware_variants:
         for n in names:
-            if n in VARIANT_BASES:
+            if n in VARIANT_BASES and (variants_of is None or n in variants_of):
                 v = make(n, True)
                 v.name = n + VARIANT_SUFFIX
                 v.exploratory = True

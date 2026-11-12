@@ -279,6 +279,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--time-aware-variants", action="store_true",
                     help="also build time-aware copies of bm25, vector, hybrid, hybrid_rerank and "
                          "agentic, named with the suffix +asof (exploratory in the report)")
+    ap.add_argument("--variants-of", default=None, metavar="NAMES",
+                    help="with --time-aware-variants: build the +asof copy only for these comma-separated "
+                         "systems (default: every one asked for)")
     ap.add_argument("--agent-rerank", action="store_true",
                     help="the agentic search tool uses hybrid_rerank instead of hybrid")
     ap.add_argument("--thinking", choices=("disabled", "default"), default="disabled",
@@ -370,7 +373,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                             agent_k=a.agent_k, max_actions=a.max_actions,
                             time_aware=a.time_aware, long_context_limit=a.long_context_limit,
                             agent_rerank=a.agent_rerank,
-                            time_aware_variants=a.time_aware_variants)
+                            time_aware_variants=a.time_aware_variants,
+                            variants_of=[s for s in a.variants_of.split(",") if s]
+                            if a.variants_of else None)
     stats = run(ds, a.split, systems, a.out, ledger, limit=a.limit, workers=a.workers,
                 seed=a.seed, dry_run=a.dry_run, params=vars(a))
     print(json.dumps({**stats, "spent_usd": ledger.spent}))
