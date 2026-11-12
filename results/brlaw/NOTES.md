@@ -280,3 +280,58 @@ choosing older acts on an as-of date of 2024-12-31 because the tax tier holds on
 * The tainted metric counts a system's final text; the engine's number includes its gate. The gate and `abstention` rates differ across systems.
 * All "in force" numbers except the 60 versioned provisions rest on single-version sources; the 1,000-odd human-check rows have not been read by a human.
 * The deterministic containment grader and the penalised score are not meaningful on BR-TaxQA-R (long official answers); the judge-assisted grade is exploratory.
+
+# Phase C: the support gate and the second legal prompt, checked once on `dev` and `temporal` (calibration data, NOT the registered result)
+
+Engine only (the baselines' prompts are unchanged, so their phase B rows stand), `brlaw-core` as in phase B, thinking default,
+`draft.max_tokens` 4096, new ledger `runs/brlaw/ledger-c.jsonl` (cap US$2.00, margin 0.25; copy in `phaseC/`). **Spent US$0.4527 (engine runs
+$0.4009, support judge and dev answer judge $0.0518), remaining US$1.5473.** Run once; nothing was iterated or tuned on these rows.
+220 rows, 0 errors. Engine-new = `verify.support = "llm"` + legal drafting instruction v2 (`docs/legal-citation-test.md`). Engine-old = phase B.
+The benchmark judges are unchanged (same prompts, same model). Files: `results/brlaw/phaseC/` (`analysis_c.json`, per-split citation tables, verdicts).
+
+| | dev old | dev new | temporal old | temporal new |
+|---|---|---|---|---|
+| answered / abstained | 87 / 13 | 78 / 22 | 95 / 25 | 93 / 27 |
+| tainted, strict (covered only) | 0 / 87 (0) | 0 / 78 (0) | 0 / 95 (0) | 0 / 93 (0) |
+| refs per answer | 4.16 | 3.71 | 1.88 | 2.67 |
+| benchmark judge: references SUPPORTED (Wilson 95 %) | 196/329 = 59.6 % [54.2, 64.7] | **195/257 = 75.9 % [70.3, 80.7]** | 127/149 = 85.2 % [78.7, 90.0] | 179/189 = 94.7 % [90.5, 97.1] |
+| judge-assisted answers equivalent to the official one (of 100) | 32 | 29 | n/a | n/a |
+| version in force given / superseded / undetermined / abstained / no 2nd version / unit not cited | n/a | n/a | 51 / 4 / 19 / 25 / 11 / 5+5 | 54 / 7 / 17 / 27 / 12 / 3 (answered without the unit) |
+| cost per question | $0.00245 | $0.00271 | $0.00099 | $0.00108 |
+| cost per equivalent answer | $0.0077 | $0.0094 | n/a | n/a |
+| calls / searches per question | 2.16 / 2.16 | 2.96 / 2.18 | 1.44 / 1.44 | 2.20 / 1.42 |
+| median latency | 9.6 s | 11.6 s | 3.9 s | 5.4 s |
+
+**Reading.** The support weakness moved the way intended: the share of references the benchmark judge rates as supporting its sentence rose from
+60 % to 76 % on dev (intervals do not overlap) and from 85 % to 95 % on temporal. The price: more abstentions (13 to 22 on dev), 3 fewer
+judged-equivalent answers on dev (32 to 29, within noise at n = 100), about 10 % more cost per question, and one more call. Tainted stays 0 (the gate
+and the resolver are unchanged). On `temporal` the version given is essentially unchanged (54 against 51 in force; 7 against 4 superseded).
+The temporal answers are judged by code, not by the judge's equivalence.
+
+**The gate's drops** (sentences removed or withheld, per sentence drafted; a sentence can fail several checks):
+
+| | dev old (312 sentences) | dev new (283) | temporal old (314) | temporal new (301) |
+|---|---|---|---|---|
+| `references_traced` | 48 (offline replay of the stored drafts) | 55 | 42 (replay) | 42 |
+| `numbers_traced` | 39 | 44 | 126 | 106 |
+| `llm support` NOT_SUPPORTED | n/a | **15** | n/a | **5** |
+| `exists` / `valid_at_date` failures other than the above | 92 flagged `exists` in the old replay, which also holds the gate's marks (old runs did not store the gate's own flag) | 21 | 44 (same) | 0 |
+
+The old rows did not store `references_traced` separately; its count there is the offline replay of the phase B analysis. `numbers_traced` drops 35 % of
+temporal sentences in both runs: dates and article numbers in the sentence that the cited passages do not repeat (a known cost of the locked check).
+
+**Agreement between the engine's own support gate and the benchmark judge** on the kept sentences both saw (gate verdicts of the new runs, dev and
+temporal together; sentences the gate dropped are never seen by the judge):
+
+| gate \ judge | SUPPORTED | NOT_SUPPORTED |
+|---|---|---|
+| SUPPORTED | 173 | 10 |
+| PARTIAL (kept, lower grade) | 64 | 10 |
+
+The judge agrees with the gate's SUPPORTED 94.5 % of the time, and calls 86 % of the gate's PARTIAL sentences supported (more lenient than the gate). **High
+agreement is expected and is not evidence of support quality**: both are claude-haiku-5-5, with different prompts, and may share blind spots. Only the
+human-check CSVs (100 rows per split, `runs/brlaw/c-*/citation_support_sample.csv`, not in git: they hold provision text) can say whether either is right.
+
+**Held-out `temporal_test`:** 240 questions (120 provisions from the 174 unused qualifying candidates), question-id sha256
+`1b46b7a35f9b619b3aaceca88b68e02aacb47e3ecf4b2fa4523ecde73a3ede49`, in the manifests of the corpora `brlaw-t` and `brlaw-core-t`; not read, no system run
+on it. Suite: 624 passed, 19 skipped. Branch head: see the commit that adds this section.

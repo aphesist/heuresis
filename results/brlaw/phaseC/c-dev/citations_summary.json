@@ -1,0 +1,33 @@
+{
+ "citations": {
+  "engine": {
+   "abstained": 22,
+   "answered": 78,
+   "container_not_found_in_covered_share": 0.0,
+   "container_not_found_share": 0.0,
+   "counts": {
+    "container_not_found": 0,
+    "norm_only": 21,
+    "resolved": 268,
+    "unit_not_found": 0
+   },
+   "exist_share": 1.0,
+   "in_force_share": 1.0,
+   "no_reference": 0,
+   "no_reference_share": 0.0,
+   "references": 289,
+   "references_free_text": 148,
+   "references_per_answer": 3.7051282051282053,
+   "rows": 100,
+   "support_judged": 257,
+   "support_share": 0.7587548638132295,
+   "tainted": 0,
+   "tainted_covered_only": 0,
+   "tainted_covered_only_share": 0.0,
+   "tainted_share": 0.0,
+   "unit_not_found_in_incomplete_container": 0,
+   "unit_not_found_share": 0.0
+  }
+ },
+ "temporal": {}
+}

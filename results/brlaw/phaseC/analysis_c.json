@@ -1,0 +1,136 @@
+{
+ "dev": {
+  "engine_old": {
+   "n": 100,
+   "answered": 87,
+   "abstained": 13,
+   "tainted_strict": 0,
+   "tainted_covered_only": 0,
+   "refs_per_answer": 4.16,
+   "support_supported": [
+    196,
+    329
+   ],
+   "equivalent": 32,
+   "usd": 0.2451,
+   "usd_per_question": 0.00245,
+   "usd_per_equivalent": 0.0077,
+   "calls_mean": 2.16,
+   "searches_mean": 2.16,
+   "median_latency_ms": 9618.986175999453,
+   "sentences_drafted": 312,
+   "gate_flags": {
+    "exists_other": 92,
+    "numbers_traced": 39
+   },
+   "temporal": null
+  },
+  "engine_new": {
+   "n": 100,
+   "answered": 78,
+   "abstained": 22,
+   "tainted_strict": 0,
+   "tainted_covered_only": 0,
+   "refs_per_answer": 3.71,
+   "support_supported": [
+    195,
+    257
+   ],
+   "equivalent": 29,
+   "usd": 0.2712,
+   "usd_per_question": 0.00271,
+   "usd_per_equivalent": 0.0094,
+   "calls_mean": 2.96,
+   "searches_mean": 2.18,
+   "median_latency_ms": 11578.78737700048,
+   "sentences_drafted": 283,
+   "gate_flags": {
+    "exists_other": 21,
+    "llm_support": 15,
+    "references_traced": 55,
+    "numbers_traced": 44
+   },
+   "temporal": null
+  }
+ },
+ "temporal": {
+  "engine_old": {
+   "n": 120,
+   "answered": 95,
+   "abstained": 25,
+   "tainted_strict": 0,
+   "tainted_covered_only": 0,
+   "refs_per_answer": 1.88,
+   "support_supported": [
+    127,
+    149
+   ],
+   "equivalent": 0,
+   "usd": 0.1188,
+   "usd_per_question": 0.00099,
+   "usd_per_equivalent": null,
+   "calls_mean": 1.44,
+   "searches_mean": 1.44,
+   "median_latency_ms": 3891.563884999414,
+   "sentences_drafted": 314,
+   "gate_flags": {
+    "numbers_traced": 126,
+    "exists_other": 44
+   },
+   "temporal": {
+    "abstained": 25,
+    "answered_without_the_unit": 5,
+    "gold_version": 51,
+    "n": 120,
+    "no_gold": 11,
+    "other_version": 4,
+    "undetermined": 19,
+    "unit_not_cited": 5
+   }
+  },
+  "engine_new": {
+   "n": 120,
+   "answered": 93,
+   "abstained": 27,
+   "tainted_strict": 0,
+   "tainted_covered_only": 0,
+   "refs_per_answer": 2.67,
+   "support_supported": [
+    179,
+    189
+   ],
+   "equivalent": 0,
+   "usd": 0.1297,
+   "usd_per_question": 0.00108,
+   "usd_per_equivalent": null,
+   "calls_mean": 2.2,
+   "searches_mean": 1.42,
+   "median_latency_ms": 5386.153902998558,
+   "sentences_drafted": 301,
+   "gate_flags": {
+    "numbers_traced": 106,
+    "llm_support": 5,
+    "references_traced": 42
+   },
+   "temporal": {
+    "abstained": 27,
+    "answered_without_the_unit": 3,
+    "gold_version": 54,
+    "n": 120,
+    "no_gold": 12,
+    "other_version": 7,
+    "undetermined": 17
+   }
+  }
+ },
+ "agreement_gate_vs_judge": {
+  "SUPPORTED": {
+   "SUPPORTED": 173,
+   "NOT_SUPPORTED": 10
+  },
+  "PARTIAL": {
+   "SUPPORTED": 64,
+   "NOT_SUPPORTED": 10
+  }
+ }
+}
