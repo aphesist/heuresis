@@ -1,19 +1,19 @@
 {
-  "corpus_tokens": 34616678,
+  "corpus_tokens": 34770851,
   "counts_in_corpus": {
     "federal": {
-      "chars": 125585233,
-      "events": 208848,
-      "norms": 28928,
-      "tokens": 31396308,
-      "units": 207367
+      "chars": 126242348,
+      "events": 211004,
+      "norms": 28932,
+      "tokens": 31560587,
+      "units": 209513
     },
     "tax": {
-      "chars": 12824858,
-      "events": 11082,
-      "norms": 425,
-      "tokens": 3206214,
-      "units": 11082
+      "chars": 12784432,
+      "events": 11074,
+      "norms": 421,
+      "tokens": 3196108,
+      "units": 11074
     },
     "versioned": {
       "chars": 56625,
@@ -26,13 +26,13 @@
   "domain": "legal_br",
   "files": {
     "edges.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "events.jsonl": "f9e1a16bc21f6b380621e865cb640939facd675c6f379d9bf6f0222d4a3b5b77",
+    "events.jsonl": "5ca544c3da39a61212c138095eed218eeba1d9f0834013c01d4a8a0cfe004f1c",
     "provisions.json": "1f95b4160bf2a895c4e0d08c458cdf7c2ae396fe4a7dfafc47892b3057ceff11",
-    "questions.jsonl": "0a7f6824b10184e03b78bf60a55fac887beb4ba2498278c03209f2b92b12d9bd",
-    "sources.jsonl": "59a0cefcf8fe9450e6b7f08ca2524ecdbcd93fdb5f5e747a7f9f57f9cc0654f3",
-    "units.jsonl": "0dc1e5beca7dc264fd641c1d6141a90e7e314f6762feb7d06e754c1d263292a4"
+    "questions.jsonl": "5cde3d1629e2f07e99108eae0b5939eac1292c2439f17a52cff86b6e6a5f34e6",
+    "sources.jsonl": "2ac4f7e7268d95f9c6912bedb7f1708f4326e98420bc197199ac91218c7e4fd4",
+    "units.jsonl": "18b92e22fbacbd4239a638eb1b2fdb818a2d8e45ca523017d10df3b285013967"
   },
-  "licence": "tax tier: CC BY 4.0 (unicamp-dl/BR-TaxQA-R); federal tier: texts are official acts (Lei 9.610/1998 art. 8 as stated by ctresb/leis, scripts MIT), referenced by commit and URN, not redistributed; versioned tier: official texts of the Câmara dos Deputados portal",
+  "licence": "tax tier: CC BY 4.0 (unicamp-dl/BR-TaxQA-R); federal tier: texts are official acts (not protected by copyright, Lei 9.610/1998 art. 8, I, as stated by ctresb/leis; scripts MIT), referenced by commit and URN, not redistributed; versioned tier: official texts of the Câmara dos Deputados portal",
   "name": "brlaw",
   "prompt_set": "legal_br",
   "questions": {
@@ -53,11 +53,11 @@
     },
     "taxqa": {
       "gold_refs": 2012,
-      "gold_refs_resolved": 1802,
-      "gold_refs_unresolved": 210,
+      "gold_refs_resolved": 1829,
+      "gold_refs_unresolved": 183,
       "questions": 715,
       "with_article_gold": 546,
-      "with_resolved_gold": 522
+      "with_resolved_gold": 528
     }
   },
   "sources": {
@@ -169,6 +169,37 @@
       "units_repealed": 1701
     },
     "tax": {
+      "articulated_norms_without_articles": [
+        "urn:lex:br:cgpc:resolucao:2008-09-29;26",
+        "urn:lex:br:federal:decreto.lei:1973-12-31;1301",
+        "urn:lex:br:federal:decreto.lei:1976-12-27;1510",
+        "urn:lex:br:federal:decreto:1950-02-16;27784",
+        "urn:lex:br:federal:decreto:1963-07-24;52288",
+        "urn:lex:br:federal:decreto:1966-09-23;59308",
+        "urn:lex:br:federal:decreto:1966-09-23;59309",
+        "urn:lex:br:federal:decreto:1967-07-26;61078",
+        "urn:lex:br:federal:decreto:1968-01-16;62125",
+        "urn:lex:br:federal:decreto:1968-08-22;63151",
+        "urn:lex:br:federal:decreto:1970-11-12;67542",
+        "urn:lex:br:federal:decreto:1980-10-30;85306",
+        "urn:lex:br:federal:decreto:1981-05-14;86006",
+        "urn:lex:br:federal:decreto:1981-06-08;86084",
+        "urn:lex:br:federal:decreto:1982-09-13;87563",
+        "urn:lex:br:federal:decreto:1999-03-26;3000",
+        "urn:lex:br:federal:lei:1965-12-09;4886",
+        "urn:lex:br:federal:lei:2002-01-10;10406",
+        "urn:lex:br:federal:medida.provisoria:2001-08-23;2189-49",
+        "urn:lex:br:federal:medida.provisoria:2005-06-15;252",
+        "urn:lex:br:federal:medida.provisoria:2015-03-10;670",
+        "urn:lex:br:mf:portaria:1977-08-25;454",
+        "urn:lex:br:mf:portaria:1979-03-01;80",
+        "urn:lex:br:mf:portaria:1980-04-25;227",
+        "urn:lex:br:srf:instrucao.normativa:1979-12-20;84",
+        "urn:lex:br:srf:instrucao.normativa:1983-03-25;23",
+        "urn:lex:br:srf:instrucao.normativa:1988-04-21;67",
+        "urn:lex:br:srf:instrucao.normativa:1988-07-14;107",
+        "urn:lex:br:srf:instrucao.normativa:2000-12-28;118"
+      ],
       "by_type": {
         "ato.declaratorio": 25,
         "ato.declaratorio.executivo": 6,

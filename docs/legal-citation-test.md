@@ -98,8 +98,8 @@ norms is tried on the newest, non-revoked one first. The core only knows the opt
 (`interfaces.Reference`, `ReferenceResolver`, `domain_references`): a domain without the method is unaffected.
 
 **Ceiling.** Rendering every article-level gold reference of BR-TaxQA-R the way a lawyer would write it,
-the resolver returns the gold unit for 1,793 of the 1,802 gold references whose unit exists in the corpus
-(99.5 %); the 9 misses are errors in the dataset's own titles (a wrong year: "Lei nº 9.250/2005"). 210 of the
+the resolver returns the gold unit for 1,815 of the 1,829 gold references whose unit exists in the corpus
+(99.2 %); the 14 misses are mostly errors in the dataset's own titles (a wrong year: "Lei nº 9.250/2005"). 183 of the
 2,012 gold article references name a unit the corpus does not hold (the norm was not parseable from the scraped
 text, or an article was not split out).
 
@@ -127,7 +127,7 @@ lawyers), `hybrid` (retrieval as of today), `agentic`, `agentic+asof`, `engine` 
 `references_traced` on).
 
 * **BR-TaxQA-R questions**: 715 questions with the official answers and article-level gold references resolved
-  to unit ids (546 questions name an article; 524 of them resolve to a unit of the corpus). Split by
+  to unit ids (546 questions name an article; 528 of them resolve to a unit of the corpus). Split by
   `sha256(seed:id)`: `dev` (100) and `test` (615). **As-of date 2024-12-31**: the Q&A is about the 2024 tax
   return (exercício 2024, income of 2023) and its references include acts up to July 2024, so a date at the end
   of 2024 is the first one at which every cited act exists. The tax-tier texts are the compiled versions
