@@ -69,17 +69,17 @@
      "calls_mean": 1.0,
      "searches_mean": 0.0,
      "latency_ms_median": 6331.772075998742,
-     "equivalent_answers": 0,
+     "equivalent_answers": 185,
      "useful": [
-      0,
+      139,
       615,
       [
-       0.0,
-       0,
-       0.0062
+       0.226,
+       0.1947,
+       0.2607
       ]
      ],
-     "usd_per_useful": null,
+     "usd_per_useful": 0.00289,
      "support": [
       209,
       800,
@@ -148,17 +148,17 @@
      "calls_mean": 1.0,
      "searches_mean": 1.0,
      "latency_ms_median": 5581.729223998991,
-     "equivalent_answers": 0,
+     "equivalent_answers": 221,
      "useful": [
-      0,
+      205,
       615,
       [
-       0.0,
-       0,
-       0.0062
+       0.3333,
+       0.2972,
+       0.3715
       ]
      ],
-     "usd_per_useful": null,
+     "usd_per_useful": 0.00308,
      "support": [
       910,
       1163,
@@ -227,17 +227,17 @@
      "calls_mean": 2.85,
      "searches_mean": 1.85,
      "latency_ms_median": 7759.823379001318,
-     "equivalent_answers": 0,
+     "equivalent_answers": 264,
      "useful": [
-      0,
+      236,
       615,
       [
-       0.0,
-       0,
-       0.0062
+       0.3837,
+       0.3461,
+       0.4228
       ]
      ],
-     "usd_per_useful": null,
+     "usd_per_useful": 0.0047,
      "support": [
       957,
       1214,
@@ -306,17 +306,17 @@
      "calls_mean": 2.9,
      "searches_mean": 1.9,
      "latency_ms_median": 7469.4882730000245,
-     "equivalent_answers": 0,
+     "equivalent_answers": 244,
      "useful": [
-      0,
+      229,
       615,
       [
-       0.0,
-       0,
-       0.0062
+       0.3724,
+       0.3351,
+       0.4112
       ]
      ],
-     "usd_per_useful": null,
+     "usd_per_useful": 0.00505,
      "support": [
       956,
       1207,
@@ -385,17 +385,17 @@
      "calls_mean": 2.89,
      "searches_mean": 2.1,
      "latency_ms_median": 10481.548048002878,
-     "equivalent_answers": 0,
+     "equivalent_answers": 210,
      "useful": [
-      0,
+      209,
       615,
       [
-       0.0,
-       0,
-       0.0062
+       0.3398,
+       0.3035,
+       0.3782
       ]
      ],
-     "usd_per_useful": null,
+     "usd_per_useful": 0.0078,
      "support": [
       1203,
       1622,
@@ -459,39 +459,39 @@
    },
    "non_inferiority": {
     "closed_book": {
-     "diff_engine_minus_system": 0.0,
+     "diff_engine_minus_system": 0.1138,
      "ci95_two_sided": [
-      0.0,
-      0.0
+      0.065,
+      0.1626
      ],
-     "lower_one_sided_95": 0.0,
+     "lower_one_sided_95": 0.0732,
      "non_inferior_margin_0.10": true
     },
     "hybrid": {
-     "diff_engine_minus_system": 0.0,
+     "diff_engine_minus_system": 0.0065,
      "ci95_two_sided": [
-      0.0,
-      0.0
+      -0.0276,
+      0.039
      ],
-     "lower_one_sided_95": 0.0,
+     "lower_one_sided_95": -0.0211,
      "non_inferior_margin_0.10": true
     },
     "agentic": {
-     "diff_engine_minus_system": 0.0,
+     "diff_engine_minus_system": -0.0439,
      "ci95_two_sided": [
-      0.0,
-      0.0
+      -0.0829,
+      -0.0049
      ],
-     "lower_one_sided_95": 0.0,
+     "lower_one_sided_95": -0.0764,
      "non_inferior_margin_0.10": true
     },
     "agentic+asof": {
-     "diff_engine_minus_system": 0.0,
+     "diff_engine_minus_system": -0.0325,
      "ci95_two_sided": [
-      0.0,
-      0.0
+      -0.0699,
+      0.0033
      ],
-     "lower_one_sided_95": 0.0,
+     "lower_one_sided_95": -0.0634,
      "non_inferior_margin_0.10": true
     }
    }

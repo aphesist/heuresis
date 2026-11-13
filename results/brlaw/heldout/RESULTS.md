@@ -8,12 +8,12 @@ Registration: `PREREGISTRATION-legal.md` (commit 18aeb40, section order followed
 |---|---|
 | H1 (primary): engine's tainted rate is lower than each baseline's, `test` | **supported**, 4 of 4 (Holm) |
 | H1, `temporal_test` | **not supported** after Holm (0 of 4; direction as expected, discordant pairs 0 vs 1-5, floor effect: baselines 0.4-2.1% of all questions) |
-| Co-primary: engine useful-answer rate not worse than `hybrid` by >10 points | **inconclusive, not evaluated**: the answer judge could not be run (Deviations) |
+| Co-primary: engine useful-answer rate not worse than `hybrid` by >10 points | **supported**: engine 34.0% useful vs hybrid 33.3% (difference +0.7 pts, one-sided lower bound -2.1 > -10); non-inferior to all four baselines |
 | Support share (secondary, two-sided, no claim) | `test`: engine 74.2% vs hybrid 78.2%, agentic 78.8%, agentic+asof 79.2%, closed_book 26.1%; `temporal_test`: engine 98.8%, highest |
 
 ## 2. Data and run
 
-Questions: `test` ae73379d...a06fbeda (615), `temporal_test` 1b46b7a3...3ede49 (240); hashes match the registration, and the frozen locked/surface/prompt/engine-config hashes were confirmed unchanged on this branch before the run. Spend: ledger `runs/brlaw/ledger-heldout.jsonl` US$7.26 of the US$10.00 cap (systems US$6.41; support judge US$0.85 including about US$0.14 of duplicated calls from a rerun).
+Questions: `test` ae73379d...a06fbeda (615), `temporal_test` 1b46b7a3...3ede49 (240); hashes match the registration, and the frozen locked/surface/prompt/engine-config hashes were confirmed unchanged on this branch before the run. Spend: ledger `ledger-heldout.jsonl` (in this folder) US$7.47 of the US$10.00 cap (systems US$6.41; support judge US$0.85 including about US$0.14 of duplicated calls from a rerun; answer judge US$0.21).
 
 ## 3. Primary outcome: tainted answers (strict)
 
@@ -59,7 +59,24 @@ The engine's single tainted `test` answer: one article not found. Coverage (answ
 
 ## 4. Co-primary non-inferiority check
 
-**Not evaluated.** `bench.judge` refuses any manifest split other than `dev`/`dev2`, and the brief forbids editing `src/`. The useful-answer rate, its non-inferiority interval and cost per useful answer are therefore unavailable. Verdict: inconclusive. A decision from the owner is needed to run it (for example, to allow the judge on `brlaw` held-out splits, logged as a deviation).
+Run as registered after a logged guard change (Deviations). Answer judge `bench.judge` (prompt hash 9542c78c...) over all 2,262 answered `test` rows (10 unreadable, counted as not EQUIVALENT). Useful = answered, not tainted (strict), EQUIVALENT. One-sided paired bootstrap, 5,000 resamples, seed 20261112; non-inferior if the lower 95% bound of engine minus system exceeds -10 points.
+
+| system | judge-EQUIVALENT answers | useful answers (of 615) | US$ per useful answer |
+|---|---|---|---|
+| closed_book | 185 | 139/615 = 22.6% [19.5, 26.1] | 0.00289 |
+| hybrid | 221 | 205/615 = 33.3% [29.7, 37.1] | 0.00308 |
+| agentic | 264 | 236/615 = 38.4% [34.6, 42.3] | 0.0047 |
+| agentic+asof | 244 | 229/615 = 37.2% [33.5, 41.1] | 0.00505 |
+| engine | 210 | 209/615 = 34.0% [30.3, 37.8] | 0.0078 |
+
+| engine minus | difference | two-sided 95% interval | one-sided lower bound | non-inferior (> -10 pts) |
+|---|---|---|---|---|
+| closed_book | +11.4 pts | [+6.5, +16.3] | +7.3 | yes |
+| hybrid | +0.7 pts | [-2.8, +3.9] | -2.1 | yes |
+| agentic | -4.4 pts | [-8.3, -0.5] | -7.6 | yes |
+| agentic+asof | -3.2 pts | [-7.0, +0.3] | -6.3 | yes |
+
+**Verdict: supported.** The engine is non-inferior to `hybrid` (+0.7 points, lower bound -2.1) and to every other system, including `agentic` (-4.4 points, lower bound -7.6, the closest). It is better than `closed_book`. Against `agentic` the two-sided interval excludes zero (the engine has fewer useful answers by 4.4 points). Cost per useful answer is highest for the engine (US$0.0078 against 0.0029-0.0051). The answer judge is not human-validated (registration section 7); the engine's judge-EQUIVALENT count (210) is the second lowest, with the tainted filter removing almost none of them.
 
 ## 5. Secondary outcomes
 
@@ -83,7 +100,7 @@ The engine's single tainted `test` answer: one article not found. Coverage (answ
 | agentic+asof | 184 | 2.76 | 0/389 | 2/389 | 2/387 | 356/385 = 92.5% [89.4, 94.7] | 0.00164 | 4.0 | 2.71 | 1.71 |
 | engine | 184 | 2.47 | 0/427 | 0/427 | 0/427 | 422/427 = 98.8% [97.3, 99.5] | 0.00123 | 5.2 | 2.39 | 1.6 |
 
-Cost per useful answer: not available (no answer judge). Abstention rate = 1 - coverage (table above).
+Cost per useful answer: section 4. Abstention rate = 1 - coverage (table above).
 
 ### Version in force, `temporal_test` (code-scored, n=240 per system)
 
@@ -132,7 +149,7 @@ By split: `test` 7/100, `temporal_test` 4/100 disagreements. Per-system 3x3 tabl
 
 ## 7. Deviations and limits
 
-- Answer judge not run (dev-only guard in `src/`); co-primary and useful-answer outcomes inconclusive. Logged in `PREREGISTRATION-legal.md`, Deviations log.
+- The dev-only guard in `bench/judge.py` blocked the answer judge; with the owner's go-ahead it was changed to accept a held-out split only with `--registered-run` and a matching registered hash (tested, suite 625 passed), logged in the Deviations log, and the judge was run after all answers were complete and before the non-inferiority result was seen. This is the only change under `src/`.
 - Human validation replaced by the Opus blind review (logged before the review ran).
 - A first support-judge pass was cut by a timeout of mine and rerun (about US$0.14 of duplicate calls).
 - The gate, the judge and the generator are the same model family; the strict tainted outcome does not use the judge.
