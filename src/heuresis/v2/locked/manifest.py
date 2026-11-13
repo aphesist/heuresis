@@ -7,7 +7,7 @@ from pathlib import Path, PurePosixPath
 from typing import Iterable
 
 _BENCH = ("stats", "datasets", "brlaw", "brlaw_versioned", "citations", "judge", "ledger",
-          "splits", "run", "report", "types", "calibrate2")
+          "splits", "run", "report", "types", "calibrate2", "systems", "systems_v2")
 
 #: Glob patterns relative to the repository root; ``dir/**`` means every file below ``dir``.
 PROTECTED: tuple[str, ...] = (

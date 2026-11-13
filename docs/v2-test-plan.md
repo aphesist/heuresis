@@ -90,6 +90,8 @@ python -m heuresis.bench.judge runs/v2/B/brlaw-core-dev runs/v2/B/{musique,multi
 # B6: reports, `engine2` as the reference (free)
 python -m heuresis.bench.report runs/v2/B/{musique,multihoprag,hoh}-dev2 --reference engine2 --family-out runs/v2/B/family-english.md
 python -m heuresis.bench.report runs/v2/B/brlaw-core-dev runs/v2/B/brlaw-core-temporal --reference engine2 --family-out runs/v2/B/family-law.md
+# the legal analysis of the preregistration (tainted, useful, H1, H3, H4, cost split, engine2 drops), as a design check on dev + temporal; English folders of the root are skipped (no citations.jsonl)
+python scripts/brlaw/analyse_v2.py runs/v2/B runs/v2/B/analysis-law.json --db data/db/brlaw.db
 # B7 (optional ablation, dev only): engine2 alone with the judge on Haiku, to compare cost and answers with the Sonnet judge
 for D in musique multihoprag hoh; do
   O=runs/v2/B/$D-dev2-haikujudge; mkdir -p $O; cp runs/stores/$D/store.sqlite $O/store.sqlite
@@ -109,7 +111,7 @@ Produces: rows with `replay` payloads (confidence per answer, gates, verdicts, n
 | B3 | `bench.run` English `dev2`, three datasets | `dev2` (3 x 100) | US$3.95 | 11.30 |
 | B4 | `bench.citations --paid`, two runs | the B1/B2 rows | US$0.20 | 11.60 |
 | B5 | `bench.judge --paid`, four folders | the B1/B3 rows | US$0.11 | 11.80 |
-| B6 | `bench.report` | the folders | US$0 | |
+| B6 | `bench.report`, `scripts/brlaw/analyse_v2.py` | the folders | US$0 | |
 | | **Stage B total** | | **US$7.84** | **11.80** |
 | B7 | optional ablation, `engine2` with a Haiku judge, `dev` + `dev2` | 400 questions | US$1.08 | 13.40 |
 
@@ -150,8 +152,8 @@ python -m heuresis.bench.calibrate2 runs/v2/B/brlaw-core-dev --label judge
 # C3: unseen check of the fitted tau (H7), a fresh rotating draw rot0, engine2 only, with the file from C2
 for D in multihoprag hoh; do
   O=runs/v2/C/$D-rot0; mkdir -p $O; cp runs/stores/$D/store.sqlite $O/store.sqlite
-  C=$(ls src/heuresis/v2/calibration/$D-*.json | head -1)
-  python -m heuresis.bench.run --dataset $D --split rot0 --systems engine2 $OPTS --ledger $L --cap 14.70 --v2-calibration $C --out $O
+  C=$(ls src/heuresis/v2/calibration/$D-*.json 2>/dev/null | head -1); CAL=${C:+--v2-calibration $C}   # no file: the engine keeps default_tau
+  python -m heuresis.bench.run --dataset $D --split rot0 --systems engine2 $OPTS --ledger $L --cap 14.70 $CAL --out $O
 done
 python -m heuresis.bench.report runs/v2/C/{multihoprag,hoh}-rot0 --reference engine2 --family-out runs/v2/C/family.md
 ```
@@ -168,12 +170,40 @@ There is no judge-assisted grade on `cal<k>` / `rot<c>` (`bench.judge` reads `de
 
 Basis: 1,000 questions x US$0.0098. The legal attempt reuses the stage-B runs and costs nothing more.
 
-## Stage D: improvement loop
+## Stage D: improvement loop (paid, one or two cycles)
 
-see docs/evolve.md
+The loop (`docs/evolve.md`) evolves only the champion surface and reads only non-held-out data: rotating draws (`rot0`, `rot1`, ...) and the sealed promotion blocks of `multihoprag` and `hoh`, plus the anchors `musique` (`dev`, `dev2`)
+and `brlaw-core` (`dev`, `temporal`). Each cycle is hard-capped by the loop's ledger at **US$10** (`--cap 10` is per cycle: the cap of a cycle is what the ledger had already spent plus 10; the loop stops cleanly at it and the next call
+resumes the same cycle). `docs/evolve.md` models a cycle at about US$9.7 (Sonnet judge included), so one or two cycles are **US$10 to US$20 at most**. Ledger `runs/v2/ledger-D.jsonl`, workdir `evolve_runs/` (git-ignored). The flags are the ones
+`heuresis evolve cycle --help` lists: `--paid --cap USD --ledger PATH --model NAME --dataset NAME (repeatable) [--judge-model NAME] [--key-env NAME] [--data-root DIR] [--k N] [--seed N] [--workdir DIR] [--allow-unpinned] [--json]`;
+`--paid` needs `--cap`, `--ledger`, `--model` and at least one `--dataset`, and the key is read from `PROJECTS_ANTHROPIC_KEY` unless `--key-env` names another variable.
 
-Placeholder for the budget of one or two cycles on the English pools: each cycle is hard-capped by the loop's ledger at **US$10** (design section (f), "Budget per cycle"; the loop stops cleanly at the cap), so one or two cycles
-are **US$10 to US$20, cap US$10 per cycle**. The figure is the design's, to be re-modelled with the Sonnet judge (`docs/evolve.md`).
+```
+export PYTHONPATH=src
+python -m heuresis.cli lock --check                       # exit 2 if a protected file differs from PROTECTED.json (the freeze writes it with `heuresis lock`)
+python -m heuresis.cli evolve describe --workdir evolve_runs --json | head -c 600   # schema, champion, protected hash (no model call)
+# stores: copy the embedded ones so nothing is re-embedded (the runner builds <workdir>/stores/<dataset>.sqlite when missing)
+mkdir -p evolve_runs/stores
+for D in multihoprag hoh musique; do cp runs/stores/$D/store.sqlite evolve_runs/stores/$D.sqlite; done
+cp data/db/brlaw-core.db evolve_runs/stores/brlaw-core.sqlite
+L=runs/v2/ledger-D.jsonl
+# D1: cycle 1 (draws rot0), cap US$10
+python -m heuresis.cli evolve cycle --paid --cap 10 --ledger $L --model claude-haiku-5-5 --dataset multihoprag --dataset hoh --data-root data --workdir evolve_runs --json
+# D2 (optional): cycle 2 (draws rot1), another US$10 on the same ledger
+python -m heuresis.cli evolve cycle --paid --cap 10 --ledger $L --model claude-haiku-5-5 --dataset multihoprag --dataset hoh --data-root data --workdir evolve_runs --json
+python -m heuresis.cli evolve status --workdir evolve_runs --json
+# if a promoted champion looks wrong on inspection:
+# python -m heuresis.cli evolve rollback --workdir evolve_runs --reason "manual check failed"
+```
+
+| # | Command | Reads | Estimate (modelled) | `--cap` per call |
+|---|---|---|---|---|
+| D1 | `heuresis evolve cycle --paid`, `multihoprag` + `hoh` | `rot0`, `promo0` (the sealed block, never printed), the anchors | about US$9.7 (`docs/evolve.md`) | 10 |
+| D2 | the same, second cycle (optional) | `rot1`, the same promotion block (2nd of 10 queries) | about US$9.7 | 10 |
+| | **Stage D total** | | **US$9.7 to US$19.4** | **at most US$10 per call, US$20 on the ledger** |
+
+Notes. (1) The loop's first cycle draws `rot0`, which stage C3 also reads: run C3 first and treat `rot0` as seen afterwards. (2) A promoted champion has to be re-calibrated (stage C) before it is registered; the loop does this only if budget
+is left. (3) The paid flags above are the only ones the CLI accepts: `heuresis evolve cycle` has no `--limit`, `--split` or `--systems` (the cycle's draws, promotion blocks and anchors come from `evolve/config.json`).
 
 ## Stage E: registered English test (paid)
 
@@ -184,8 +214,8 @@ surface hash and protected hash of the commit to be run, calibration files commi
 L=runs/v2/ledger-E.jsonl; R=PREREGISTRATION-v2.md
 for D in musique multihoprag hoh; do
   O=runs/v2/E/$D-test; mkdir -p $O; cp runs/stores/$D/store.sqlite $O/store.sqlite
-  C=$(ls src/heuresis/v2/calibration/$D-*.json | head -1)
-  python -m heuresis.bench.run --dataset $D --split test $SYS $OPTS --ledger $L --cap 29.70 --registered-run $R --v2-calibration $C --out $O
+  C=$(ls src/heuresis/v2/calibration/$D-*.json 2>/dev/null | head -1); CAL=${C:+--v2-calibration $C}   # no file: the engine keeps default_tau
+  python -m heuresis.bench.run --dataset $D --split test $SYS $OPTS --ledger $L --cap 29.70 --registered-run $R $CAL --out $O
 done
 # secondary, judge-assisted grade, as in the first registration (held-out split: the registered-run flag again)
 python -m heuresis.bench.judge runs/v2/E/{musique,multihoprag,hoh}-test --paid --cap 30.10 --margin-usd 0.25 --ledger $L --workers 4 --max-tokens 20 --registered-run $R
@@ -226,12 +256,15 @@ for S in test temporal_test; do
 done
 # the answer judge (useful answers), test only, as in the first registration
 python -m heuresis.bench.judge runs/v2/F/brlaw-core-t-test --paid --cap 24.10 --margin-usd 0.25 --ledger $L --workers 4 --max-tokens 20 --registered-run $R
-# analysis, as for the first held-out run (free); then the model review of the support judge (as logged in PREREGISTRATION-legal.md)
-python scripts/brlaw/analyse_heldout.py runs/v2/F runs/v2/F/analysis.json
+# analysis (free): six systems, reference engine2; --db is the full store of the citation check and scores H4 per question
+python scripts/brlaw/analyse_v2.py runs/v2/F runs/v2/F/analysis.json --db data/db/brlaw-t.db
+# then the model review of the support judge, as logged in PREREGISTRATION-legal.md
 ```
 
-`scripts/brlaw/analyse_heldout.py` is the analysis of the first registration: it lists the five systems of that run (`SYS` in the script) and `engine` as the reference; before stage F it needs a copy that adds
-`engine2` and uses it as the reference (the registration fixes the analysis; the script is not part of this change). `scripts/brlaw/agreement.py` joins the blind reviewer's labels with the support judge's verdicts.
+`scripts/brlaw/analyse_v2.py` is the analysis of this registration: the six systems `closed_book, hybrid, agentic, agentic+asof, engine, engine2`, reference `engine2`, on any folder layout `bench.run` + `bench.citations` + `bench.judge` leave (it finds the run folders under
+`runs/v2/F` by their manifests' `split`). It computes tainted answers (strict and covered-only; exact McNemar and Holm over the 8 + 2 tests of `PREREGISTRATION-legal-v2.md` section 4), useful answers with paired bootstrap differences,
+the H1 check (non-inferiority to `agentic` at -3 points, superiority over `engine`), the H3 non-inferiority check against v1 (margin 1 point), H4 on `temporal_test` (paired with `--db`), cost per question and per useful answer split into generator and judge, coverage, and `engine2`'s gate and judge drops by
+reason from the rows' `replay` payloads. `scripts/brlaw/analyse_heldout.py` (the first registration's analysis, five systems, reference `engine`) is not changed and not used here. `scripts/brlaw/agreement.py` joins the blind reviewer's labels with the support judge's verdicts.
 Reads H1 (useful answers), H3 (tainted answers, non-inferiority within 1 point of v1), H4 (`temporal_test`: version in force), H6, with Holm over the family. On `temporal_test` the primary outcome sat at the floor in
 the first run (baselines 0.4-2.1% tainted), so it can show H3 non-inferiority and H4 only.
 
@@ -241,7 +274,7 @@ the first run (baselines 0.4-2.1% tainted), so it can show H3 non-inferiority an
 | F2 | `bench.run` `temporal_test`, six systems | `temporal_test` (240) | US$3.83 | 22.20 |
 | F3 | `bench.citations --paid`, support judge | the F1/F2 rows | US$1.02 | 23.70 |
 | F4 | `bench.judge --registered-run`, answer judge | the F1 rows | US$0.25 | 24.10 |
-| F5 | analysis scripts | the folders | US$0 | |
+| F5 | `scripts/brlaw/analyse_v2.py` | the folders | US$0 | |
 | | **Stage F total** | | **US$16.05** | **24.10** |
 
 Basis: held-out per-question costs at default thinking, US$/question (`results/brlaw/heldout/RESULTS.md` section 5): on `test` `closed_book` 0.00065, `hybrid` 0.00103, `agentic` 0.0018, `agentic+asof` 0.00188,

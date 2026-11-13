@@ -66,6 +66,16 @@ $ heuresis evolve rollback --workdir evolve_runs --reason "manual check failed"
 `--key-env` says otherwise.) A cycle that hits the cap ends as `stopped_budget`; the next run
 resumes the same cycle from the archive.
 
+## Datasets and stores
+
+Names are those `bench.datasets.load` accepts. Rotating and promotion draws: `multihoprag`, `hoh` (they
+have pools). Anchors (`config.json`, `anchors`): `musique` splits `dev` and `dev2`; **`brlaw-core`** splits `dev`
+and `temporal` (loaded by `bench.brlaw.load` from `data/corpora/brlaw-core`; the name `brlaw` would load the
+other, full corpus, which has no such comparison). Each dataset's store is built by the runner at
+`<workdir>/stores/<dataset>.sqlite` from the corpus folder, embedding with the local model, unless the file
+exists: to avoid re-embedding copy the stores of the benchmark first (`cp data/db/brlaw-core.db
+<workdir>/stores/brlaw-core.sqlite`, `cp runs/stores/<dataset>/store.sqlite <workdir>/stores/<dataset>.sqlite`).
+
 ## Files in the workdir
 
 | file | content |
@@ -120,14 +130,24 @@ injected.
    paired with the champion; one-sided paired sign-flip test at the level
    `alpha_t = alpha * gamma_t * (promotions so far + 1)`, `gamma_t = 6 / (pi^2 t^2)` (sums to 1, so
    with no promotion the levels sum to at most alpha = 0.05; `t` counts every promotion test ever
-   made). The promotion block is retired after 10 promotion queries and a fresh block drawn.
+   made). The promotion block is retired after 10 promotion queries and the next reserved block is used (2 per dataset, so 20 queries at most; see Stated limits).
 8. A promoted candidate becomes champion; the loop then runs it on the calibration block **only if
    budget remains** and fits the locked risk-controlled threshold, otherwise the cycle record says
    the champion is uncalibrated. Everything else stays in the archive as a possible parent.
 
-Guard rails (against the champion): no tainted citation on any anchor answer; error rate among
-answered not more than 2 points higher; coverage not more than 5 points lower; cost per question
-not more than 25% higher; no anchor group lower by more than 2 standard errors. Winner's curse:
+Guard rails (against the champion): no tainted citation on any anchor answer;
+error rate among answered not more than 2 points higher; coverage not more than 5 points lower; cost per question
+not more than 25% higher; no **graded** anchor group lower by more than 2 standard errors.
+**Legal anchors are not graded by containment** (BR-TaxQA-R answers are paragraphs, so the containment grade
+means nothing there): their rows carry `graded: false` and the penalised score is never applied to them (the
+`anchor_score` rail ignores them). A separate rail, `anchor_ungraded`, uses only what code can score on
+those groups: coverage (not more than 5 points lower), cost (not more than 25% higher) and, on the dated
+`temporal` questions, the share of answers that gave the version in force (`bench.citations.temporal_outcome`
+= `gold_version`; not more than `version_points` = 5 points lower; needs at least `min_pairs` dated pairs).
+Tainted citations are rail 1 for every anchor. The version score needs the corpus store of the run to hold the
+versions of the cited units (the packaged law store does); if it cannot be computed the row has no `temporal`
+value and that part of the rail is skipped.
+Winner's curse:
 only the promotion-set difference is recorded as a candidate's gain.
 
 ## Tripwires (`evolve/tripwires.py`)
@@ -209,8 +229,20 @@ is enough.
   as the generator; same-family judge errors.
 * The loop evolves only on datasets with pools (MultiHop-RAG, HoH); the legal corpora have none and
   appear only as anchors. Anchors are sampled (`anchor_n` per group) at this budget.
-* Only 2 promotion blocks are reserved by `bench.splits` (`PROMO_RESERVED`): 20 promotion queries
-  per dataset, then `promote` reports that no block is left.
+* Promotion queries are limited. `bench.splits.PROMO_RESERVED` = 2 blocks of `PROMO_N` = 300 ids
+  are reserved per dataset and `config.json` assumes the same (`promotion_blocks` 2,
+  `promotion_query_budget` 10 queries per block, `promotion_n` 150 of a block's 300 ids). A dataset
+  therefore supports **2 x 10 = 20 promotion queries**, each `heuresis evolve promote` (or the
+  promotion stage of a cycle) using one on every dataset of the run; the 21st reports "no
+  promotion block left" and nothing is promoted. A cycle makes at most one promotion test, so
+  the loop can promote at most 20 times per pool. Rotating draws are limited by the pool as well:
+  `bench.splits` takes the 600 promotion ids and the 400 calibration ids (`CAL_N`, `CAL_RESERVED` = 1)
+  out first and cuts draws of 100 from the rest (the loop uses the first 50 of a draw). With the
+  pool sizes quoted in `docs/design-v2.md` (MultiHop-RAG about 1,550, HoH about 110,000;
+  **modelled from those counts, not read from the data**) MultiHop-RAG leaves about 550 ids, that
+  is 5 cycles (`rot0` to `rot4`), after which `cycle` stops with `SplitExhausted`; HoH is not a limit.
+  `BenchSplits.capacity(name, budget)` reports the figures for a real pool without printing a question.
+  Stage C3 of `docs/v2-test-plan.md` also reads `rot0`, which the loop's first cycle draws too.
 * The cap is checked before each chunk of 25 questions, so a stop can overshoot by about one chunk.
 * Per-cycle cost is modelled from a US$0.010 per question estimate; the ledger records what was
   actually charged.

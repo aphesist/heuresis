@@ -107,3 +107,9 @@ def test_candidate_paths_reports_each():
     out = M.check_candidate_paths(["src/heuresis/v2/surface/a.json", "x.py", "../y.txt"])
     assert len(out) == 2 and out[0].startswith("x.py") and out[1].startswith("../y.txt")
     assert M.check_candidate_paths([]) == []
+
+
+def test_the_protected_manifest_matches_the_tree():
+    """A change to a protected file must come with a deliberate `heuresis lock`."""
+    from heuresis.v2.locked import manifest
+    assert manifest.verify_manifest() == []

@@ -9,11 +9,13 @@ on stderr), 1 unexpected failure (one line, no traceback).
 | `init DB [--domain NAME]` | create an empty database; the domain is remembered |
 | `ingest DB PATH [--domain NAME]` | read a path with a domain plug-in into the store (default domain: the database's, else `text`) |
 | `index DB [--local]` | embed versions that have no vector yet; `--local` loads the ONNX models from `heuresis.models_local` |
-| `ask DB QUESTION [--as-of DATE] [--recorded TS] [--source ID ...] [--budget USD] [--local] [--model MODEL] [--trace]` | verified answer or typed abstention |
+| `ask DB QUESTION [--as-of DATE] [--recorded TS] [--source ID ...] [--budget USD] [--local] [--model MODEL] [--trace] [--engine v1\|v2] [--judge-model MODEL]` | verified answer or typed abstention; `--engine v2` runs `EngineV2` |
 | `search DB QUESTION [--as-of DATE] [-k N]` | passages in force at the date, no drafting |
 | `unit DB UNIT_ID [--as-of DATE]` | one unit as it read at the date, with its validity interval |
 | `verify DB --text TEXT --unit UNIT_ID ... [--as-of DATE]` | verify a text against the named units in force at the date |
 | `hash` | the locked-folder hash, the surface hash and the baseline prompts hash, exactly as a benchmark run manifest records them |
+| `lock [--check]` | write `src/heuresis/v2/locked/PROTECTED.json` (sha256 of every protected file) and print the protected hash; `--check` exits 2 listing the differences instead of writing |
+| `evolve describe\|evaluate\|promote\|rollback\|status\|cycle\|lock-check ...` | the improvement loop over the v2 engine; see below and `docs/evolve.md` |
 | `bench run\|report [--dry-run] [--paid --cap USD] ...` | delegate to `heuresis.bench`, imported lazily |
 
 Dates are `YYYY-MM-DD`; `--recorded` is an ISO date or timestamp (only what the corpus knew by then).
@@ -40,6 +42,40 @@ status: answered
 grade: 0.95
 cost: $0.0000   time: 1.6 ms
 ```
+
+## ask --engine v2
+
+`--engine v2` answers with `EngineV2` (`src/heuresis/v2/`; default `--engine v1`). Offline it uses the same fakes
+and so mostly abstains: it shows the mechanics. `--model MODEL --budget USD` is a real, paid run as for v1; the
+locked judge model is fixed by `v2/locked/policy.json` (`claude-sonnet-5-5`) and `--judge-model MODEL` overrides it
+for a run (v2 with `--model` only). Nothing about v2 has been measured (`docs/v2-test-plan.md`).
+
+## lock
+
+`heuresis lock` hashes the files that the improvement loop and the benchmark must not change (the patterns of
+`heuresis.v2.locked.manifest.PROTECTED`) into `PROTECTED.json` and prints the protected hash; `--check` verifies
+instead and exits 2 listing every changed, missing or new protected path. The loop's evaluator refuses to run on a
+tree that differs from it (`--allow-unpinned` for builds before the first `lock`).
+
+## evolve
+
+`heuresis evolve COMMAND [--json] [--workdir DIR] ...` (default workdir `evolve_runs/`). Details, files and limits in `docs/evolve.md`.
+
+| Command | Purpose |
+|---|---|
+| `evolve describe` | surface schema with bounds, champion, protected hash, stages, budget |
+| `evolve evaluate --stage {static,smoke,screen,dev,promote} (--candidate FILE \| --candidate-dir DIR) [--nonce N]` | one stage on one candidate; with `--nonce` stdout is exactly one `HEURESIS-EVAL N <json>` line |
+| `evolve promote CANDIDATE_ID` | promotion test on an archived candidate; makes it champion if it passes |
+| `evolve rollback [--to ID] [--reason TEXT]` | restore the previous champion, or one from the history |
+| `evolve status` | champion, counters, promotion blocks in use, spend |
+| `evolve cycle [--k N] [--seed N] (--offline \| --paid ...)` | one whole cycle |
+| `evolve lock-check` | exit 2 if a protected file differs from `PROTECTED.json` |
+
+`evaluate`, `promote` and `cycle` also take `--allow-unpinned`, and for a paid run `--paid --cap USD --ledger PATH
+--model NAME --dataset NAME (repeatable) [--judge-model NAME] [--key-env NAME] [--data-root DIR]`: `--paid` needs the
+first four, the key is read from the variable named by `--key-env` (default `PROJECTS_ANTHROPIC_KEY`; only the name is
+printed) and the cap of a cycle is what the ledger had already spent plus `--cap`. Without `--paid`, `evolve cycle` needs
+`--offline` (a packaged invented corpus with deterministic fakes; free). `--cap` without `--paid` is refused.
 
 ## verify
 
@@ -69,7 +105,7 @@ arguments are passed through to `heuresis.bench.run.main` / `report.main`.
   thinking stays on and its tokens count against `max_tokens`). The manifest records `"temperature": null`
   with a note, the `thinking` setting, the model id and the output cap. Every call's stop reason and
   content-block counts go to the ledger, and each result row records `stop_reasons`, `blocks` and `text_chars`.
-- **Splits and systems.** `--split` takes `dev`, `dev2`, `test` or `sealed`; `dev2` is a tuning split like
+- **Splits and systems.** `--split` takes `dev`, `dev2`, `test`, `sealed` (and, for the legal corpora, `temporal`, `temporal_test`; for datasets with a pool, `rot<c>` and `cal<k>`, see below); `dev2` is a tuning split like
   `dev` (`docs/datasets.md`). The default systems include `engine` (answer mode `search`, decision mode
   `grade`) and the exploratory `engine_single` (the earlier design); `--set answer.mode=single` or
   `--set decide.mode=strict` changes the engine itself. The manifest records each engine system's effective
@@ -85,6 +121,33 @@ arguments are passed through to `heuresis.bench.run.main` / `report.main`.
   timings are summed into the separate field `stage_ms`.
 - **Replay data.** Each engine row stores the raw draft, the passages shown, the tool results and the
   per-claim entailment scores before thresholding (`replay`), for `bench.calibrate`.
+
+- **Version 2 (`engine2`).** `--systems` takes `engine2`, which is never in the default list. `--time-aware-variants`
+  adds `+asof` copies (exploratory in the report), `--variants-of NAMES` limits them to the named systems. Flags that
+  only `engine2` reads: `--judge-model NAME` (default: the policy's locked judge, thinking disabled), `--strong-model NAME`
+  (only if the surface's `route.escalate` is on), `--v2-cache` (a separate generator client with prompt caching),
+  `--v2-set SECTION.KEY=VALUE` (repeatable) and `--v2-candidate FILE` (a JSON `{"config": ..., "prompts": ...}`), both
+  checked by the v2 schema, and `--v2-calibration PATH` (a file written by `bench.calibrate2`). The manifest records the
+  surface hash, the protected hash, the judge and strong models and whether the judge is the policy's.
+- **Held-out and drawn splits.** `--registered-run FILE` is required for `test`, `sealed`, `temporal_test` (dry runs
+  included): the file must contain the sha256 of the split's ordered question ids. `promo*` is never readable here.
+  `rot<c>` (rotating draws) and `cal<k>` (calibration blocks) come from the pool of unused questions of a dataset
+  (`bench.splits`; `--data-root DIR` says where the corpora are, default `data`) and are not held out.
+- **Other flags.** `--legal-prompt {v1,v2}` (legal datasets), `--agent-rerank`, `--long-context-limit`, `--embedder`, `--reranker`,
+  `--entailer`, `--k`, `--agent-k`, `--max-actions`, `--estimate-usd`, `--margin-usd`, `--seed`, `--limit`, `--out`.
+
+### Report (`python -m heuresis.bench.report OUT_DIR [OUT_DIR ...] [--reference NAME] [--family-out FILE] [--iters N] [--seed N]`)
+
+`--reference NAME` is the system every paired comparison puts first (default `engine`; `engine2` for a run of the v2
+engine). With several folders a family table with Holm across all of them is also written to `--family-out`.
+
+### Calibration of `engine2` (`python -m heuresis.bench.calibrate2 RUN_DIR [RUN_DIR ...] --label {containment,judge} [--out FILE] [--data-root DIR]`)
+
+Fits the confidence threshold `tau` of `engine2` from the `engine2` rows of non-held-out folders (`dev`, `dev2`,
+`temporal`, `cal<k>`, `rot<c>`): it reads each row's `replay` payload, labels answers by containment of a gold answer
+or by the `judge.jsonl` verdict, walks the grid of `v2/locked/policy.json` from the strictest threshold and writes
+`src/heuresis/v2/calibration/<dataset>-<surface hash[:12]>.json` (and a `.table.md`), or the path given by `--out`. If nothing
+is certified `tau` is null and the engine keeps `default_tau`. A file is valid only for the surface it was fitted on.
 
 ### Judge-assisted secondary grade (`python -m heuresis.bench.judge RUN_DIR [RUN_DIR ...]`)
 

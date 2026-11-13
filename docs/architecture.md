@@ -152,3 +152,32 @@ sums per stage; in `search` mode every model turn (`draft`) and every search (`s
 with its tokens, cost and time, so the cost of a question is the sum of all of them and the number
 of model calls and retrievals can be read from the trace; the benchmark's ledger (`bench/ledger.py`) appends every charge to a file and stops
 at a cap. Local models (embedder, reranker, entailer) are not priced.
+
+## Version 2
+
+Version 2 is a second engine next to v1, not a rewrite of it (`src/heuresis/v2/`; the design and its evidence are in
+`docs/design-v2.md`, the signatures in `docs/v2-contracts.md`, the improvement loop in `docs/evolve.md`). It is **built
+and tested offline only; nothing about it has been measured** (the paid stages are in `docs/v2-test-plan.md`).
+`heuresis ask --engine v2` and the benchmark system `engine2` run it; v1 is unchanged and stays the default.
+
+Stages of one question (`v2/engine.py`; numbered as in its code and stage trace):
+
+1. understand: the question's own as-of date and intent are fixed by code, never by the model.
+2. lookup: provisions the question names are resolved by `references.py` and put first in the evidence.
+3. retrieve: the same date-filtered store as v1 (`store.py`, `retrieve.py`).
+4. propose (`v2/agent.py`): a model writes sentences that cite passages by mark `[t1]`, ...; it may issue `SEARCH:` and `OPEN:` actions for more passages (each date-filtered by the store), `CALL` lines for the locked tools, or `ABSTAIN <type>`.
+5. tools and 6. bind: tool results (`k` marks) are run and bound into the sentences (`v2/bind.py`).
+7. gates: deterministic checks per sentence: mark exists, version in force at the date, numbers traced, named references traced (`v2/locked/gates.py`).
+8. repair: sentences that failed a check are sent back with their reasons (`v2/repair.py`).
+9. judge: a locked judge model, fixed by `v2/locked/policy.json`, rates the surviving sentences and the answer as a whole (`v2/locked/judge.py`).
+10. decide: a locked rule gives answered / partial / a typed abstention and a confidence against a threshold `tau`, calibrated by `bench.calibrate2` or `default_tau` (`v2/locked/decide.py`, `calibration.py`).
+11. escalate: optionally one retry with a stronger model after an unsupported abstention (off by default). 12. assemble: the answer, its claims, passages, meta and cost.
+
+Locked and surface split of v2. **Locked** (`src/heuresis/v2/locked/`, plus `store.py`, `model.py`, `interfaces.py`, `tools/`,
+`references.py`, `v2/bind.py`, the benchmark modules and `src/heuresis/evolve/`): changed by hand, in review, and hashed in
+`PROTECTED.json` (`heuresis lock`); the loop's evaluator refuses to run if one differs. **Surface** (`src/heuresis/v2/surface/`):
+`default.json` (config values within the bounds of `v2/locked/schema.py`), per-domain overrides (`domain.legal_br.json`) and
+four prompts (`agent_system`, `agent_more`, `agent_last`, `repair`, with `.legal_br` variants). It is data only; the loop changes
+nothing else, and a candidate containing code, a path outside the surface or a forbidden string fails the static stage.
+As in v1 this is a contract, not a sandbox (`docs/evolve.md`, stated limits).
+

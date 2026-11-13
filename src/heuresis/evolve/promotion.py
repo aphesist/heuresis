@@ -178,10 +178,13 @@ def guard_rails(cand_rows: Sequence[Mapping], champ_rows: Sequence[Mapping],
     cc, cch = mc["cost_per_question"], mb["cost_per_question"]
     rails["cost"] = _rail(cch <= 0 or cc <= ratio * cch + 1e-12,
                           f"cost per question {cc:.5f} against {cch:.5f}")
-    # 5. no anchor group lower than the champion's by more than k standard errors
+    # 5. no anchor group lower than the champion's by more than k standard errors. Only GRADED anchor
+    #    rows count: a legal anchor (answers are paragraphs) has no meaningful containment grade, so its
+    #    rows carry ``graded: False`` and are judged by rail 6 with what code can score.
     k = float(cfg.get("anchor_score_se", 2.0))
+    graded = [r for r in cand_anchor_rows if r.get("graded", True) is not False]
     groups: dict[tuple, list] = {}
-    for r in cand_anchor_rows:
+    for r in graded:
         groups.setdefault((r.get("dataset", ""), r.get("split", "")), []).append(r)
     worst = None
     failed = []
@@ -198,6 +201,33 @@ def guard_rails(cand_rows: Sequence[Mapping], champ_rows: Sequence[Mapping],
                                   ("no anchor rows" if not groups else
                                    f"worst anchor difference {worst:.1f} standard errors"
                                    if worst is not None else "too few anchor pairs"))
+    # 6. ungraded (legal) anchor groups: never the penalised score; coverage, cost and, for dated
+    #    questions, the share of answers that gave the version in force (``temporal == gold_version``)
+    ung: dict[tuple, list] = {}
+    for r in cand_anchor_rows:
+        if r.get("graded", True) is False:
+            ung.setdefault((r.get("dataset", ""), r.get("split", "")), []).append(r)
+    bad6 = []
+    v_pts = float(cfg.get("version_points", 0.05))
+    for key, rs in sorted(ung.items()):
+        base_g = [r for r in champ_anchor_rows if (r.get("dataset", ""), r.get("split", "")) == key]
+        ca_, cb_ = align(rs, base_g)
+        if len(ca_) < min_pairs:
+            continue
+        m1, m0 = metrics(ca_, t), metrics(cb_, t)
+        name = f"{key[0]}/{key[1]}"
+        if m0["coverage"] - m1["coverage"] > m_cov + 1e-12:
+            bad6.append(f"{name} coverage {m1['coverage']:.3f} against {m0['coverage']:.3f}")
+        if m0["cost_per_question"] > 0 and m1["cost_per_question"] > ratio * m0["cost_per_question"] + 1e-12:
+            bad6.append(f"{name} cost {m1['cost_per_question']:.5f} against {m0['cost_per_question']:.5f}")
+        dated = [(a, b) for a, b in zip(ca_, cb_) if a.get("temporal") is not None and b.get("temporal") is not None]
+        if len(dated) >= min_pairs:
+            sh1 = sum(a["temporal"] == "gold_version" for a, _ in dated) / len(dated)
+            sh0 = sum(b["temporal"] == "gold_version" for _, b in dated) / len(dated)
+            if sh0 - sh1 > v_pts + 1e-12:
+                bad6.append(f"{name} version in force {sh1:.3f} against {sh0:.3f}")
+    rails["anchor_ungraded"] = _rail(not bad6, "; ".join(bad6) if bad6 else
+                                     ("no ungraded anchor rows" if not ung else "coverage, cost and version hold"))
     return rails
 
 

@@ -179,6 +179,8 @@ class BenchRunner:
         g = grade(q, res.status, res.text)
         replay = res.replay or {}
         tainted = None
+        legal = ctx.dataset.meta.get("prompt_set") == "legal_br"
+        temporal = None
         if res.status == "answered":
             try:
                 from ..bench import citations
@@ -187,14 +189,27 @@ class BenchRunner:
                                       res.cited_units)
                 tainted = bool(citations.is_tainted(a))
             except Exception:
-                tainted = None
+                tainted, a = None, None
+        else:
+            a = None
+        if legal and str(q.kind).startswith("temporal"):
+            try:  # the version in force, as code scores it (bench.citations.temporal_outcome)
+                from ..bench import citations
+                temporal = citations.temporal_outcome(
+                    {"status": res.status, "answerable": q.answerable, "cluster": q.cluster,
+                     "gold_units": list(q.gold_units), "text": res.text,
+                     "analysis": a or {"refs": [], "n_refs": 0}}, ctx.store())["outcome"]
+            except Exception:
+                temporal = None
         reasons = [c.get("note", "") for c in replay.get("claims", [])
                    if c.get("label") != "supported" and c.get("note")]
         reasons += [d.get("reason", "") for d in (replay.get("meta") or {}).get("dropped", [])]
         return {"qid": q.id, "status": res.status, "text": res.text, "outcome": g["outcome"],
                 "score": g["score"], "confidence": float(res.confidence), "usd": float(res.usage.usd),
                 "tainted": tainted, "abstention": replay.get("abstention"),
-                "reasons": [_short(r) for r in reasons if r][:8]}
+                "reasons": [_short(r) for r in reasons if r][:8],
+                "graded": not legal,       # containment means nothing on a legal question (paragraph answers)
+                "temporal": temporal}
 
 
 class FixtureRunner(BenchRunner):
@@ -316,6 +331,7 @@ class Evaluator:
             "reasons": [_short(x) for x in (r.get("reasons") or [])][:8],
             "answerable": bool(q.answerable), "cluster": q.cluster, "kind": q.kind,
             "has_marker": contains_marker(text),
+            "graded": r.get("graded", True) is not False, "temporal": r.get("temporal"),
         }
         if r.get("error"):
             row["error"] = _short(r["error"], 80)

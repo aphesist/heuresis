@@ -7,7 +7,7 @@
   "estimate_usd_per_question": 0.010,
   "alpha": 0.05,
   "rotating_datasets": ["multihoprag", "hoh"],
-  "anchors": {"musique": ["dev", "dev2"], "brlaw": ["dev", "temporal"]},
+  "anchors": {"musique": ["dev", "dev2"], "brlaw-core": ["dev", "temporal"]},
   "rotating_n": 50,
   "screen_n": 20,
   "dev_top": 1,
@@ -30,7 +30,8 @@
     "error_rate_points": 0.02,
     "coverage_points": 0.05,
     "cost_ratio": 1.25,
-    "anchor_score_se": 2.0
+    "anchor_score_se": 2.0,
+    "version_points": 0.05
   },
   "tripwires": {
     "canary_answer_share": 0.1,

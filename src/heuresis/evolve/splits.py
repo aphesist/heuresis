@@ -173,9 +173,22 @@ class BenchSplits(SplitSource):
         return [to_pool(q, name, f"promo{block}") for q in qs[:n]]
 
     def calibration(self, name: str, block: int, n: int) -> list[PoolQuestion]:
-        """``cal<k>`` blocks come from ``bench.splits`` (which keeps them out of rotating draws)."""
+        """Calibration block ``block`` (``cal<k>``): ``bench.splits.calibration`` through ``load_split``. The
+        ids are never recomputed here; ``bench.splits.rotating`` and ``promotion`` already keep them apart."""
         qs = self._load(name, f"cal{block}")
+        if n > len(qs):
+            raise SplitExhausted(f"{name}: a calibration block has {len(qs)} questions, {n} asked")
         return [to_pool(q, name, f"cal{block}") for q in qs[:n]]
+
+    def capacity(self, name: str, promotion_query_budget: int) -> dict[str, int]:
+        """What the pool of ``name`` can serve, from ``bench.splits`` constants and ``pool_ids``: promotion
+        queries (``PROMO_RESERVED`` blocks of ``promotion_query_budget`` queries each) and rotating cycles
+        (the pool less the promotion and calibration blocks, in draws of 100)."""
+        from ..bench import splits as bs
+        pool = len(bs.pool_ids(name, self.root))
+        rest = pool - bs.PROMO_RESERVED * bs.PROMO_N - bs.CAL_RESERVED * bs.CAL_N
+        return {"pool": pool, "promotion_queries": bs.PROMO_RESERVED * int(promotion_query_budget),
+                "rotating_cycles": max(0, rest // 100)}
 
     def anchors(self) -> list[PoolQuestion]:
         from ..bench import splits as bs

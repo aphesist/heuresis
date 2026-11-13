@@ -23,7 +23,7 @@ heuresis = "heuresis.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-heuresis = ["surface/*.json", "surface/*.txt", "v2/surface/*.json", "v2/surface/prompts/*.txt", "v2/locked/*.json", "v2/calibration/*.json"]
+heuresis = ["surface/*.json", "surface/*.txt", "v2/surface/*.json", "v2/surface/prompts/*.txt", "v2/locked/*.json", "v2/calibration/*.json", "evolve/config.json", "evolve/fixture/*.jsonl"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

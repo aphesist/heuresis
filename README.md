@@ -11,22 +11,61 @@ answer in which every sentence is checked against the passages it cites, or a ty
 says why it did not answer. law and accounting were its first intended domain and are one example
 plug-in among several; the core knows nothing about any of them.
 
-> **status:** built and tested offline. paid model calls have been made on the dev split only
-> (calibration data, n = 100 per dataset; us$5.78 of the us$30 cap, ledger in
-> [`results/dev-fixes/ledger.jsonl`](results/dev-fixes/ledger.jsonl)); no system has been run and no
-> answer graded on a test or sealed split. two retrieval-only sanity checks did read part of the test
+> **status:** built and tested offline. paid model calls have been made on the dev splits (calibration
+> data, n = 100 per dataset; us$5.78 of the us$30 cap, ledger in
+> [`results/dev-fixes/ledger.jsonl`](results/dev-fixes/ledger.jsonl)) and, once, on the held-out
+> sets of the legal citation test (BR-TaxQA-R `test`, 615 questions, and `temporal_test`, 240; the
+> v1 engine and four baselines, registered in [PREREGISTRATION-legal.md](PREREGISTRATION-legal.md);
+> results in [`results/brlaw/heldout/RESULTS.md`](results/brlaw/heldout/RESULTS.md), us$7.47). no answer has
+> been graded on the `test` or `sealed` split of the three english datasets, whose confirmatory
+> benchmark has not been run. two retrieval-only sanity checks did read part of the english test
 > split (no model, no system answer); they are disclosed in
 > [PREREGISTRATION.md, section 2a](PREREGISTRATION.md#2a-prior-contact-with-the-test-split). the
 > engine was redesigned on dev evidence (an answer mode where the model may search, and
 > verification that grades instead of gating, see [below](#what-the-paid-dev-runs-showed)); the
 > redesigned engine is a hypothesis until it has been measured on `dev2`, a fresh tuning split,
-> and then on test. the benchmark is pre-registered as a draft in
+> and then on test. the english benchmark is pre-registered as a draft in
 > [PREREGISTRATION.md](PREREGISTRATION.md) and its confirmatory part has not been run.
+
+## version 2
+
+version 2 is a second engine, `EngineV2` (`src/heuresis/v2/`), built after the legal held-out run found
+v1 giving fewer useful answers than agentic search (34.0% against 38.4% of 615, measured on that run);
+the design reads that as v1's gates removing content that was not wrong, which is an interpretation, not
+a measured cause. in short:
+
+- the model proposes: it may search and open passages in several turns (every search date-filtered),
+  writes sentences that cite passages by mark and may ask a locked calculator.
+- locked code disposes: deterministic gates check each sentence (mark exists, version in force at the
+  date, numbers and named references traced), a locked judge model (fixed by `v2/locked/policy.json`)
+  reads the question, the sentences and the passages, and a locked decision rule answers, answers
+  partly or gives a typed abstention with a confidence, against a threshold that may be calibrated.
+- the improvement loop (`heuresis evolve`) may change only the **surface**, config values and four prompts,
+  never the locked code, the judge or the benchmark; the protected files are hashed in `PROTECTED.json`.
+- **built and tested offline only. nothing about v2 has been measured**: no paid run of the v2 engine
+  exists; every cost figure is modelled, every claim below is a hypothesis until the stages of
+  [docs/v2-test-plan.md](docs/v2-test-plan.md) have run.
+
+| goal | how v2 addresses it | status |
+|---|---|---|
+| correct most of the time | the model may search in several turns and keep uncited conclusions (derived sentences) that v1 dropped; the judge replaces the entailment gate | **hypothesis** (tests B and F: useful answers against `agentic`, H1 and H5) |
+| no answer when it does not know | typed abstentions and a confidence per answer; a threshold fitted on labelled answers with a risk bound, `default_tau` until then | **hypothesis** (stages C and E: H2, H7) |
+| validated answers | deterministic gates on every sentence plus the locked judge; the answer is only what survived | gates **tested** offline (`tests/test_v2_gates.py`); the effect on law is a **hypothesis** (H3, stage F) |
+| works through dates | every search and open takes the question's as-of date, in the store, not from the model | **tested** offline (as-of property tests); the effect on dated questions is a **hypothesis** (H4) |
+| continuously self-improving | `heuresis evolve`: candidate surfaces screened, compared on rotating draws, promoted on a sealed block with an online error budget, with canaries, tripwires and rollback | machinery **tested** offline on an invented fixture; whether it improves anything is a **hypothesis** (H8, stage D) |
+
+read next: [docs/design-v2.md](docs/design-v2.md) (the design and the evidence it rests on),
+[docs/v2-contracts.md](docs/v2-contracts.md) (signatures and rules), [docs/research/](docs/research/README.md)
+(the literature report behind it, every claim labelled), [docs/evolve.md](docs/evolve.md) (the loop),
+[docs/v2-test-plan.md](docs/v2-test-plan.md) (the paid stages and their modelled cost),
+[PREREGISTRATION-v2.md](PREREGISTRATION-v2.md) (the english test, draft) and
+[PREREGISTRATION-legal-v2.md](PREREGISTRATION-legal-v2.md) (the second legal comparison, draft).
 
 ## what it found
 
-no system has been run and no answer graded on a test or sealed split; the confirmatory part of the
-benchmark has not been run. what follows is dev-split calibration data.
+the english benchmark's test and sealed splits have not been run. the only held-out results are the
+registered legal run ([`results/brlaw/heldout/RESULTS.md`](results/brlaw/heldout/RESULTS.md)); everything else
+below is dev-split calibration data.
 
 ### what the dev pilot showed
 
@@ -181,6 +220,9 @@ in `tests/` passes; "modelled" means arithmetic on stated assumptions.
 | time-aware retrieval lifts answer accuracy on dated questions | **measured** on dev (n = 100 per dataset, calibration data) | `hoh`: `hybrid` -0.060 and `hybrid+asof` +0.770 penalised score (thinking disabled); pooled 0.120 and 0.390 (n = 300). a plain `hybrid+asof` matches the single-draft engine on `hoh` (+0.770 against +0.750). [`results/dev-fixes/thinking-default/comparison.md`](results/dev-fixes/thinking-default/comparison.md) |
 | a local verifier separates matched from mismatched passages | **measured** as a crude proxy (dev) | auroc 0.855, 0.659, 0.918 on `musique`, `multihoprag`, `hoh`; not verification quality on drafted answers |
 | the benchmark costs a few dollars | **modelled**, partly checked on dev | $2.16 to $4.01 for one test run of seven systems on 3 x 500 questions at 1 to 4 agentic searches; excludes `hybrid`, the `+asof` variants, `engine_single`, the search mode and calibration; assumes 120 output tokens per call and 3.5 characters per token. on dev the measured cost was us$0.00006 to 0.0008 per question and system, thinking disabled or default (`results/dev-fixes/thinking-default/comparison.md`, cost table) |
+| the v1 engine's answers on law cite no fabricated or out-of-force provision | **measured** (held-out, registered, one run) | 1 of 615 answers against 6.0% to 16.1% for the four baselines on `test`; discordant pairs and Holm p in [`results/brlaw/heldout/RESULTS.md`](results/brlaw/heldout/RESULTS.md); the same run found the engine's useful-answer share (34.0%) below `agentic`'s (38.4%) |
+| the v2 engine gives more useful answers than v1 and is not below agentic search, without losing citation integrity | **hypothesis** | built and tested offline; no paid run of v2 exists ([docs/v2-test-plan.md](docs/v2-test-plan.md), [PREREGISTRATION-legal-v2.md](PREREGISTRATION-legal-v2.md)); its cost is modelled at about 4 to 8 times v1's per question because of the locked judge |
+| the improvement loop improves the surface without gaming its benchmarks | **hypothesis** | the machinery is **tested** offline on an invented fixture (`tests/test_evolve_*.py`); no paid cycle has been run ([docs/evolve.md](docs/evolve.md)) |
 | the engine beats the baselines on the penalised score | **hypothesis** | the pre-registered 18-comparison family; not run |
 | it is cheaper per correct answer than agentic search | **hypothesis** | bootstrap interval of the difference; not run |
 | verification as a gate improves reliability | **measured** on dev: it did not (n = 100 per dataset, calibration data) | claim-level auroc 0.50 [0.36, 0.62] (163 claims of correct, 24 of wrong drafts); the single-draft engine abstained on 149 of 300 dev questions; the threshold grid is flat. [`results/dev-calibration/phase1/NOTES.md`](results/dev-calibration/phase1/NOTES.md), [`results/dev-fixes/NOTES.md`](results/dev-fixes/NOTES.md) |
@@ -214,11 +256,18 @@ heuresis ask demo.db "Qual o texto do art. 2º?" --as-of 2021-01-01     # the or
 heuresis ask demo.db "Qual o texto do art. 2º?" --as-of 2023-01-01     # the corrected rewording
 heuresis ask demo.db "Qual o texto do art. 2º?" --as-of 2023-01-01 --recorded 2022-12-31   # before the correction was recorded
 heuresis hash                                                           # locked-folder, surface and baseline-prompt hashes
+
+# version 2 (offline fakes; nothing here measures the engine)
+heuresis ask demo.db "Qual o texto do art. 2º?" --as-of 2023-01-01 --engine v2     # the offline fakes make it abstain: mechanics only
+heuresis lock --check                                                   # protected files against PROTECTED.json (`heuresis lock` writes it)
+heuresis evolve describe --json                                         # the surface schema, champion and budget of the improvement loop
+heuresis evolve cycle --workdir evolve_runs --offline --allow-unpinned  # one whole cycle on a packaged invented corpus, free
+heuresis evolve status --workdir evolve_runs --json
 ```
 
 offline, `ask` uses built-in fakes: an extractive "model" and a rule-based verifier. it shows the
 mechanics (dates, citations, abstentions), not answer quality. a real model needs `--model` and a
-required `--budget`; the key is read from `PROJECTS_ANTHROPIC_KEY`. see [docs/cli.md](docs/cli.md).
+required `--budget`; the key is read from `PROJECTS_ANTHROPIC_KEY`. see [docs/cli.md](docs/cli.md); the loop is in [docs/evolve.md](docs/evolve.md).
 
 ```python
 from heuresis import Engine, AsOf
