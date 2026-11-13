@@ -1,0 +1,249 @@
+{
+ "rows": 200,
+ "missing": [],
+ "overall": {
+  "n": 200,
+  "table_judge_rows_by_reviewer_cols": {
+   "SUPPORTED": {
+    "SUPPORTED": 137,
+    "PARTIAL": 6,
+    "NOT_SUPPORTED": 0
+   },
+   "PARTIAL": {
+    "SUPPORTED": 0,
+    "PARTIAL": 0,
+    "NOT_SUPPORTED": 0
+   },
+   "NOT_SUPPORTED": {
+    "SUPPORTED": 5,
+    "PARTIAL": 17,
+    "NOT_SUPPORTED": 35
+   }
+  },
+  "disagree_supported_vs_not": [
+   11,
+   200,
+   0.055
+  ],
+  "kappa_3x3": 0.6835979433866319,
+  "kappa_supported_vs_not": 0.8657554308030264,
+  "judge_support_share": 0.715,
+  "reviewer_support_share": 0.71,
+  "reviewer_supported_or_partial": 0.825
+ },
+ "by_system": {
+  "agentic": {
+   "n": 40,
+   "table_judge_rows_by_reviewer_cols": {
+    "SUPPORTED": {
+     "SUPPORTED": 26,
+     "PARTIAL": 2,
+     "NOT_SUPPORTED": 0
+    },
+    "PARTIAL": {
+     "SUPPORTED": 0,
+     "PARTIAL": 0,
+     "NOT_SUPPORTED": 0
+    },
+    "NOT_SUPPORTED": {
+     "SUPPORTED": 2,
+     "PARTIAL": 1,
+     "NOT_SUPPORTED": 9
+    }
+   },
+   "disagree_supported_vs_not": [
+    4,
+    40,
+    0.1
+   ],
+   "kappa_3x3": 0.7175141242937854,
+   "kappa_supported_vs_not": 0.761904761904762,
+   "judge_support_share": 0.7,
+   "reviewer_support_share": 0.7,
+   "reviewer_supported_or_partial": 0.775
+  },
+  "agentic+asof": {
+   "n": 40,
+   "table_judge_rows_by_reviewer_cols": {
+    "SUPPORTED": {
+     "SUPPORTED": 34,
+     "PARTIAL": 1,
+     "NOT_SUPPORTED": 0
+    },
+    "PARTIAL": {
+     "SUPPORTED": 0,
+     "PARTIAL": 0,
+     "NOT_SUPPORTED": 0
+    },
+    "NOT_SUPPORTED": {
+     "SUPPORTED": 1,
+     "PARTIAL": 2,
+     "NOT_SUPPORTED": 2
+    }
+   },
+   "disagree_supported_vs_not": [
+    2,
+    40,
+    0.05
+   ],
+   "kappa_3x3": 0.5616438356164385,
+   "kappa_supported_vs_not": 0.7714285714285712,
+   "judge_support_share": 0.875,
+   "reviewer_support_share": 0.875,
+   "reviewer_supported_or_partial": 0.95
+  },
+  "closed_book": {
+   "n": 40,
+   "table_judge_rows_by_reviewer_cols": {
+    "SUPPORTED": {
+     "SUPPORTED": 14,
+     "PARTIAL": 0,
+     "NOT_SUPPORTED": 0
+    },
+    "PARTIAL": {
+     "SUPPORTED": 0,
+     "PARTIAL": 0,
+     "NOT_SUPPORTED": 0
+    },
+    "NOT_SUPPORTED": {
+     "SUPPORTED": 1,
+     "PARTIAL": 4,
+     "NOT_SUPPORTED": 21
+    }
+   },
+   "disagree_supported_vs_not": [
+    1,
+    40,
+    0.025
+   ],
+   "kappa_3x3": 0.7630331753554501,
+   "kappa_supported_vs_not": 0.9459459459459459,
+   "judge_support_share": 0.35,
+   "reviewer_support_share": 0.375,
+   "reviewer_supported_or_partial": 0.475
+  },
+  "engine": {
+   "n": 40,
+   "table_judge_rows_by_reviewer_cols": {
+    "SUPPORTED": {
+     "SUPPORTED": 31,
+     "PARTIAL": 1,
+     "NOT_SUPPORTED": 0
+    },
+    "PARTIAL": {
+     "SUPPORTED": 0,
+     "PARTIAL": 0,
+     "NOT_SUPPORTED": 0
+    },
+    "NOT_SUPPORTED": {
+     "SUPPORTED": 1,
+     "PARTIAL": 5,
+     "NOT_SUPPORTED": 2
+    }
+   },
+   "disagree_supported_vs_not": [
+    2,
+    40,
+    0.05
+   ],
+   "kappa_3x3": 0.49999999999999983,
+   "kappa_supported_vs_not": 0.8437499999999999,
+   "judge_support_share": 0.8,
+   "reviewer_support_share": 0.8,
+   "reviewer_supported_or_partial": 0.95
+  },
+  "hybrid": {
+   "n": 40,
+   "table_judge_rows_by_reviewer_cols": {
+    "SUPPORTED": {
+     "SUPPORTED": 32,
+     "PARTIAL": 2,
+     "NOT_SUPPORTED": 0
+    },
+    "PARTIAL": {
+     "SUPPORTED": 0,
+     "PARTIAL": 0,
+     "NOT_SUPPORTED": 0
+    },
+    "NOT_SUPPORTED": {
+     "SUPPORTED": 0,
+     "PARTIAL": 5,
+     "NOT_SUPPORTED": 1
+    }
+   },
+   "disagree_supported_vs_not": [
+    2,
+    40,
+    0.05
+   ],
+   "kappa_3x3": 0.4466403162055335,
+   "kappa_supported_vs_not": 0.8275862068965516,
+   "judge_support_share": 0.85,
+   "reviewer_support_share": 0.8,
+   "reviewer_supported_or_partial": 0.975
+  }
+ },
+ "by_split": {
+  "temporal_test": {
+   "n": 100,
+   "table_judge_rows_by_reviewer_cols": {
+    "SUPPORTED": {
+     "SUPPORTED": 76,
+     "PARTIAL": 2,
+     "NOT_SUPPORTED": 0
+    },
+    "PARTIAL": {
+     "SUPPORTED": 0,
+     "PARTIAL": 0,
+     "NOT_SUPPORTED": 0
+    },
+    "NOT_SUPPORTED": {
+     "SUPPORTED": 2,
+     "PARTIAL": 2,
+     "NOT_SUPPORTED": 18
+    }
+   },
+   "disagree_supported_vs_not": [
+    4,
+    100,
+    0.04
+   ],
+   "kappa_3x3": 0.8295454545454544,
+   "kappa_supported_vs_not": 0.8834498834498833,
+   "judge_support_share": 0.78,
+   "reviewer_support_share": 0.78,
+   "reviewer_supported_or_partial": 0.82
+  },
+  "test": {
+   "n": 100,
+   "table_judge_rows_by_reviewer_cols": {
+    "SUPPORTED": {
+     "SUPPORTED": 61,
+     "PARTIAL": 4,
+     "NOT_SUPPORTED": 0
+    },
+    "PARTIAL": {
+     "SUPPORTED": 0,
+     "PARTIAL": 0,
+     "NOT_SUPPORTED": 0
+    },
+    "NOT_SUPPORTED": {
+     "SUPPORTED": 3,
+     "PARTIAL": 15,
+     "NOT_SUPPORTED": 17
+    }
+   },
+   "disagree_supported_vs_not": [
+    7,
+    100,
+    0.07
+   ],
+   "kappa_3x3": 0.580552907530982,
+   "kappa_supported_vs_not": 0.8471615720524018,
+   "judge_support_share": 0.65,
+   "reviewer_support_share": 0.64,
+   "reviewer_supported_or_partial": 0.83
+  }
+ },
+ "rule_fires_over_20pct": false
+}

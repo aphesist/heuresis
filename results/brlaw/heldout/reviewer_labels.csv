@@ -1,0 +1,201 @@
+row_id,split,system,qid,unit,judge,reviewer,reason
+R001,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art679-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art679,SUPPORTED,PARTIAL,Provision says Regional Tribunals judge …; sentence omits the exception.
+R002,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art661-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art661,SUPPORTED,SUPPORTED,Lists … through ….
+R003,test,engine,taxqa-476,urn:lex:br:srf:instrucao.normativa:2001-10-11;83!art23,SUPPORTED,SUPPORTED,….
+R004,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art191-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art191,NOT_SUPPORTED,NOT_SUPPORTED,Art. 191 says …; nothing on eliminating insalubrity.
+R005,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art655-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art655,SUPPORTED,SUPPORTED,…
+R006,test,hybrid,taxqa-126,urn:lex:br:srf:instrucao.normativa:2002-09-27;208!art3,SUPPORTED,SUPPORTED,…; ….
+R007,test,hybrid,taxqa-533,urn:lex:br:federal:decreto:2018-11-22;9580!art54,SUPPORTED,SUPPORTED,…
+R008,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art415-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art415,SUPPORTED,SUPPORTED,Text shows … with no content following it.
+R009,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art749-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art749,SUPPORTED,SUPPORTED,…; ….
+R010,test,hybrid,taxqa-378,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art94,SUPPORTED,SUPPORTED,…; ….
+R011,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art413-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art413,SUPPORTED,SUPPORTED,…; ….
+R012,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art190-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art190,SUPPORTED,SUPPORTED,….
+R013,test,engine,taxqa-498,urn:lex:br:federal:decreto:2018-11-22;9580!art59,NOT_SUPPORTED,NOT_SUPPORTED,Art. 59 says the person opting under art. 63 …; nothing on heirs using losses.
+R014,test,agentic+asof,taxqa-551,urn:lex:br:federal:decreto:2018-11-22;9580!art55,SUPPORTED,SUPPORTED,….
+R015,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art191-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art191,NOT_SUPPORTED,NOT_SUPPORTED,Art. 191 concerns …; no inciso II on protective equipment.
+R016,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art864-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art864,SUPPORTED,SUPPORTED,…
+R017,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art415-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art415,SUPPORTED,PARTIAL,Text shows an empty … but does not state it was revoked by Lei nº 13.874/2019.
+R018,test,engine,taxqa-026,urn:lex:br:rfb:instrucao.normativa:2024-03-05;2178!art4,NOT_SUPPORTED,PARTIAL,Provision says …; PGD is not the only way.
+R019,test,closed_book,taxqa-535,urn:lex:br:federal:lei:1988-12-22;7713!art21,NOT_SUPPORTED,NOT_SUPPORTED,Art. 21 says …; no progressive rates.
+R020,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art191-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art191,NOT_SUPPORTED,NOT_SUPPORTED,Art. 191 concerns …; nothing on eliminating insalubrity within tolerance limits.
+R021,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art663-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art663,SUPPORTED,SUPPORTED,….
+R022,test,engine,taxqa-423,urn:lex:br:federal:decreto:2018-11-22;9580!art366,NOT_SUPPORTED,PARTIAL,Supports lease payments and … and …; not that depreciation is only allowed for production-related assets.
+R023,test,hybrid,taxqa-316,urn:lex:br:federal:decreto:2018-11-22;9580!art700,SUPPORTED,SUPPORTED,….
+R024,test,hybrid,taxqa-491,urn:lex:br:srf:instrucao.normativa:2001-10-11;83!art2,NOT_SUPPORTED,PARTIAL,Art. 2º lists … activities but says nothing about receita bruta (that is attributed to art. 5º).
+R025,test,closed_book,taxqa-276,urn:lex:br:federal:lei:1995-12-26;9250!art7,NOT_SUPPORTED,PARTIAL,Art. 7º requires … on …; nothing specific on reporting pensions per paying source.
+R026,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art846-after,urn:lex:br:federal:lei:1995-04-05;9022!art1,SUPPORTED,SUPPORTED,…
+R027,test,closed_book,taxqa-168,urn:lex:br:federal:lei:1995-12-26;9250!art16,NOT_SUPPORTED,NOT_SUPPORTED,Art. 16 concerns …; nothing on foreign tax credit.
+R028,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art144-after,urn:lex:br:federal:lei:1997-12-10;9528!art3,SUPPORTED,SUPPORTED,….
+R029,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art74-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art74,NOT_SUPPORTED,NOT_SUPPORTED,"Provision says …, not more than 10."
+R030,test,closed_book,taxqa-272,urn:lex:br:federal:lei:1966-10-25;5172!art110,SUPPORTED,SUPPORTED,…
+R031,test,closed_book,taxqa-473,urn:lex:br:federal:lei:1995-12-26;9249!art15,NOT_SUPPORTED,PARTIAL,States … but does not mention rural activity or lucro presumido.
+R032,test,closed_book,taxqa-373,urn:lex:br:federal:lei:1995-12-26;9250!art8,NOT_SUPPORTED,PARTIAL,Covers … and §2 III requires identification of CPF/CGC; does not mention Covid tests or state 'sem limite'.
+R033,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art415-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art415,SUPPORTED,SUPPORTED,….
+R034,test,agentic+asof,taxqa-400,urn:lex:br:federal:decreto:2018-11-22;9580!art72,SUPPORTED,SUPPORTED,…; ….
+R035,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art459-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art459,NOT_SUPPORTED,NOT_SUPPORTED,Art. 459 says salary …; nothing on dia útil or local de trabalho.
+R036,test,agentic+asof,taxqa-624,urn:lex:br:federal:lei:2023-12-12;14754!art14,SUPPORTED,SUPPORTED,….
+R037,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art380-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art380,SUPPORTED,SUPPORTED,….
+R038,test,closed_book,taxqa-217,urn:lex:br:federal:lei:1988-12-22;7713!art3,NOT_SUPPORTED,NOT_SUPPORTED,Art. 3º taxes … and …; it says nothing about valor locativo or rents effectively received.
+R039,test,agentic,taxqa-618,urn:lex:br:federal:decreto:2018-11-22;9580!art154,SUPPORTED,SUPPORTED,….
+R040,test,closed_book,taxqa-511,urn:lex:br:federal:lei:1988-12-22;7713!art21,NOT_SUPPORTED,NOT_SUPPORTED,Art. 21 says …; no progressive rates.
+R041,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art663-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art663,SUPPORTED,SUPPORTED,….
+R042,test,agentic,taxqa-703,urn:lex:br:federal:decreto:2018-11-22;9580!art876,NOT_SUPPORTED,PARTIAL,"Art. 876 taxes income of foreign 'entidades', … and 'carteiras'; it does not say non-resident individuals follow this regime."
+R043,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art464-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art464,SUPPORTED,SUPPORTED,….
+R044,test,hybrid,taxqa-095,urn:lex:br:srf:instrucao.normativa:2001-10-11;81!art3,SUPPORTED,SUPPORTED,….
+R045,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art380-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art380,SUPPORTED,SUPPORTED,….
+R046,test,closed_book,taxqa-025,urn:lex:br:federal:lei:1991-08-29;8218!art7,NOT_SUPPORTED,NOT_SUPPORTED,Art. 7º concerns debt …; nothing on late-filing fines.
+R047,test,closed_book,taxqa-373,urn:lex:br:federal:lei:1995-12-26;9250!art8,NOT_SUPPORTED,PARTIAL,Covers … and §2 III requires identification of CPF/CGC; does not mention Covid tests or state 'sem limite'.
+R048,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art441-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art441,SUPPORTED,SUPPORTED,…
+R049,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art612-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art612,NOT_SUPPORTED,NOT_SUPPORTED,Art. 612 says the contrato coletivo …; nothing on assembleia geral deliberation.
+R050,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art166-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art166,SUPPORTED,SUPPORTED,….
+R051,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art864-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art864,SUPPORTED,SUPPORTED,….
+R052,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art413-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art413,SUPPORTED,SUPPORTED,'E… followed by limited exceptions a) to c).
+R053,test,agentic,taxqa-371,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art94,SUPPORTED,SUPPORTED,….
+R054,test,agentic,taxqa-633,urn:lex:br:federal:lei:1988-12-22;7713!art3,SUPPORTED,SUPPORTED,….
+R055,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art846-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art846,SUPPORTED,SUPPORTED,…
+R056,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art749-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art749,SUPPORTED,SUPPORTED,….
+R057,test,agentic+asof,taxqa-149,urn:lex:br:srf:instrucao.normativa:2002-09-27;208!art21,SUPPORTED,SUPPORTED,…; I - ….
+R058,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art432-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art432,SUPPORTED,SUPPORTED,…
+R059,test,engine,taxqa-665,urn:lex:br:federal:lei:1964-12-16;4591!art28,SUPPORTED,SUPPORTED,….
+R060,test,agentic,taxqa-693,urn:lex:br:federal:decreto:2018-11-22;9580!art848,SUPPORTED,SUPPORTED,….
+R061,test,engine,taxqa-256,urn:lex:br:federal:decreto.lei:1974-12-23;1381!art1,NOT_SUPPORTED,PARTIAL,Art. 1º supports equiparação of …; the art. 4º details are not in this text.
+R062,test,agentic+asof,taxqa-551,urn:lex:br:federal:decreto:2018-11-22;9580!art55,SUPPORTED,SUPPORTED,…
+R063,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art612-after,urn:lex:br:federal:decreto.lei:1967-02-28;229!art612,NOT_SUPPORTED,NOT_SUPPORTED,Text gives art. 612 (…) but nothing about an alteration by Decreto-Lei nº 229/1967.
+R064,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art864-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art864,SUPPORTED,SUPPORTED,….
+R065,temporal_test,engine,temporal-urn.lex.br.federal.lei.1988.12.22.7713.art24-before,urn:lex:br:federal:lei:1988-12-22;7713!art29,SUPPORTED,SUPPORTED,Art. 29 refers to one who ….
+R066,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art464-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art464,NOT_SUPPORTED,NOT_SUPPORTED,Text shows only the caput …; no parágrafo único on bank deposit.
+R067,test,agentic,taxqa-693,urn:lex:br:federal:decreto:2018-11-22;9580!art848,SUPPORTED,SUPPORTED,….
+R068,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art584-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art584,SUPPORTED,SUPPORTED,….
+R069,test,agentic,taxqa-324,urn:lex:br:federal:medida.provisoria:2001-08-24;2158-35!art55,SUPPORTED,SUPPORTED,…
+R070,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art507-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art507,SUPPORTED,SUPPORTED,…
+R071,test,closed_book,taxqa-040,urn:lex:br:federal:lei:1995-12-26;9250!art7,NOT_SUPPORTED,NOT_SUPPORTED,Art. 7º sets filing …; it says nothing about late filing procedure or late-filing fines.
+R072,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art413-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art413,NOT_SUPPORTED,SUPPORTED,… followed by incisos I and II.
+R073,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art432-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art432,SUPPORTED,SUPPORTED,…
+R074,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art584-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art584,SUPPORTED,SUPPORTED,….
+R075,test,agentic+asof,taxqa-172,urn:lex:br:federal:decreto:2018-11-22;9580!art746,SUPPORTED,SUPPORTED,Art. 746 covers income ….
+R076,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art166-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art166,SUPPORTED,SUPPORTED,….
+R077,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art679-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art679,NOT_SUPPORTED,PARTIAL,Text shows art. 679 in force on 1968-05-28 (…) but does not state it took effect from that date.
+R078,test,hybrid,taxqa-333,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art88,SUPPORTED,SUPPORTED,….
+R079,test,hybrid,taxqa-378,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art94,SUPPORTED,SUPPORTED,…; ….
+R080,test,closed_book,taxqa-431,urn:lex:br:federal:decreto:2018-11-22;9580!art75,NOT_SUPPORTED,NOT_SUPPORTED,Art. 75 allows deduction of … and private pension; nothing on advertising expenses.
+R081,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art846-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art846,SUPPORTED,SUPPORTED,….
+R082,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art749-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art749,SUPPORTED,SUPPORTED,….
+R083,test,closed_book,taxqa-020,urn:lex:br:federal:lei:1995-12-26;9250!art10,SUPPORTED,SUPPORTED,….
+R084,test,agentic+asof,taxqa-583,urn:lex:br:federal:decreto:2018-11-22;9580!art128,NOT_SUPPORTED,NOT_SUPPORTED,Art. 128 only says the person … is taxed; nothing on recalculating with antecipação plus complementação.
+R085,test,engine,taxqa-354,urn:lex:br:cosit:solucao.consulta:2016-02-29;15!doc,SUPPORTED,SUPPORTED,….
+R086,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art28-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art28,SUPPORTED,SUPPORTED,…
+R087,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art413-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art413,SUPPORTED,SUPPORTED,…; ….
+R088,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art469-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art469,SUPPORTED,SUPPORTED,…
+R089,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art413-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art413,SUPPORTED,SUPPORTED,'E… followed by limited exceptions a) to c).
+R090,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art459-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art459,NOT_SUPPORTED,NOT_SUPPORTED,Art. 459 says salary …; nothing on dia útil or local de trabalho.
+R091,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art619-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art619,SUPPORTED,SUPPORTED,"Lists …, …... …; parágrafo único allows clauses on …."
+R092,test,agentic+asof,taxqa-090,urn:lex:br:federal:lei:2015-03-16;13105!art615,SUPPORTED,SUPPORTED,….
+R093,test,engine,taxqa-305,urn:lex:br:rfb:instrucao.normativa:2016-05-30;1645!art4,SUPPORTED,PARTIAL,…; says nothing about being non-taxable generally.
+R094,test,agentic+asof,taxqa-583,urn:lex:br:federal:decreto:2018-11-22;9580!art128,NOT_SUPPORTED,NOT_SUPPORTED,Art. 128 only says the person … is taxed; nothing on recalculating with antecipação plus complementação.
+R095,test,engine,taxqa-423,urn:lex:br:federal:decreto:2018-11-22;9580!art366,SUPPORTED,SUPPORTED,….
+R096,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art397-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art397,SUPPORTED,SUPPORTED,….
+R097,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art757-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art757,SUPPORTED,SUPPORTED,…; ….
+R098,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art680-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art680,SUPPORTED,SUPPORTED,….
+R099,test,closed_book,taxqa-263,urn:lex:br:federal:lei:1995-12-26;9250!art8,NOT_SUPPORTED,NOT_SUPPORTED,Art. 8º defines the annual …; nothing on monthly carnê-leão computation.
+R100,test,agentic+asof,taxqa-198,urn:lex:br:federal:decreto:2018-11-22;9580!art786,SUPPORTED,SUPPORTED,….
+R101,test,hybrid,taxqa-308,urn:lex:br:federal:decreto:2018-11-22;9580!art754,NOT_SUPPORTED,PARTIAL,…; … is only a following heading.
+R102,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art157-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art157,SUPPORTED,SUPPORTED,…; III adopt measures; IV facilitate fiscalização.
+R103,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art661-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art661,NOT_SUPPORTED,PARTIAL,"Text of art. 661 is shown as in force on 1967-02-28, but nothing states it was valid …."
+R104,test,hybrid,taxqa-273,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art7,SUPPORTED,SUPPORTED,….
+R105,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art459-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art459,NOT_SUPPORTED,NOT_SUPPORTED,Art. 459 says salary …; nothing on dia útil or local de trabalho.
+R106,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art661-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art661,SUPPORTED,SUPPORTED,…
+R107,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art413-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art413,SUPPORTED,SUPPORTED,'E… followed by limited exceptions a) to c).
+R108,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art191-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art191,NOT_SUPPORTED,NOT_SUPPORTED,Art. 191 concerns …; nothing on eliminating insalubrity within tolerance limits.
+R109,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art190-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art190,SUPPORTED,SUPPORTED,….
+R110,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art507-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art507,NOT_SUPPORTED,NOT_SUPPORTED,Text in force shows …; no indication of revocation by Lei nº 6.533/1978.
+R111,test,agentic,taxqa-703,urn:lex:br:federal:decreto:2018-11-22;9580!art878,SUPPORTED,SUPPORTED,….
+R112,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art612-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art612,NOT_SUPPORTED,NOT_SUPPORTED,Art. 612 says the contrato coletivo …; nothing on assembleia geral deliberation.
+R113,test,agentic,taxqa-521,urn:lex:br:srf:instrucao.normativa:2001-10-11;83!art19,SUPPORTED,SUPPORTED,…
+R114,test,hybrid,taxqa-533,urn:lex:br:federal:decreto:2018-11-22;9580!art54,SUPPORTED,SUPPORTED,….
+R115,test,engine,taxqa-561,urn:lex:br:srf:instrucao.normativa:2005-12-28;599!art2,SUPPORTED,SUPPORTED,….
+R116,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art413-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art413,SUPPORTED,SUPPORTED,….
+R117,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art586-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art586,SUPPORTED,SUPPORTED,….
+R118,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art612-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art612,NOT_SUPPORTED,NOT_SUPPORTED,Art. 612 text in force has no parágrafo único; it says the contrato coletivo ….
+R119,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art619-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art619,SUPPORTED,SUPPORTED,… through ….
+R120,test,engine,taxqa-665,urn:lex:br:federal:lei:1964-12-16;4591!art28,SUPPORTED,SUPPORTED,….
+R121,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art680-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art680,SUPPORTED,SUPPORTED,….
+R122,test,agentic+asof,taxqa-307,urn:lex:br:federal:decreto:2018-11-22;9580!art754,SUPPORTED,SUPPORTED,….
+R123,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art157-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art157,SUPPORTED,SUPPORTED,…
+R124,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art179-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art179,SUPPORTED,SUPPORTED,….
+R125,test,agentic+asof,taxqa-149,urn:lex:br:srf:instrucao.normativa:2002-09-27;208!art21,SUPPORTED,PARTIAL,"…, but only …; sentence omits the condition."
+R126,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art619-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art619,SUPPORTED,SUPPORTED,"Lists …, …, …, 'g) horário', …."
+R127,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art749-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art749,SUPPORTED,SUPPORTED,….
+R128,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art586-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art586,SUPPORTED,SUPPORTED,…
+R129,test,agentic+asof,taxqa-634,urn:lex:br:federal:decreto:2018-11-22;9580!art596,SUPPORTED,SUPPORTED,….
+R130,test,hybrid,taxqa-316,urn:lex:br:federal:decreto:2018-11-22;9580!art700,SUPPORTED,SUPPORTED,….
+R131,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art507-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art507,NOT_SUPPORTED,NOT_SUPPORTED,Text in force shows …; no indication of revocation by Lei nº 6.533/1978.
+R132,test,closed_book,taxqa-367,urn:lex:br:federal:decreto:2018-11-22;9580!art80,NOT_SUPPORTED,NOT_SUPPORTED,Art. 80 lists deductions from tax such as … and Fundos; nothing on aparelhos or próteses as health expenses.
+R133,test,engine,taxqa-305,urn:lex:br:rfb:instrucao.normativa:2016-05-30;1645!art4,SUPPORTED,SUPPORTED,….
+R134,test,hybrid,taxqa-383,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art94,SUPPORTED,SUPPORTED,…
+R135,test,hybrid,taxqa-126,urn:lex:br:srf:instrucao.normativa:2002-09-27;208!art3,SUPPORTED,SUPPORTED,…; ….
+R136,test,closed_book,taxqa-217,urn:lex:br:federal:lei:1988-12-22;7713!art3,NOT_SUPPORTED,NOT_SUPPORTED,Art. 3º taxes … and …; it says nothing about valor locativo or rents effectively received.
+R137,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art432-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art432,SUPPORTED,SUPPORTED,…
+R138,test,agentic+asof,taxqa-624,urn:lex:br:federal:lei:2023-12-12;14754!art14,NOT_SUPPORTED,SUPPORTED,….
+R139,test,hybrid,taxqa-533,urn:lex:br:federal:decreto:2018-11-22;9580!art54,SUPPORTED,SUPPORTED,….
+R140,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art749-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art749,SUPPORTED,SUPPORTED,…
+R141,test,agentic,taxqa-126,urn:lex:br:srf:instrucao.normativa:2002-09-27;208!art3,SUPPORTED,SUPPORTED,….
+R142,test,agentic+asof,taxqa-229,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art27,NOT_SUPPORTED,PARTIAL,Supports State courts: …; not the Federal precatório part.
+R143,test,closed_book,taxqa-514,urn:lex:br:federal:constituicao:1988-10-05;1988!art155,SUPPORTED,SUPPORTED,….
+R144,test,closed_book,taxqa-514,urn:lex:br:federal:constituicao:1988-10-05;1988!art155,SUPPORTED,SUPPORTED,….
+R145,test,agentic,taxqa-371,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art94,SUPPORTED,SUPPORTED,….
+R146,test,agentic,taxqa-645,urn:lex:br:federal:decreto:2018-11-22;9580!art137,SUPPORTED,SUPPORTED,…; …; …; …; ….
+R147,test,engine,taxqa-256,urn:lex:br:federal:decreto.lei:1974-12-23;1381!art1,SUPPORTED,SUPPORTED,….
+R148,test,engine,taxqa-511,urn:lex:br:federal:decreto:2018-11-22;9580!art146,NOT_SUPPORTED,NOT_SUPPORTED,Art. 146 says cost and sale value are …; nothing on missing Diat or documents.
+R149,test,agentic+asof,taxqa-634,urn:lex:br:srf:instrucao.normativa:2001-10-11;84!art10,SUPPORTED,SUPPORTED,….
+R150,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art179-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art179,NOT_SUPPORTED,NOT_SUPPORTED,Art. 179 in force says …; nothing on instalações elétricas.
+R151,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art507-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art507,SUPPORTED,SUPPORTED,…
+R152,test,hybrid,taxqa-389,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art91,SUPPORTED,SUPPORTED,…; ….
+R153,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art179-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art179,SUPPORTED,SUPPORTED,….
+R154,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art413-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art413,NOT_SUPPORTED,SUPPORTED,… followed by incisos I and II.
+R155,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art661-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art661,SUPPORTED,SUPPORTED,…... ….
+R156,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art619-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art619,SUPPORTED,SUPPORTED,"Lists …, …, …, 'g) horário', …."
+R157,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art749-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art749,SUPPORTED,SUPPORTED,…
+R158,test,hybrid,taxqa-623,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art10,SUPPORTED,SUPPORTED,….
+R159,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art612-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art612,NOT_SUPPORTED,NOT_SUPPORTED,Art. 612 says the contrato coletivo …; nothing on assembleia geral deliberation.
+R160,test,engine,taxqa-594,urn:lex:br:srf:instrucao.normativa:2001-10-11;84!art30,SUPPORTED,SUPPORTED,…; ….
+R161,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art584-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art584,SUPPORTED,SUPPORTED,….
+R162,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art846-after,urn:lex:br:federal:lei:1995-04-05;9022!art1,SUPPORTED,SUPPORTED,…
+R163,test,hybrid,taxqa-389,urn:lex:br:rfb:instrucao.normativa:2014-10-29;1500!art91,NOT_SUPPORTED,PARTIAL,Supports …; nothing on travel and stays abroad.
+R164,test,agentic,taxqa-703,urn:lex:br:federal:decreto:2018-11-22;9580!art878,SUPPORTED,SUPPORTED,….
+R165,test,closed_book,taxqa-514,urn:lex:br:federal:constituicao:1988-10-05;1988!art155,NOT_SUPPORTED,NOT_SUPPORTED,§ 1º IV says the tax …; nothing on donatários as contribuintes or state-set rates.
+R166,test,agentic+asof,taxqa-693,urn:lex:br:federal:decreto:2018-11-22;9580!art848,SUPPORTED,SUPPORTED,….
+R167,test,engine,taxqa-392,urn:lex:br:federal:lei:1996-12-20;9394!art29,NOT_SUPPORTED,PARTIAL,Art. 29 supports …; creches/pré-escolas and art. 21 claims are not in it.
+R168,test,hybrid,taxqa-702,urn:lex:br:rfb:instrucao.normativa:2015-08-31;1585!art16,SUPPORTED,SUPPORTED,….
+R169,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art655-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art655,SUPPORTED,SUPPORTED,…
+R170,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art846-after,urn:lex:br:federal:lei:1995-04-05;9022!art1,SUPPORTED,SUPPORTED,…
+R171,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art655-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art655,SUPPORTED,SUPPORTED,…
+R172,test,engine,taxqa-423,urn:lex:br:federal:decreto:2018-11-22;9580!art366,SUPPORTED,SUPPORTED,….
+R173,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art397-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art397,SUPPORTED,SUPPORTED,….
+R174,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art28-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art28,SUPPORTED,SUPPORTED,…
+R175,test,engine,taxqa-026,urn:lex:br:rfb:instrucao.normativa:2024-03-05;2178!art4,NOT_SUPPORTED,PARTIAL,Art. 4º supports PGD … with …; nothing on authorizing another person (art. 14).
+R176,temporal_test,engine,temporal-urn.lex.br.federal.lei.1988.12.22.7713.art24-before,urn:lex:br:federal:lei:1988-12-22;7713!art29,SUPPORTED,SUPPORTED,Art. 29 refers to one who ….
+R177,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art157-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art157,SUPPORTED,SUPPORTED,….
+R178,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art864-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art864,SUPPORTED,SUPPORTED,….
+R179,test,agentic,taxqa-324,urn:lex:br:federal:medida.provisoria:2001-08-24;2158-35!art55,SUPPORTED,SUPPORTED,….
+R180,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art586-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art586,SUPPORTED,SUPPORTED,….
+R181,test,engine,taxqa-026,urn:lex:br:rfb:instrucao.normativa:2024-03-05;2178!art4,SUPPORTED,SUPPORTED,…; ….
+R182,test,agentic,taxqa-645,urn:lex:br:federal:decreto:2018-11-22;9580!art137,SUPPORTED,SUPPORTED,….
+R183,test,engine,taxqa-089,urn:lex:br:federal:decreto:2018-11-22;9580!art6,NOT_SUPPORTED,SUPPORTED,Art. 6º addresses only spouses: …; nothing on non-spouse co-owners.
+R184,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art198-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art198,SUPPORTED,SUPPORTED,….
+R185,test,agentic+asof,taxqa-272,urn:lex:br:federal:lei:1988-12-22;7713!art7,NOT_SUPPORTED,PARTIAL,…; no mention of monthly progressive table or Declaração de Ajuste Anual.
+R186,temporal_test,closed_book,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art464-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art464,SUPPORTED,SUPPORTED,….
+R187,test,agentic,taxqa-667,urn:lex:br:federal:decreto.lei:1967-02-28;271!art3,SUPPORTED,PARTIAL,Supports …; solidary liability of incorporadores (art. 31) not in this text.
+R188,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art581-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art581,SUPPORTED,SUPPORTED,….
+R189,test,agentic,taxqa-618,urn:lex:br:federal:decreto:2018-11-22;9580!art154,SUPPORTED,PARTIAL,…; not gains of non-residents generally.
+R190,test,agentic+asof,taxqa-690,urn:lex:br:rfb:instrucao.normativa:2015-08-31;1585!art58,SUPPORTED,SUPPORTED,…
+R191,temporal_test,hybrid,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art584-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art584,SUPPORTED,SUPPORTED,….
+R192,temporal_test,agentic+asof,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art622-before,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art622,SUPPORTED,SUPPORTED,….
+R193,test,agentic,taxqa-467,urn:lex:br:federal:lei:1995-12-26;9250!art25,SUPPORTED,SUPPORTED,…; ….
+R194,temporal_test,agentic,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art201-after,urn:lex:br:federal:lei:1975-04-29;6205!art2,NOT_SUPPORTED,NOT_SUPPORTED,Lei 6.205 art. 2º says …; nothing on CLT art. 201 fines.
+R195,test,agentic,taxqa-579,urn:lex:br:federal:lei:2002-01-10;10406!art505,NOT_SUPPORTED,NOT_SUPPORTED,Art. 505 only says …; nothing on tax exemption.
+R196,temporal_test,engine,temporal-urn.lex.br.federal.decreto.lei.1943.05.01.5452.art680-after,urn:lex:br:federal:decreto.lei:1943-05-01;5452!art680,SUPPORTED,SUPPORTED,…; ….
+R197,test,hybrid,taxqa-662,urn:lex:br:srf:instrucao.normativa:2001-10-11;84!art8,NOT_SUPPORTED,NOT_SUPPORTED,Art. 8 says …; nothing on ex-spouse valuation.
+R198,test,agentic+asof,taxqa-693,urn:lex:br:federal:decreto:2018-11-22;9580!art848,SUPPORTED,SUPPORTED,….
+R199,test,agentic,taxqa-324,urn:lex:br:federal:medida.provisoria:2001-08-24;2158-35!art55,SUPPORTED,SUPPORTED,….
+R200,test,closed_book,taxqa-427,urn:lex:br:federal:lei:1995-12-26;9250!art8,NOT_SUPPORTED,SUPPORTED,"Art. 8º II lists … (médicos, instrução, dependentes, previdência, pensão, Livro Caixa); sindicatos or associations are not among them."
