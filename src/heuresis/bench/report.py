@@ -49,7 +49,7 @@ from ..locked import scoring
 from . import stats
 
 BANNER = "DRY RUN — offline fakes, not a measurement"
-REFERENCE = "engine"
+REFERENCE = "engine"  # the default reference of paired comparisons; ``--reference engine2`` swaps it
 EXCLUDED = ("oracle",)
 COST_COMPARE = ("agentic", "hybrid")
 EXPLORATORY_SUFFIX = "+asof"
@@ -148,6 +148,11 @@ def system_metrics(rows: list[dict], iters: int, seed: int) -> dict:
     n_ans = len(answered)
     n_ok_ans = sum(1 for r in answered if r["outcome"] == "correct")
     out["accuracy"] = cnt["correct"] / n if n else None
+    # error rate among answered: wrong / answered, with a Wilson interval (what a refusal-aware system is judged on)
+    n_wrong_ans = sum(1 for r in answered if r["outcome"] == "wrong")
+    lo, hi = stats.wilson_interval(n_wrong_ans, n_ans)
+    out["error_rate_answered"] = {"p": n_wrong_ans / n_ans if n_ans else None, "wrong": n_wrong_ans,
+                                  "answered": n_ans, "lo": lo if n_ans else None, "hi": hi if n_ans else None}
     out["coverage"] = n_ans / n if n else None
     out["selective_accuracy"] = n_ok_ans / n_ans if n_ans else None
     conf = [float(r["confidence"]) for r in answered]
@@ -240,7 +245,10 @@ def pareto(res: dict) -> dict:
     return rows
 
 
-def build(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
+def build(out_dir: str, iters: int = 10_000, seed: int = 0, reference: str | None = None) -> dict:
+    """``reference`` is the system the paired comparisons put first (default ``REFERENCE``, the
+    engine); ``engine2`` makes the v2 engine the reference and the v1 engine one of the baselines."""
+    reference = reference or REFERENCE
     manifest, rows, n_err = load(out_dir)
     by: dict[str, list[dict]] = {}
     for r in rows:
@@ -262,16 +270,16 @@ def build(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
         "unavailable": {s["name"]: s["reason"] for s in manifest.get("systems", [])
                         if not s.get("available", True)},
         "systems": {s: system_metrics(by[s], iters, seed) for s in order},
-        "paired": {}, "exploratory_paired": {}, "reference": REFERENCE,
+        "paired": {}, "exploratory_paired": {}, "reference": reference,
         "exploratory_systems": [s for s in order if is_exploratory(s)],
     }
-    if REFERENCE in by:
+    if reference in by:
         for key, want in (("paired", False), ("exploratory_paired", True)):
             names, ps = [], []
             for s in order:
-                if s == REFERENCE or s in EXCLUDED or is_exploratory(s) != want:
+                if s == reference or s in EXCLUDED or is_exploratory(s) != want:
                     continue
-                p = paired([r for r in by[REFERENCE] if r["qid"] in common],
+                p = paired([r for r in by[reference] if r["qid"] in common],
                            [r for r in by[s] if r["qid"] in common], iters, seed,
                            cost=(not want and s in COST_COMPARE))
                 if p:
@@ -336,6 +344,13 @@ def _usd(x: float | None) -> str:
     return "n/a" if x is None else f"${x:.4f}"
 
 
+def _er(e: dict) -> str:
+    """Error rate among answered questions, with its Wilson interval and the counts."""
+    if not e or e["p"] is None:
+        return "n/a"
+    return f"{_pct(e['p'])} [{_pct(e['lo'])}, {_pct(e['hi'])}] ({e['wrong']}/{e['answered']})"
+
+
 def render(res: dict) -> str:
     L: list[str] = []
     if res["dry_run"]:
@@ -387,12 +402,12 @@ def render(res: dict) -> str:
                      f"{_pct(w['p'])} [{_pct(w['lo'])}, {_pct(w['hi'])}] | {_ci_s(j['penalised_score'])} | "
                      f"{_ci_s(m['penalised_score'])} |")
     L += ["", f"## Table 2. Selective answering ({sp}; AURC over answered questions, lower is better)",
-          "", "| system | n | accuracy | coverage | selective accuracy | AURC | abstains on unanswerable | mean answer chars |",
-          "|---|---|---|---|---|---|---|---|"]
+          "", "| system | n | accuracy | coverage | selective accuracy | error rate (answered) | AURC | abstains on unanswerable | mean answer chars |",
+          "|---|---|---|---|---|---|---|---|---|"]
     for s, m in sysm.items():
         u = m["unanswerable"]
         L.append(f"| {s} | {m['n']} | {_pct(m['accuracy'])} | {_pct(m['coverage'])} | "
-                 f"{_pct(m['selective_accuracy'])} | {_f(m['aurc'])} | "
+                 f"{_pct(m['selective_accuracy'])} | {_er(m['error_rate_answered'])} | {_f(m['aurc'])} | "
                  f"{_pct(u['abstain_rate'])} (n={u['n']}) | {_f(m['mean_answer_chars'], 1)} |")
     L += ["", f"## Table 2b. Errors ({sp})", "",
           "An error is an API or model failure after the client's retries. It is counted as a wrong answer "
@@ -483,8 +498,8 @@ def render(res: dict) -> str:
     return "\n".join(L)
 
 
-def write(out_dir: str, iters: int = 10_000, seed: int = 0) -> dict:
-    res = build(out_dir, iters=iters, seed=seed)
+def write(out_dir: str, iters: int = 10_000, seed: int = 0, reference: str | None = None) -> dict:
+    res = build(out_dir, iters=iters, seed=seed, reference=reference)
     with open(os.path.join(out_dir, "results.json"), "w", encoding="utf-8") as fh:
         json.dump(res, fh, indent=2, ensure_ascii=False)  # banner is the first key
     with open(os.path.join(out_dir, "results.md"), "w", encoding="utf-8") as fh:
@@ -533,10 +548,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--iters", type=int, default=10_000)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--family-out", default="family.md", help="where the family table goes")
+    ap.add_argument("--reference", default=REFERENCE, metavar="NAME",
+                    help=f"the system every paired comparison puts first (default {REFERENCE}; "
+                         "engine2 for the v2 engine)")
     a = ap.parse_args(argv)
     results = []
     for d in a.out_dir:
-        results.append(write(d, a.iters, a.seed))
+        results.append(write(d, a.iters, a.seed, a.reference))
         print(os.path.join(d, "results.md"))
     if len(results) > 1:
         rows = family(results)

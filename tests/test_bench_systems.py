@@ -4,7 +4,7 @@ import pytest
 
 from heuresis.bench import systems as S
 from heuresis.bench.ledger import Ledger
-from heuresis.bench.systems import SYSTEM_NAMES, build_context, build_systems, parse_reply
+from heuresis.bench.systems import DEFAULT_SYSTEMS, SYSTEM_NAMES, build_context, build_systems, parse_reply
 from heuresis.fakes import EchoLLM
 from heuresis.surface.config import config_to_dict, load_config
 from test_bench_common import Recorder, make_dataset, questions
@@ -23,7 +23,7 @@ def test_every_system_returns_wellformed_result(tmp_path):
     ds = make_dataset(tmp_path)
     ctx = build_context(ds, str(tmp_path / "s.sqlite"))
     systems = build_systems(ctx)
-    assert [s.name for s in systems] == list(SYSTEM_NAMES)
+    assert [s.name for s in systems] == list(DEFAULT_SYSTEMS)
     for s in systems:
         assert s.available, s.name
         for q in questions()[:3] + questions()[6:7] + questions()[8:9]:
@@ -162,7 +162,8 @@ class CountingReranker:
 
 def test_system_order_and_hybrid_has_no_reranker(tmp_path):
     assert SYSTEM_NAMES == ("closed_book", "bm25", "vector", "hybrid", "hybrid_rerank",
-                            "agentic", "long_context", "engine", "oracle", "engine_single")
+                            "agentic", "long_context", "engine", "oracle", "engine_single", "engine2")
+    assert DEFAULT_SYSTEMS == SYSTEM_NAMES[:-1]
     ds = make_dataset(tmp_path)
     rr = CountingReranker()
     ctx = build_context(ds, str(tmp_path / "s.sqlite"), reranker=rr)

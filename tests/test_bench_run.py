@@ -9,6 +9,20 @@ from heuresis.locked.guard import locked_hash
 from test_bench_common import Recorder, make_dataset, questions
 
 
+def _registration():
+    """A registration file for the synthetic `test` split (the held-out guard of `main`)."""
+    import hashlib
+    import tempfile
+    ids = [q.id for q in questions()[:4]]
+    path = os.path.join(tempfile.mkdtemp(), "REGISTRATION.md")
+    with open(path, "w") as fh:
+        fh.write("split test ids sha256: " + hashlib.sha256("\n".join(ids).encode()).hexdigest() + "\n")
+    return path
+
+
+REG = _registration()
+
+
 def rows(out):
     with open(os.path.join(out, "results.jsonl")) as fh:
         return [json.loads(x) for x in fh]
@@ -301,12 +315,12 @@ def test_paid_run_without_ledger_is_refused(tmp_path, monkeypatch, capsys):
     R, made = _paid_env(tmp_path, monkeypatch)
     monkeypatch.setenv("PROJECTS_ANTHROPIC_KEY", "sk-secret-value")
     out = str(tmp_path / "out")
-    assert R.main(["--dataset", "tiny", "--split", "test", "--paid", "--cap", "5",
+    assert R.main(["--dataset", "tiny", "--split", "test", "--registered-run", REG, "--paid", "--cap", "5",
                    "--out", out, "--systems", "closed_book"]) == 2
     assert "--ledger" in capsys.readouterr().err
     assert not os.path.exists(out) and not made
     # a dry run needs no shared ledger
-    assert R.main(["--dataset", "tiny", "--split", "test", "--out", out,
+    assert R.main(["--dataset", "tiny", "--split", "test", "--registered-run", REG, "--out", out,
                    "--systems", "closed_book"]) == 0
 
 
@@ -314,7 +328,7 @@ def test_paid_run_reads_the_default_key_variable_and_prints_only_its_name(tmp_pa
     R, made = _paid_env(tmp_path, monkeypatch)
     monkeypatch.setenv("PROJECTS_ANTHROPIC_KEY", "sk-secret-value")
     out, ledger = str(tmp_path / "out"), str(tmp_path / "shared.jsonl")
-    assert R.main(["--dataset", "tiny", "--split", "test", "--paid", "--cap", "5", "--ledger", ledger,
+    assert R.main(["--dataset", "tiny", "--split", "test", "--registered-run", REG, "--paid", "--cap", "5", "--ledger", ledger,
                    "--out", out, "--systems", "closed_book", "--workers", "1"]) == 0
     cap = capsys.readouterr()
     assert made[0].key_env == "PROJECTS_ANTHROPIC_KEY" and made[0].temperature is None
@@ -335,7 +349,7 @@ def test_thinking_flag_default_restores_the_model_default(tmp_path, monkeypatch)
     R, made = _paid_env(tmp_path, monkeypatch)
     monkeypatch.setenv("PROJECTS_ANTHROPIC_KEY", "sk-x")
     out, ledger = str(tmp_path / "out"), str(tmp_path / "l.jsonl")
-    assert R.main(["--dataset", "tiny", "--split", "test", "--paid", "--cap", "5", "--ledger", ledger,
+    assert R.main(["--dataset", "tiny", "--split", "test", "--registered-run", REG, "--paid", "--cap", "5", "--ledger", ledger,
                    "--out", out, "--systems", "closed_book", "--workers", "1",
                    "--thinking", "default"]) == 0
     assert made[0].thinking is None
@@ -367,7 +381,7 @@ def test_paid_run_key_env_can_be_renamed_and_must_be_set_before_any_work(tmp_pat
     monkeypatch.delenv("MY_BENCH_KEY", raising=False)
     monkeypatch.setattr(R, "_load_dataset", lambda name: pytest.fail("work started"))
     out, ledger = str(tmp_path / "out"), str(tmp_path / "l.jsonl")
-    base = ["--dataset", "tiny", "--split", "test", "--paid", "--cap", "5", "--ledger", ledger,
+    base = ["--dataset", "tiny", "--split", "test", "--registered-run", REG, "--paid", "--cap", "5", "--ledger", ledger,
             "--out", out, "--systems", "closed_book", "--workers", "1"]
     assert R.main(base) == 2
     assert "PROJECTS_ANTHROPIC_KEY" in capsys.readouterr().err
@@ -388,16 +402,16 @@ def test_paid_run_key_env_can_be_renamed_and_must_be_set_before_any_work(tmp_pat
 def test_set_overrides_a_config_value_and_the_manifest_records_it(tmp_path, monkeypatch, capsys):
     R, made = _paid_env(tmp_path, monkeypatch)
     out = str(tmp_path / "out")
-    assert R.main(["--dataset", "tiny", "--split", "test", "--out", out, "--systems", "engine",
+    assert R.main(["--dataset", "tiny", "--split", "test", "--registered-run", REG, "--out", out, "--systems", "engine",
                    "--set", "draft.prompt=v1", "--set", "verify.answers_question=true"]) == 0
     man = json.load(open(os.path.join(out, "manifest.json")))
     assert man["engine_config"]["draft"]["prompt"] == "v1"
     assert man["engine_config"]["verify"]["answers_question"] is True
     base = json.load(open(os.path.join(str(tmp_path / "o2"), "manifest.json"))) if R.main(
-        ["--dataset", "tiny", "--split", "test", "--out", str(tmp_path / "o2"), "--systems", "engine"]) == 0 else None
+        ["--dataset", "tiny", "--split", "test", "--registered-run", REG, "--out", str(tmp_path / "o2"), "--systems", "engine"]) == 0 else None
     assert base["engine_config"]["draft"]["prompt"] == "v2" and base["surface_hash"] != man["surface_hash"]
     for bad in ("draft.nope=1", "nosection.x=1", "draft=1", "draft.prompt"):
-        assert R.main(["--dataset", "tiny", "--split", "test", "--out", str(tmp_path / "o3"),
+        assert R.main(["--dataset", "tiny", "--split", "test", "--registered-run", REG, "--out", str(tmp_path / "o3"),
                        "--set", bad]) == 2
 
 
@@ -419,3 +433,105 @@ def test_manifest_records_each_engines_effective_config(tmp_path):
     assert by["engine"]["answer_mode"] == "search" and by["engine_single"]["answer_mode"] == "single"
     names = {r["system"] for r in rows(out)}
     assert names == {"bm25", "engine", "engine_single"}
+
+
+# --- held-out guard, rotating splits, engine2 flags ---------------------------------------------
+
+
+def _dry(R, tmp_path, *extra, split="test", systems="closed_book", out="o"):
+    return R.main(["--dataset", "tiny", "--split", split, "--out", str(tmp_path / out), "--systems", systems,
+                   "--workers", "1", *extra])
+
+
+def test_held_out_splits_need_a_matching_registration_even_in_a_dry_run(tmp_path, monkeypatch, capsys):
+    R, made = _paid_env(tmp_path, monkeypatch)
+    wrong = tmp_path / "WRONG.md"
+    wrong.write_text("sha256 0000\n")
+    for extra in ([], ["--registered-run", str(wrong)], ["--registered-run", str(tmp_path / "none.md")]):
+        assert _dry(R, tmp_path, *extra) == 2
+        assert "held out" in capsys.readouterr().err
+        assert not os.path.exists(tmp_path / "o")
+    assert _dry(R, tmp_path, "--registered-run", REG) == 0
+    man = json.load(open(os.path.join(str(tmp_path / "o"), "manifest.json")))
+    assert man["split"] == "test" and len(man["split_ids_sha256"]) == 64 and man["split_ids_sha256"] in open(REG).read()
+    assert _dry(R, tmp_path, split="dev", out="o2") == 0  # a dev split needs nothing
+    # a paid run is refused before any client exists
+    monkeypatch.setenv("PROJECTS_ANTHROPIC_KEY", "sk-x")
+    assert _dry(R, tmp_path, "--paid", "--cap", "5", "--ledger", str(tmp_path / "l.jsonl"), out="o3") == 2
+    assert not made and not os.path.exists(tmp_path / "o3")
+
+
+def test_promotion_sets_are_never_readable_from_the_cli(tmp_path, monkeypatch, capsys):
+    R, made = _paid_env(tmp_path, monkeypatch)
+    assert _dry(R, tmp_path, "--registered-run", REG, split="promo0") == 2
+    assert "promotion" in capsys.readouterr().err and not os.path.exists(tmp_path / "o")
+
+
+def test_a_rotating_split_is_drawn_from_the_pool_and_run(tmp_path, monkeypatch):
+    from test_bench_splits import make_root
+    R, made = _paid_env(tmp_path, monkeypatch)
+    root, rows = make_root(tmp_path, name="tiny", n=2000)
+    out = str(tmp_path / "rot")
+    assert R.main(["--dataset", "tiny", "--split", "rot1", "--data-root", root, "--out", out,
+                   "--systems", "closed_book", "--limit", "5", "--workers", "1"]) == 0
+    man = json.load(open(os.path.join(out, "manifest.json")))
+    from heuresis.bench import splits
+    ids = splits.rotating("tiny", 1, root=root)
+    assert man["split"] == "rot1" and set(man["question_ids"]) <= set(ids) and man["n_questions"] == 5
+    assert man["split_ids_sha256"] == splits._ids_sha(ids)
+    assert R.main(["--dataset", "tiny", "--split", "rot99", "--data-root", root, "--out", str(tmp_path / "r9"),
+                   "--systems", "closed_book"]) == 2  # the pool has no cycle 99
+    out2 = str(tmp_path / "cal")  # a calibration block is not held out: it runs without a registration
+    assert R.main(["--dataset", "tiny", "--split", "cal0", "--data-root", root, "--out", out2,
+                   "--systems", "closed_book", "--limit", "3", "--workers", "1"]) == 0
+    assert json.load(open(os.path.join(out2, "manifest.json")))["n_questions"] == 3
+
+
+def test_engine2_flags_surface_candidate_and_calibration(tmp_path, monkeypatch, capsys):
+    R, made = _paid_env(tmp_path, monkeypatch)
+    hashes = {}
+    for tag, extra in (("base", []), ("set", ["--v2-set", "agent.max_turns=2"]),
+                       ("both", ["--v2-set", "agent.max_turns=2", "--v2-candidate", None])):
+        if extra and extra[-1] is None:
+            cand = tmp_path / "cand.json"
+            cand.write_text(json.dumps({"config": {"retrieve.k_first": 5}, "prompts": {}}))
+            extra = extra[:-1] + [str(cand)]
+        assert _dry(R, tmp_path, *extra, split="dev", systems="engine2", out=tag) == 0
+        man = json.load(open(os.path.join(str(tmp_path / tag), "manifest.json")))
+        assert len(man["protected_hash"]) == 64 and man["judge_model"] == "echo" and man["v2_cache"] is False
+        hashes[tag] = man["v2_surface_hash"]
+    assert len(set(hashes.values())) == 3
+    for bad in (["--v2-set", "agent.max_turns=99"], ["--v2-set", "nope.key=1"], ["--v2-set", "novalue"],
+                ["--v2-candidate", str(tmp_path / "missing.json")], ["--v2-calibration", str(tmp_path / "no.json")]):
+        assert _dry(R, tmp_path, *bad, split="dev", systems="engine2", out="bad") == 2
+        assert "error" in capsys.readouterr().err
+    assert not os.path.exists(tmp_path / "bad")
+
+
+def test_engine2_paid_clients_judge_strong_and_cache(tmp_path, monkeypatch):
+    R, made = _paid_env(tmp_path, monkeypatch)
+    monkeypatch.setenv("PROJECTS_ANTHROPIC_KEY", "sk-x")
+    out, ledger = str(tmp_path / "out"), str(tmp_path / "l.jsonl")
+    assert R.main(["--dataset", "tiny", "--split", "dev", "--paid", "--cap", "5", "--ledger", ledger, "--out", out,
+                   "--systems", "engine2", "--workers", "1", "--limit", "2", "--thinking", "default",
+                   "--judge-model", "claude-haiku-5-5", "--strong-model", "claude-haiku-5-5",
+                   "--v2-cache"]) == 0
+    assert len(made) == 5  # generator, support gate, judge, strong, cached engine2 generator
+    assert made[0].cache is False and made[0].thinking is None
+    assert made[2].thinking == {"type": "disabled"} and made[2].cache is False  # judge
+    assert made[3].cache is False and made[3].thinking is None                  # strong: generator's thinking
+    assert made[4].cache is True and made[4].thinking is None                   # engine2 generator
+    man = json.load(open(os.path.join(out, "manifest.json")))
+    assert man["v2_cache"] is True and man["judge_model"] == "claude-haiku-5-5" == man["strong_model"]
+    from heuresis.v2.locked.decide import load_policy
+    assert man["judge_model_policy"] == load_policy().judge_model and man["judge_is_policy_model"] is False
+    # no --judge-model: the judge is the policy's model, not the generator
+    made.clear()
+    out3 = str(tmp_path / "out3")
+    assert R.main(["--dataset", "tiny", "--split", "dev", "--paid", "--cap", "5", "--ledger", ledger, "--out", out3,
+                   "--systems", "engine2", "--workers", "1", "--limit", "1"]) == 0
+    assert made[2].model == load_policy().judge_model and made[2].thinking == {"type": "disabled"}
+    m3 = json.load(open(os.path.join(out3, "manifest.json")))
+    assert m3["judge_is_policy_model"] is True and m3["judge_model"] == load_policy().judge_model
+    tags = {json.loads(x)["tag"] for x in open(ledger)}
+    assert "engine2" in tags and "engine" not in tags  # the fake reply never reaches the judge

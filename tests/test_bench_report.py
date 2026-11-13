@@ -246,3 +246,33 @@ def test_engine_single_is_exploratory_not_in_the_family(tmp_path):
     res = report.write(out, iters=100)
     assert set(res["paired"]) == {"bm25"} and set(res["exploratory_paired"]) == {"engine_single"}
     assert report.is_exploratory("engine_single") and not report.in_family("engine_single")
+
+
+def test_error_rate_among_answered_has_a_wilson_interval(tmp_path):
+    out = str(tmp_path)
+    write(out, hand_rows())
+    res = report.write(out, iters=200)
+    e, b = res["systems"]["engine"]["error_rate_answered"], res["systems"]["bm25"]["error_rate_answered"]
+    assert (e["wrong"], e["answered"]) == (1, 4) and e["p"] == 0.25
+    assert (e["lo"], e["hi"]) == pytest.approx(stats.wilson_interval(1, 4))
+    assert (b["wrong"], b["answered"]) == (2, 3) and b["p"] == pytest.approx(2 / 3)
+    assert "error rate (answered)" in report.render(res) and "25.0%" in report.render(res)
+    none = report.system_metrics([row("x", "q1", "abstained", "abstained", 0.1, 0.0, 1.0)], 50, 0)
+    assert none["error_rate_answered"]["p"] is None and none["error_rate_answered"]["answered"] == 0
+
+
+def test_engine2_can_be_the_reference_and_engine_becomes_a_baseline(tmp_path):
+    out = str(tmp_path)
+    rows = hand_rows() + [row("engine2", f"q{i}", "answered", o, 0.8, 0.1, 10, time_aware=True)
+                          for i, o in enumerate(("correct", "correct", "correct", "correct"), 1)]
+    write(out, rows, systems=("engine", "bm25", "engine2"))
+    default = report.build(out, iters=200)
+    assert default["reference"] == "engine" and set(default["paired"]) == {"bm25", "engine2"}
+    ref2 = report.build(out, iters=200, reference="engine2")
+    assert ref2["reference"] == "engine2" and set(ref2["paired"]) == {"engine", "bm25"}
+    assert ref2["paired"]["engine"]["reference_only_correct"] == 1 and ref2["paired"]["engine"]["other_only_correct"] == 0
+    assert "engine2" in report.complete_case({"systems": [{"name": "engine2"}]}, {"engine2": []})["systems"]
+    assert report.in_family("engine2") and not report.is_exploratory("engine2")
+    assert report.main([out, "--iters", "100", "--reference", "engine2"]) == 0
+    assert json.load(open(os.path.join(out, "results.json")))["reference"] == "engine2"
+    assert "`engine2` against each baseline" in open(os.path.join(out, "results.md")).read()

@@ -11,6 +11,7 @@ against the best gold answer is stored alongside.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import os
 import random
@@ -25,8 +26,9 @@ from ..locked import scoring
 from ..locked.guard import locked_hash
 from ..surface.config import config_to_dict
 from .ledger import BudgetExceeded, Ledger
+from . import splits as _splits
 from .systems import (
-    BENCH_TEMPERATURE, BENCH_THINKING, SYSTEM_NAMES, BenchContext, System, prompts_hash,
+    BENCH_TEMPERATURE, BENCH_THINKING, DEFAULT_SYSTEMS, BenchContext, System, prompts_hash,
 )
 from .systems import surface_hash as _surface_hash
 from .types import Dataset, Question
@@ -160,6 +162,8 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
     manifest = {
         "dataset": dataset.name, "licence": dataset.licence, "corpus_tokens": dataset.corpus_tokens,
         "split": split, "n_questions": len(qs), "question_ids": [q.id for q in qs],
+        #: sha256 of the split's ordered question ids (the hash a registration quotes), whatever --limit
+        "split_ids_sha256": _splits._ids_sha([q.id for q in dataset.questions[split]]),
         "limit": limit, "seed": seed, "workers": workers, "dry_run": dry_run,
         "systems": [s.describe() for s in systems], "locked_hash": locked_hash(),
         "prompts_hash": prompts_hash(), "price_table": PRICE_TABLE, "params": params or {},
@@ -181,6 +185,10 @@ def run(dataset: Dataset, split: str, systems: Sequence[System], out_dir: str,
         manifest["surface_hash"] = surface_hash(ctx)
         manifest["models"] = ctx.models()
         manifest["model_provenance"] = ctx.provenance()
+        for s in systems:  # engine2: surface hash, protected hash, judge and strong model, cache
+            if hasattr(s, "manifest_info"):
+                manifest.update(s.manifest_info())
+                break
 
     pending = [(q, s) for q in qs for s in active if (s.name, q.id) not in done]
     stats = {"written": 0, "skipped": len(qs) * len(active) - len(pending), "errors": 0,
@@ -262,7 +270,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m heuresis.bench.run")
     ap.add_argument("--dataset", help="dataset name, resolved by heuresis.bench.datasets")
     ap.add_argument("--split", default="dev")
-    ap.add_argument("--systems", default=",".join(SYSTEM_NAMES))
+    ap.add_argument("--systems", default=",".join(DEFAULT_SYSTEMS),
+                    help="comma-separated names; engine2 (the v2 engine) is never in the default")
     ap.add_argument("--out", help="output folder (default: bench_out/<dataset>-<split>)")
     ap.add_argument("--limit", type=int)
     ap.add_argument("--workers", type=int, default=4)
@@ -306,6 +315,26 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--embedder")
     ap.add_argument("--reranker")
     ap.add_argument("--entailer")
+    g = ap.add_argument_group("held-out splits and the v2 engine (engine2)")
+    g.add_argument("--registered-run", metavar="FILE", default=None,
+                   help="REQUIRED for a held-out split (test, sealed, temporal_test; also for a dry run): a "
+                        "registration file that contains the sha256 of the split's ordered question ids")
+    g.add_argument("--data-root", default="data",
+                   help="where the corpora are, for the rot<c> splits (default: data)")
+    g.add_argument("--judge-model", default=None,
+                   help="engine2's judge model (default: judge_model of v2/locked/policy.json, not the generator); "
+                        "thinking disabled")
+    g.add_argument("--strong-model", default=None,
+                   help="engine2's strong model, used only when the surface's route.escalate is on")
+    g.add_argument("--v2-cache", action="store_true",
+                   help="engine2's generator is a separate client with prompt caching "
+                        "(AnthropicLLM(cache=True)), same thinking setting")
+    g.add_argument("--v2-set", dest="v2_sets", action="append", default=[], metavar="SECTION.KEY=VALUE",
+                   help="override one engine2 surface value (repeatable), checked by the v2 schema")
+    g.add_argument("--v2-candidate", metavar="FILE", default=None,
+                   help='a JSON candidate {"config": {...}, "prompts": {...}} applied to the engine2 surface')
+    g.add_argument("--v2-calibration", metavar="PATH", default=None,
+                   help="a calibration file (bench.calibrate2) for engine2")
     a = ap.parse_args(argv)
     if not a.dataset:
         print("error: --dataset is required", file=sys.stderr)
@@ -320,6 +349,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     if a.paid and not os.environ.get(a.key_env):
         print(f"error: environment variable {a.key_env} is not set; nothing was run "
               f"(use --key-env NAME to read another variable)", file=sys.stderr)
+        return 2
+    if a.split.startswith("promo"):
+        print(f"error: split {a.split!r} is a sealed promotion set: only the improvement loop's evaluator "
+              "may read it", file=sys.stderr)
+        return 2
+    if _splits.is_held_out(a.split) and not a.registered_run:
+        print(f"error: split {a.split!r} is held out: it is read only by a registered run (dry runs "
+              f"included). Give --registered-run FILE, a registration that contains the sha256 of the "
+              f"split's ordered question ids", file=sys.stderr)
         return 2
     a.dry_run = a.dry_run or not a.paid  # a paid run is never the default
     if a.cap_usd is None:
@@ -350,6 +388,46 @@ def main(argv: Sequence[str] | None = None) -> int:
         except ValueError as e:
             print(f"error: --set: {e}", file=sys.stderr)
             return 2
+    ds = _load_dataset(a.dataset)
+    try:
+        split_qs = _splits.load_split(ds, a.split, root=a.data_root)
+    except (ValueError, OSError, KeyError) as e:
+        print(f"error: split {a.split!r}: {e}", file=sys.stderr)
+        return 2
+    if a.split not in ds.questions:  # a rotating draw: the run reads it like any split of the dataset
+        ds = dataclasses.replace(ds, questions={**ds.questions, a.split: split_qs})
+    if _splits.is_held_out(a.split):
+        why = _splits.registration_ok([q.id for q in split_qs], a.registered_run)
+        if why:
+            print(f"error: split {a.split!r} is held out and the registration does not match: {why}",
+                  file=sys.stderr)
+            return 2
+    v2_surface = None
+    if a.v2_sets or a.v2_candidate:
+        from ..v2.locked import schema as v2schema
+        try:
+            cand: dict = {"config": {}, "prompts": {}}
+            if a.v2_candidate:
+                with open(a.v2_candidate, encoding="utf-8") as fh:
+                    loaded = json.load(fh)
+                cand = {"config": dict(loaded.get("config") or {}), "prompts": dict(loaded.get("prompts") or {})}
+            for item in a.v2_sets:
+                if "=" not in item or "." not in item.split("=", 1)[0]:
+                    raise ValueError(f"--v2-set {item!r}: expected SECTION.KEY=VALUE")
+                path, raw = item.split("=", 1)
+                try:
+                    cand["config"][path] = json.loads(raw)
+                except ValueError:
+                    cand["config"][path] = raw
+            v2_surface = v2schema.apply_overrides(
+                v2schema.load_surface(domain=ds.meta.get("domain", "jsonl"),
+                                      prompt_set=ds.meta.get("prompt_set")), cand)
+        except (ValueError, OSError, AttributeError) as e:
+            print(f"error: engine2 surface: {e}", file=sys.stderr)
+            return 2
+    if a.v2_calibration and not os.path.isfile(a.v2_calibration):
+        print(f"error: --v2-calibration {a.v2_calibration}: no such file", file=sys.stderr)
+        return 2
     paid_llm = None
     if a.paid:  # built, and announced, before any work: only the variable NAME is shown
         from ..llm import AnthropicLLM
@@ -360,7 +438,6 @@ def main(argv: Sequence[str] | None = None) -> int:
               f"(value not shown); requests go to {paid_llm.base_url}; no temperature "
               f"is sent; thinking {'disabled' if a.thinking == 'disabled' else 'left at the model default'}",
               file=sys.stderr)
-    ds = _load_dataset(a.dataset)
     os.makedirs(a.out, exist_ok=True)
     # A dry run costs nothing: no safety margin, and the ledger never stops it.
     ledger = Ledger(a.ledger or os.path.join(a.out, "ledger.jsonl"), a.cap_usd,
@@ -378,11 +455,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         from ..llm import AnthropicLLM
         support_llm = AnthropicLLM(a.model or cfg.draft.model, key_env=a.key_env,
                                    temperature=BENCH_TEMPERATURE, thinking=BENCH_THINKING)
+    names = [s for s in a.systems.split(",") if s]
+    judge_llm = strong_llm = v2_llm = None
+    if a.paid and "engine2" in names:  # engine2's own clients: thinking as for the generator, except the judge
+        from ..llm import AnthropicLLM
+        thinking = BENCH_THINKING if a.thinking == "disabled" else None
+        model = a.model or cfg.draft.model
+        from ..v2.locked.decide import load_policy
+        judge_llm = AnthropicLLM(a.judge_model or load_policy().judge_model or model, key_env=a.key_env,
+                                 temperature=BENCH_TEMPERATURE, thinking=BENCH_THINKING)
+        if a.strong_model:
+            strong_llm = AnthropicLLM(a.strong_model, key_env=a.key_env,
+                                      temperature=BENCH_TEMPERATURE, thinking=thinking)
+        if a.v2_cache:
+            v2_llm = AnthropicLLM(model, key_env=a.key_env, temperature=BENCH_TEMPERATURE,
+                                  thinking=thinking, cache=True)
     ctx = build_context(ds, os.path.join(a.out, "store.sqlite"), llm=llm, embedder=emb,
                         reranker=rr, entailer=ent, config=cfg, ledger=ledger,
                         estimate_usd=a.estimate_usd, legal_prompt=a.legal_prompt,
-                        support_llm=support_llm)
-    systems = build_systems(ctx, [s for s in a.systems.split(",") if s], k=a.k,
+                        support_llm=support_llm, judge_llm=judge_llm, strong_llm=strong_llm,
+                        v2_llm=v2_llm, v2_surface=v2_surface, v2_calibration=a.v2_calibration)
+    systems = build_systems(ctx, names, k=a.k,
                             agent_k=a.agent_k, max_actions=a.max_actions,
                             time_aware=a.time_aware, long_context_limit=a.long_context_limit,
                             agent_rerank=a.agent_rerank,

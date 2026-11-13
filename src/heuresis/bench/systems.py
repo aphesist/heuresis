@@ -32,7 +32,7 @@ from .ledger import BudgetExceeded, Ledger, LedgerLLM
 from .types import Dataset, Question
 
 __all__ = [
-    "ANSWER_FORMAT", "SYSTEM_NAMES", "EXPLORATORY_SYSTEMS", "Result", "System", "BenchContext", "build_context",
+    "ANSWER_FORMAT", "SYSTEM_NAMES", "DEFAULT_SYSTEMS", "EXPLORATORY_SYSTEMS", "Result", "System", "BenchContext", "build_context",
     "build_systems", "parse_reply", "prompts_hash", "surface_hash", "effective_engine_config",
     "prepare_corpus", "BENCH_TEMPERATURE", "BENCH_TEMPERATURE_NOTE", "BENCH_THINKING", "add_call_record",
 ]
@@ -125,7 +125,11 @@ class LegalPrompts:
 
 
 SYSTEM_NAMES = ("closed_book", "bm25", "vector", "hybrid", "hybrid_rerank", "agentic",
-                "long_context", "engine", "oracle", "engine_single")
+                "long_context", "engine", "oracle", "engine_single", "engine2")
+#: What ``build_systems`` and ``bench.run`` build when no names are given: the systems of the
+#: first version of the harness. ``engine2`` (the v2 engine, ``bench.systems_v2``) is always asked for
+#: by name, so that no run starts a system nobody listed.
+DEFAULT_SYSTEMS = tuple(n for n in SYSTEM_NAMES if n != "engine2")
 #: Extra systems that are exploratory by construction (not in the confirmatory family):
 #: ``engine_single`` is the earlier engine design (one draft, entailment as a gate).
 EXPLORATORY_SYSTEMS = ("engine_single",)
@@ -247,7 +251,16 @@ class BenchContext:
     def __init__(self, dataset: Dataset, db_path: str, *, llm: Any, embedder: Any,
                  reranker: Any, entailer: Any = None, config: Config | None = None,
                  ledger: Ledger | None = None, estimate_usd: float = 0.01,
-                 legal_prompt: str = "v2", support_llm: Any = None):
+                 legal_prompt: str = "v2", support_llm: Any = None,
+                 judge_llm: Any = None, strong_llm: Any = None, v2_llm: Any = None,
+                 v2_surface: Any = None, v2_calibration: Any = None):
+        #: Version 2 engine (``engine2``): its own generator (default: the shared one), judge and
+        #: strong models, a surface (``v2.locked.schema.Surface``) and a calibration (file or object).
+        self.judge_llm = judge_llm
+        self.strong_llm = strong_llm
+        self.v2_llm = v2_llm
+        self.v2_surface = v2_surface
+        self.v2_calibration = v2_calibration
         #: "v2" (default for a legal dataset): the one-claim-per-sentence instruction and the model
         #: support gate for the engine; "v1": the first legal instruction and entailment support.
         self.legal_prompt = legal_prompt
@@ -287,6 +300,33 @@ class BenchContext:
         if self.ledger is None:
             return base
         return LedgerLLM(base, self.ledger, tag, self.estimate_usd)
+
+    def _v2_llm(self, key: str, base: Any, tag: str) -> Any:
+        """``base`` metered under ``tag`` when a ledger is set. Never wrapped in ``LegalPrompts``:
+        the v2 engine has its own Portuguese prompts (``prompt_set``). The wrapper reports
+        ``supports_cache_break`` like the model it wraps, so prompt caching survives the meter."""
+        if key not in self._llms:
+            w = base if self.ledger is None else LedgerLLM(base, self.ledger, tag, self.estimate_usd)
+            if w is not base:
+                w.supports_cache_break = bool(getattr(base, "supports_cache_break", False))
+            self._llms[key] = w
+        return self._llms[key]
+
+    def v2_llm_for(self, tag: str = "engine2") -> Any:
+        """The generator of ``engine2`` (``v2_llm``, else the shared generator), metered under ``tag``."""
+        return self._v2_llm("v2:" + tag, self.v2_llm if self.v2_llm is not None else self.llm, tag)
+
+    def judge_llm_for(self, tag: str = "engine2-judge") -> Any:
+        """The judge model of ``engine2`` (``judge_llm``, else the generator), metered under ``tag``."""
+        base = self.judge_llm if self.judge_llm is not None else (
+            self.v2_llm if self.v2_llm is not None else self.llm)
+        return self._v2_llm("v2j:" + tag, base, tag)
+
+    def strong_llm_for(self, tag: str = "engine2-strong") -> Any:
+        """The strong model of ``engine2``'s escalation, metered under ``tag``; None when none was given."""
+        if self.strong_llm is None:
+            return None
+        return self._v2_llm("v2s:" + tag, self.strong_llm, tag)
 
     def engine_tap(self, variant: str = "engine") -> "_Tap":
         """Keeps the raw replies of the engine's model calls (per thread). Exists once
@@ -408,7 +448,9 @@ def build_context(dataset: Dataset, db_path: str, *, llm: Any = None, embedder: 
                   reranker: Any = None, entailer: Any = None, config: Config | None = None,
                   ledger: Ledger | None = None, estimate_usd: float = 0.01,
                   prepare: bool = True, legal_prompt: str = "v2",
-                  support_llm: Any = None) -> BenchContext:
+                  support_llm: Any = None, judge_llm: Any = None, strong_llm: Any = None,
+                  v2_llm: Any = None, v2_surface: Any = None,
+                  v2_calibration: Any = None) -> BenchContext:
     """Defaults to the offline fakes. Ingests and embeds the corpus into ``db_path``."""
     from ..fakes import HashEmbedder, OverlapReranker, RuleEntailer
     ctx = BenchContext(
@@ -419,6 +461,8 @@ def build_context(dataset: Dataset, db_path: str, *, llm: Any = None, embedder: 
         entailer=entailer if entailer is not None else RuleEntailer(),
         config=config, ledger=ledger, estimate_usd=estimate_usd,
         legal_prompt=legal_prompt, support_llm=support_llm,
+        judge_llm=judge_llm, strong_llm=strong_llm, v2_llm=v2_llm, v2_surface=v2_surface,
+        v2_calibration=v2_calibration,
     )
     if prepare:
         prepare_corpus(dataset.corpus_dir, db_path, ctx.embedder)
@@ -829,15 +873,20 @@ class EngineSingle(EngineSystem):
     exploratory = True
 
 
+def _engine2(ctx: BenchContext, **_: Any) -> System:
+    from .systems_v2 import EngineV2System  # imported late: the v2 engine is optional
+    return EngineV2System(ctx)
+
+
 _CLASSES: dict[str, Callable[..., System]] = {
     "closed_book": ClosedBook, "bm25": BM25, "vector": Vector, "hybrid": Hybrid,
     "hybrid_rerank": HybridRerank,
     "agentic": Agentic, "long_context": LongContext, "engine": EngineSystem, "oracle": Oracle,
-    "engine_single": EngineSingle,
+    "engine_single": EngineSingle, "engine2": _engine2,
 }
 
 
-def build_systems(ctx: BenchContext, names: tuple[str, ...] | list[str] = SYSTEM_NAMES, *,
+def build_systems(ctx: BenchContext, names: tuple[str, ...] | list[str] = DEFAULT_SYSTEMS, *,
                   k: int = 8, agent_k: int = 5, max_actions: int = 4,
                   time_aware: bool = False, long_context_limit: int = 90_000,
                   agent_rerank: bool = False,
