@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- heuresis's paper page, in the aphes.ist design system (aphesis design-system: system/page-types/paper).
+     site/page.html is the source; site/build.py fills in the honesty table and the dev numbers from README.md and
+     writes site/index.html. The lab kit is pinned in site/vendor/lab-kit-v1 -->
+<title>heuresis · the benchmark</title>
+<meta name="description" content="heuresis, a retrieval engine that cites what was in force or abstains, and its pre-registered benchmark: draft, not run on the test split; dev-split calibration data only.">
+<meta name="color-scheme" content="light dark">
+<link rel="preload" href="vendor/lab-kit-v1/fonts/AphesisScript-VF.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="vendor/lab-kit-v1/fonts/SpecialElite-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="vendor/lab-kit-v1/lab.css">
+<script src="vendor/lab-kit-v1/lab.js" defer></script>
+<style>
+  /* the page's own layout, on the kit's tokens only. prefix: hr- */
+  .hr-meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: center; margin-top: var(--space-4); }
+  .hr-stack { display: grid; gap: var(--space-5); margin-top: var(--space-5); max-width: 760px; }
+  .lab-section > * + * { margin-top: var(--space-4); }
+  .lab-section h3 { margin-top: var(--space-6); }
+  .lab-chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .lab-honesty td:first-child { min-width: 16em; }
+</style>
+</head>
+<body class="lab">
+<div class="lab-page">
+
+<header class="lab-header lab-header--sticky lab-header--blur">
+  <a class="lab-mark" href="https://aphes.ist/" aria-label="aphes.ist"></a>
+  <span class="lab-project">heuresis <span class="lab-gloss" lang="grc">εὕρεσις</span></span>
+  <nav class="lab-nav" aria-label="on this page">
+    <a href="#question">question</a><a href="#method">method</a><a href="#prereg">pre-registration</a><a href="#results">results</a><a href="#honesty">honesty</a><a href="#data">data</a>
+  </nav>
+  <div class="lab-controls">
+    <button class="lab-button" type="button" data-lab-toggle="theme">close the eye</button>
+    <button class="lab-button" type="button" data-lab-toggle="fog" aria-pressed="false">fog · off</button>
+  </div>
+</header>
+
+<main>
+<div class="lab-titles">
+  <span class="lab-gloss-title" lang="la">experimentum</span>
+  <h1 class="lab-title">the benchmark</h1>
+  <p class="lab-lede">heuresis retrieves what was in force at a date, cites it, and abstains when it cannot. its benchmark asks whether that is cheaper per correct answer and more reliable than standard rag and agentic search, on three public datasets. it has not been run on the test split.</p>
+  <div class="hr-meta lab-meta">
+    <span>datasets: hoh, multihoprag, musique</span>
+    <span>generator: claude-haiku-5-5</span>
+    <span class="lab-ev" data-ev="hypothesis" data-tip="the pre-registration is a draft; thresholds are not calibrated and no hash is frozen">pre-registration: draft, not frozen</span>
+  </div>
+</div>
+
+<section class="lab-section" id="question" aria-labelledby="question-h">
+  <h2 id="question-h">the question</h2>
+  <div class="lab-callout">
+    <span class="lab-callout-label">quaestio</span>
+    <p>on corpora too large for one context window, is a cost-ordered, time-aware, verified-and-abstaining retrieval algorithm cheaper per correct answer and more reliable than standard rag and agentic search?</p>
+  </div>
+  <p class="lab-prose">"more reliable" means a higher penalised score: +1 correct, 0 abstained, −1 wrong, which rewards abstaining over answering wrongly. "cheaper per correct answer" means lower total api cost divided by the number of correct outcomes, at a dated price table. the claim is limited to corpora that do not fit in a context window, to the three datasets, to one generator model, and to the comparison as built.</p>
+</section>
+
+<section class="lab-section" id="method" aria-labelledby="method-h">
+  <h2 id="method-h">method</h2>
+  <p class="lab-prose">the engine orders its work by cost: cheap local stages first, one model call, then local checks. it filters by validity date before it ranks, so a version not in force at the question's date cannot reach the ranking, and it returns an answer in which every sentence is checked against the passages it cites, or a typed abstention that says why it did not answer. in the default <code>search</code> mode the model may ask for up to four more searches, each run with the question's own as-of date.</p>
+  <p class="lab-prose">every system shares one generator (<code>claude-haiku-5-5</code>, thinking disabled), one sqlite corpus per dataset and one local embedder. the baselines search as of today and are not told the question's date: this is deliberate, the comparison between a system that handles validity and systems that do not. a time-aware copy of each baseline (<code>+asof</code>) is run too, as exploratory, to show how much of any gap is the date filter alone.</p>
+  <div class="lab-table-wrap">
+    <table class="lab-table lab-table--dense">
+      <caption>the systems.</caption>
+      <thead><tr><th scope="col">system</th><th scope="col">what it does</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><code>closed_book</code></th><td>no retrieval</td></tr>
+        <tr><th scope="row"><code>bm25</code>, <code>vector</code></th><td>lexical or dense search over all versions in force today</td></tr>
+        <tr><th scope="row"><code>hybrid</code>, <code>hybrid_rerank</code></th><td>bm25 and dense fused by reciprocal rank fusion; with or without the local cross-encoder</td></tr>
+        <tr><th scope="row"><code>agentic</code></th><td>a search-tool loop over the <code>hybrid</code> retriever, at most 4 searches</td></tr>
+        <tr class="lab-ref-row"><th scope="row"><code>engine</code></th><td>the heuresis algorithm, given the question's as-of date; <code>search</code> answer mode, <code>grade</code> decision mode. a hypothesis until measured</td></tr>
+        <tr><th scope="row"><code>oracle</code></th><td>the gold passages: a ceiling, not a competitor</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="lab-table-wrap">
+    <table class="lab-table lab-table--dense">
+      <caption>the datasets, all public, built from pinned revisions. dev / test / sealed: 100 / 500 / 300 questions each.</caption>
+      <thead><tr><th scope="col">dataset</th><th scope="col">kind</th><th scope="col" class="num">corpus tokens</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><code>hoh</code></th><td>temporal</td><td class="num">7,296,081</td></tr>
+        <tr><th scope="row"><code>multihoprag</code></th><td>multi-hop, with unanswerable questions</td><td class="num">1,574,432</td></tr>
+        <tr><th scope="row"><code>musique</code></th><td>multi-hop</td><td class="num">1,409,951</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="lab-section" id="prereg" aria-labelledby="prereg-h">
+  <h2 id="prereg-h">pre-registration</h2>
+  <p class="lab-prose"><a href="https://github.com/aphesist/heuresis/blob/main/PREREGISTRATION.md">PREREGISTRATION.md</a> is a draft, dated 2026-11-11. it will be frozen by a git tag (<code>prereg-v1</code>) after the calibration on dev and before any run on the test split; after the tag, every change goes into its deviations log with its reason and date.</p>
+  <p class="lab-prose">its proposed decision rules: <b>supported</b> only if, on at least two of the three datasets, the engine's penalised score beats both <code>hybrid</code> and <code>agentic</code> at a holm-adjusted p below 0.05, and its cost per correct answer is lower than <code>agentic</code>'s with a bootstrap 95% interval that excludes zero. <b>refuted</b> if, among other conditions, the engine does not beat <code>hybrid</code> on <code>hoh</code>, the one dataset where it has a structural advantage. <b>mixed</b> otherwise.</p>
+  <div class="lab-callout lab-callout--alert">
+    <span class="lab-callout-label">prior contact with the test split</span>
+    <p>two retrieval-only sanity checks read part of the test split before the draft was written: no system answered a test question, no model was called and nothing was graded. it is a contamination risk and is disclosed as one, in section 2a of the pre-registration.</p>
+  </div>
+</section>
+
+<section class="lab-section" id="results" aria-labelledby="results-h">
+  <h2 id="results-h">results</h2>
+  <p class="lab-prose">no results yet. no system has been run and no answer graded on a test or sealed split; the confirmatory part of the benchmark has not been run. what follows is dev-split calibration data: the same 100 questions per dataset, used for tuning.</p>
+  <div class="lab-callout lab-callout--alert">
+    <span class="lab-callout-label">dev split · calibration data, not results</span>
+    <p>these numbers chose the design. they are not evidence for it.</p>
+  </div>
+
+  <h3>the date filter, retrieval only</h3>
+  <p class="lab-prose">on <code>hoh</code>, does the retrieved gold unit hold the version in force at the question date? answerable dev questions, n = 100, top 8 passages, no language model. the filter's side of this is partly by construction; the chart measures how often retrieval without it returns the wrong version.</p>
+  <div class="hr-stack">
+    <figure class="lab-chart">
+      <div class="lab-chart-head">
+        <h3>in-force version retrieved, hoh dev</h3>
+        <ul class="lab-legend"><li class="lab-key lab-key--dot lab-c1">as-of = question date</li><li class="lab-key lab-key--dot lab-c2">as-of = today</li><li class="lab-key lab-key--band lab-ink">95% wilson interval</li></ul>
+      </div>
+        <svg viewBox="0 0 520 202" role="img" aria-label="on hoh dev, with the as-of filter the retrieved gold unit holds the version in force for 92 to 100 of 100 questions; searching as of today, for 42 to 49 of 100">
+        <g class="lab-grid"><line x1="170.0" x2="170.0" y1="10" y2="172"/><line x1="252.5" x2="252.5" y1="10" y2="172"/><line x1="335.0" x2="335.0" y1="10" y2="172"/><line x1="417.5" x2="417.5" y1="10" y2="172"/><line x1="500.0" x2="500.0" y1="10" y2="172"/></g>
+        <g class="lab-axis" transform="translate(0,176)"><line class="domain" x1="170" x2="500" y1="0" y2="0"/>
+        <g class="tick" transform="translate(170.0,0)"><line y2="5"/><text y="18" text-anchor="middle">0%</text></g>
+        <g class="tick" transform="translate(252.5,0)"><line y2="5"/><text y="18" text-anchor="middle">25%</text></g>
+        <g class="tick" transform="translate(335.0,0)"><line y2="5"/><text y="18" text-anchor="middle">50%</text></g>
+        <g class="tick" transform="translate(417.5,0)"><line y2="5"/><text y="18" text-anchor="middle">75%</text></g>
+        <g class="tick" transform="translate(500.0,0)"><line y2="5"/><text y="18" text-anchor="middle">100%</text></g>
+        </g>
+        <text class="lab-label" x="0" y="22">bm25</text>
+        <rect class="lab-band lab-c2" x="298.7" y="12" width="66.0" height="12" data-tip="49/100, 95% wilson 39–59"/>
+        <rect class="lab-dot lab-c2" x="328.7" y="15" width="6" height="6"/>
+        <rect class="lab-band lab-c1" x="486.8" y="12" width="13.2" height="12" data-tip="100/100, 95% wilson 96–100"/>
+        <rect class="lab-dot lab-c1" x="497.0" y="15" width="6" height="6"/>
+        <text class="lab-label" x="0" y="52">dense</text>
+        <rect class="lab-band lab-c2" x="278.9" y="42" width="62.7" height="12" data-tip="42/100, 95% wilson 33–52"/>
+        <rect class="lab-dot lab-c2" x="305.6" y="45" width="6" height="6"/>
+        <rect class="lab-band lab-c1" x="450.5" y="42" width="36.3" height="12" data-tip="92/100, 95% wilson 85–96"/>
+        <rect class="lab-dot lab-c1" x="470.6" y="45" width="6" height="6"/>
+        <text class="lab-label" x="0" y="82">bm25 + dense (rrf)</text>
+        <rect class="lab-band lab-c2" x="295.4" y="72" width="66.0" height="12" data-tip="48/100, 95% wilson 38–58"/>
+        <rect class="lab-dot lab-c2" x="325.4" y="75" width="6" height="6"/>
+        <rect class="lab-band lab-c1" x="476.9" y="72" width="19.8" height="12" data-tip="98/100, 95% wilson 93–99"/>
+        <rect class="lab-dot lab-c1" x="490.4" y="75" width="6" height="6"/>
+        <text class="lab-label" x="0" y="112">rrf + rerank</text>
+        <rect class="lab-band lab-c2" x="282.2" y="102" width="62.7" height="12" data-tip="43/100, 95% wilson 34–53"/>
+        <rect class="lab-dot lab-c2" x="308.9" y="105" width="6" height="6"/>
+        <rect class="lab-band lab-c1" x="450.5" y="102" width="36.3" height="12" data-tip="92/100, 95% wilson 85–96"/>
+        <rect class="lab-dot lab-c1" x="470.6" y="105" width="6" height="6"/>
+        <text class="lab-label" x="0" y="142">default cascade (with rerank)</text>
+        <rect class="lab-band lab-c2" x="285.5" y="132" width="62.7" height="12" data-tip="44/100, 95% wilson 35–54"/>
+        <rect class="lab-dot lab-c2" x="312.2" y="135" width="6" height="6"/>
+        <rect class="lab-band lab-c1" x="453.8" y="132" width="36.3" height="12" data-tip="93/100, 95% wilson 86–97"/>
+        <rect class="lab-dot lab-c1" x="473.9" y="135" width="6" height="6"/>
+        </svg>
+      <figcaption>searching as of today returned the version in force at the question date for fewer than half of the questions, and for none (0/51) of the "outdated" ones. it is retrieval, not answer accuracy. source: <a href="https://github.com/aphesist/heuresis/blob/main/docs/pilot-dev.md">docs/pilot-dev.md</a>, item 2.</figcaption>
+    </figure>
+    <div class="lab-table-wrap">
+      <table class="lab-table lab-table--dense">
+        <caption>the same numbers.</caption>
+        <thead><tr><th scope="col">system</th><th scope="col" class="num">question date</th><th scope="col" class="num">95% ci</th><th scope="col" class="num">today</th><th scope="col" class="num">95% ci</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">bm25</th><td class="num">100/100</td><td class="num">96–100</td><td class="num">49/100</td><td class="num">39–59</td></tr>
+          <tr><th scope="row">dense</th><td class="num">92/100</td><td class="num">85–96</td><td class="num">42/100</td><td class="num">33–52</td></tr>
+          <tr><th scope="row">bm25 + dense (rrf)</th><td class="num">98/100</td><td class="num">93–99</td><td class="num">48/100</td><td class="num">38–58</td></tr>
+          <tr><th scope="row">rrf + rerank</th><td class="num">92/100</td><td class="num">85–96</td><td class="num">43/100</td><td class="num">34–53</td></tr>
+          <tr><th scope="row">default cascade (with rerank)</th><td class="num">93/100</td><td class="num">86–97</td><td class="num">44/100</td><td class="num">35–54</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>the paid dev runs</h3>
+  <dl class="lab-stats">
+    <div class="lab-stat"><dt class="lab-stat-label">hoh · hybrid, as of today</dt><dd class="lab-stat-value num">−0.060</dd><dd class="lab-stat-note">penalised score, thinking disabled, n = 100</dd></div>
+    <div class="lab-stat lab-stat--ref"><dt class="lab-stat-label">hoh · hybrid given the date</dt><dd class="lab-stat-value num">+0.770</dd><dd class="lab-stat-note">the single-draft engine: +0.750</dd></div>
+    <div class="lab-stat"><dt class="lab-stat-label">verifier, right vs wrong</dt><dd class="lab-stat-value num">0.50</dd><dd class="lab-stat-note">claim-level auroc [0.36, 0.62]</dd></div>
+  </dl>
+  <ul class="lab-prose">
+    <li><b>the versioned store with its as-of filter is a large, robust gain.</b> pooled over the three datasets: 0.120 and 0.390 (thinking disabled, n = 300).</li>
+    <li><b>a plain hybrid baseline that is given the date matches the engine on the temporal set,</b> so the date filter, not the rest of the engine, carries that result.</li>
+    <li><b>the single-draft engine abstained on 61 to 76 percent of the multi-hop questions</b> and, with the model's default thinking on, lost to the <code>agentic</code> baseline on both (engine minus <code>agentic</code>: <code>musique</code> −0.240 [−0.370, −0.110], <code>multihoprag</code> −0.270 [−0.440, −0.110]).</li>
+    <li><b>the entailment verifier cannot separate right answers from wrong ones</b>, because the wrong answers' claims are usually true of their passage. this is why verification became a grader of confidence, not a gate, in the redesign.</li>
+  </ul>
+  <p class="lab-prose">the redesign these results led to (the <code>search</code> answer mode and the <code>grade</code> decision mode) is not measured. the check is a paid run on <code>dev2</code>, a fresh tuning split, then the test split. sources: <a href="https://github.com/aphesist/heuresis/blob/main/results/dev-fixes/NOTES.md">results/dev-fixes/NOTES.md</a>, <a href="https://github.com/aphesist/heuresis/blob/main/results/dev-fixes/thinking-default/comparison.md">results/dev-fixes/thinking-default/comparison.md</a>, <a href="https://github.com/aphesist/heuresis/blob/main/results/dev-calibration/phase1/NOTES.md">results/dev-calibration/phase1/NOTES.md</a>.</p>
+</section>
+
+<section class="lab-section" id="honesty" aria-labelledby="honesty-h">
+  <h2 id="honesty-h">what this rests on</h2>
+  <div class="lab-table-wrap">
+    <table class="lab-table lab-honesty">
+      <caption>the honesty table, as in the readme: every claim, and the kind of evidence behind it today.</caption>
+      <thead><tr><th scope="col">claim</th><th scope="col">rests on</th><th scope="col">basis</th></tr></thead>
+      <tbody>
+        <tr><td>the as-of filter never returns a version outside its validity interval</td><td><span class="lab-ev" data-ev="tested">tested</span> (property test)</td><td><code>tests/test_store.py</code>, <code>test_invariant_nothing_outside_validity</code> (hypothesis, 150 examples)</td></tr>
+        <tr><td>consolidated text is replayed from events, including corrections and transaction time</td><td><span class="lab-ev" data-ev="tested">tested</span> , on synthetic fixtures only</td><td><code>tests/test_store.py</code>, <code>tests/test_domains.py</code>; no real amended corpus has been used</td></tr>
+        <tr><td>numbers in an answer come only from cited sources or tool results</td><td><span class="lab-ev" data-ev="tested">tested</span></td><td><code>tests/test_locked_verify.py</code></td></tr>
+        <tr><td>the sql tool is bound to the engine's own database; a model-written <code>db</code> is overwritten</td><td><span class="lab-ev" data-ev="tested">tested</span></td><td><code>tests/test_engine.py</code>, <code>test_sql_binding</code></td></tr>
+        <tr><td>the guard rejects diffs outside the surface</td><td><span class="lab-ev" data-ev="tested">tested</span></td><td><code>tests/test_locked_guard.py</code></td></tr>
+        <tr><td>the date filter fixes in-force retrieval on <code>hoh</code></td><td><span class="lab-ev" data-ev="measured">measured</span> (dev, n=100, retrieval only)</td><td>92 to 100 of 100 with the filter against 42 to 49 of 100 without; partly by construction; no answer accuracy (<a href="https://github.com/aphesist/heuresis/blob/main/docs/pilot-dev.md">pilot</a>)</td></tr>
+        <tr><td>time-aware retrieval lifts answer accuracy on dated questions</td><td><span class="lab-ev" data-ev="measured">measured</span> on dev (n = 100 per dataset, calibration data)</td><td><code>hoh</code>: <code>hybrid</code> -0.060 and <code>hybrid+asof</code> +0.770 penalised score (thinking disabled); pooled 0.120 and 0.390 (n = 300). a plain <code>hybrid+asof</code> matches the single-draft engine on <code>hoh</code> (+0.770 against +0.750). [<code>results/dev-fixes/thinking-default/comparison.md</code>](results/dev-fixes/thinking-default/comparison.md)</td></tr>
+        <tr><td>a local verifier separates matched from mismatched passages</td><td><span class="lab-ev" data-ev="measured">measured</span> as a crude proxy (dev)</td><td>auroc 0.855, 0.659, 0.918 on <code>musique</code>, <code>multihoprag</code>, <code>hoh</code>; not verification quality on drafted answers</td></tr>
+        <tr><td>the benchmark costs a few dollars</td><td><span class="lab-ev" data-ev="modelled">modelled</span> , partly checked on dev</td><td>$2.16 to $4.01 for one test run of seven systems on 3 x 500 questions at 1 to 4 agentic searches; excludes <code>hybrid</code>, the <code>+asof</code> variants, <code>engine_single</code>, the search mode and calibration; assumes 120 output tokens per call and 3.5 characters per token. on dev the measured cost was us$0.00006 to 0.0008 per question and system, thinking disabled or default (<code>results/dev-fixes/thinking-default/comparison.md</code>, cost table)</td></tr>
+        <tr><td>the engine beats the baselines on the penalised score</td><td><span class="lab-ev" data-ev="hypothesis">hypothesis</span></td><td>the pre-registered 18-comparison family; not run</td></tr>
+        <tr><td>it is cheaper per correct answer than agentic search</td><td><span class="lab-ev" data-ev="hypothesis">hypothesis</span></td><td>bootstrap interval of the difference; not run</td></tr>
+        <tr><td>verification as a gate improves reliability</td><td><span class="lab-ev" data-ev="measured">measured</span> on dev: it did not (n = 100 per dataset, calibration data)</td><td>claim-level auroc 0.50 [0.36, 0.62] (163 claims of correct, 24 of wrong drafts); the single-draft engine abstained on 149 of 300 dev questions; the threshold grid is flat. [<code>results/dev-calibration/phase1/NOTES.md</code>](results/dev-calibration/phase1/NOTES.md), [<code>results/dev-fixes/NOTES.md</code>](results/dev-fixes/NOTES.md)</td></tr>
+        <tr><td>the redesigned engine (the model may search, with every search date-filtered; verification only grades) beats the single-draft engine and the baselines</td><td><span class="lab-ev" data-ev="hypothesis">hypothesis</span></td><td>built and tested offline (<code>tests/test_engine_search.py</code>); not measured. the check is a paid run on <code>dev2</code>, then the test split</td></tr>
+        <tr><td>the grade (min of support, version certainty, source coverage) orders answers by correctness</td><td><span class="lab-ev" data-ev="hypothesis">hypothesis</span></td><td>the support part had auroc about 0.5 on dev; version certainty and source coverage are constant in the benchmark corpora</td></tr>
+        <tr><td>the ask-back gate helps</td><td><span class="lab-ev" data-ev="hypothesis">hypothesis</span> , not benchmarked</td><td>the benchmark attaches no classifier, so the gate cannot fire there</td></tr>
+        <tr><td>coverage grades improve calibration</td><td><span class="lab-ev" data-ev="hypothesis">hypothesis</span> , not benchmarked</td><td>the benchmark datasets declare full coverage</td></tr>
+        <tr><td>explicit-edge expansion helps</td><td><span class="lab-ev" data-ev="hypothesis">hypothesis</span> , off by default</td><td>not evaluated; the benchmark corpora have no edges</td></tr>
+        <tr><td>divergence (conflict) detection</td><td>not built</td><td>the decision rule has a branch for it; nothing produces the flag</td></tr>
+        <tr><td>the offline mode's rule-based verifier</td><td>a test fixture, lenient</td><td>token containment; not a demonstration of verification quality</td></tr>
+        <tr><td>portuguese</td><td>untested beyond tokenisation, dates and wording</td><td>no portuguese retrieval or verification evaluation; the verifier model is reported not to have been trained on portuguese data</td></tr>
+        <tr><td>the legal plug-in</td><td>a synthetic example</td><td>not legal advice and not a legal product</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="lab-ev-key lab-legend" aria-label="key">
+    <span class="lab-ev" data-ev="measured">measured · a number in a committed file</span>
+    <span class="lab-ev" data-ev="modelled">modelled · arithmetic on stated assumptions</span>
+    <span class="lab-ev" data-ev="tested">tested · a test in tests/ passes</span>
+    <span class="lab-ev" data-ev="hypothesis">hypothesis · not checked yet</span>
+  </div>
+  <p class="lab-prose">rows move from hypothesis to measured only when a result with its confidence interval is committed.</p>
+</section>
+
+<section class="lab-section" id="data" aria-labelledby="data-h">
+  <h2 id="data-h">the data</h2>
+  <p class="lab-prose">every number on this page is in a committed file. the paid dev runs are itemised in a ledger: us$5.78 of the us$30 cap so far. the datasets are public and are not redistributed; the loaders rebuild them from pinned revisions and refuse to continue if a split's hash differs from the manifest.</p>
+  <div class="lab-table-wrap">
+    <table class="lab-table lab-table--dense">
+      <caption>files.</caption>
+      <thead><tr><th scope="col">path</th><th scope="col">what</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/aphesist/heuresis/blob/main/docs/pilot-dev.md">docs/pilot-dev.md</a></td><td>the retrieval-only dev pilot</td></tr>
+        <tr><td><a href="https://github.com/aphesist/heuresis/tree/main/results/dev-fixes">results/dev-fixes/</a></td><td>the paid dev runs, their notes and <code>ledger.jsonl</code></td></tr>
+        <tr><td><a href="https://github.com/aphesist/heuresis/tree/main/results/dev-calibration">results/dev-calibration/</a></td><td>the verifier and threshold calibration</td></tr>
+        <tr><td><a href="https://github.com/aphesist/heuresis/blob/main/docs/datasets.md">docs/datasets.md</a></td><td>the datasets, their splits, licences and known weaknesses</td></tr>
+        <tr><td><a href="https://github.com/aphesist/heuresis/blob/main/PREREGISTRATION.md">PREREGISTRATION.md</a></td><td>the draft pre-registration</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <pre data-label="offline, no model, no key, no cost"><code>pip install -e ".[dev]"
+python3 -m pytest -q
+heuresis hash      <span class="c"># locked-folder, surface and baseline-prompt hashes</span></code></pre>
+</section>
+</main>
+
+<footer class="lab-footer lab-meta">
+  <span>heuresis · the benchmark</span>
+  <span>aphes.ist lab kit <span id="kit-version">1.1.0</span>, vendored in site/vendor/lab-kit-v1</span>
+  <span><a href="https://github.com/aphesist/heuresis">github</a> · apache-2.0</span>
+</footer>
+</div>
+</body>
+</html>
