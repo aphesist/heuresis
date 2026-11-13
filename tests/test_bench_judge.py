@@ -104,3 +104,29 @@ def test_dev2_folders_may_be_judged(tmp_path, monkeypatch):
     st = judge.judge_folder(out, qs, Judge(), workers=1)
     assert st["candidates"] > 0 and st["judged"] == st["candidates"]
     assert judge.DEV_SPLITS == ("dev", "dev2")
+
+
+def test_registered_run_flag_allows_a_held_out_split_only_with_a_matching_hash(tmp_path, monkeypatch, capsys):
+    from heuresis.bench import run as R
+    from heuresis.bench.brlaw import _ids_sha
+    ds, out = make_run(tmp_path, split="test")
+    monkeypatch.setattr(R, "_load_dataset", lambda name: ds)
+    qs = {q.id: q for q in ds.questions["test"]}
+    ids = [q.id for q in ds.questions["test"]]
+    good = tmp_path / "reg.md"
+    good.write_text(f"held-out hash `{_ids_sha(ids)}`\n")
+    bad = tmp_path / "bad.md"
+    bad.write_text("held-out hash `deadbeef`\n")
+    # without the flag: still refused
+    assert judge.main([out]) == 2
+    with pytest.raises(ValueError):
+        judge.judge_folder(out, qs, Judge())
+    # with a registration that does not carry the hash, or a missing file: refused
+    assert judge.main([out, "--registered-run", str(bad)]) == 2
+    assert judge.main([out, "--registered-run", str(tmp_path / "none.md")]) == 2
+    # with the matching hash: accepted (dry run counts only)
+    capsys.readouterr()
+    assert judge.main([out, "--registered-run", str(good)]) == 0
+    assert json.loads(capsys.readouterr().out)["to_judge"] > 0
+    st = judge.judge_folder(out, qs, Judge(), workers=1, registered=True)
+    assert st["judged"] == st["candidates"] > 0

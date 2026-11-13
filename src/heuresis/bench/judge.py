@@ -80,12 +80,29 @@ def load_verdicts(run_dir: str) -> dict[tuple[str, str], dict]:
     return out
 
 
+def registered_split_ok(manifest: dict, questions: Sequence[Any], registration: str) -> str | None:
+    """None if ``manifest`` is a held-out run whose split's question-id hash is written in the
+    registration file ``registration`` and matches the questions; else the reason it is not."""
+    from .brlaw import _ids_sha
+    split = manifest.get("split")
+    try:
+        text = open(registration, encoding="utf-8").read()
+    except OSError as e:
+        return f"cannot read the registration {registration}: {e}"
+    ids = [q.id for q in questions]
+    if _ids_sha(ids) not in text:
+        return f"the question-id hash of split {split!r} is not in {registration}"
+    if sorted(manifest.get("question_ids") or []) != sorted(ids):
+        return f"the manifest's question ids differ from the split {split!r}"
+    return None
+
+
 def judge_folder(run_dir: str, questions: dict[str, Any], llm: Any, *, workers: int = 4,
-                 max_tokens: int = 10, dry_run: bool = False) -> dict:
+                 max_tokens: int = 10, dry_run: bool = False, registered: bool = False) -> dict:
     """Judge one dev run folder. ``questions`` maps question id to a ``Question`` (dev only);
     ``llm`` is the metered generator. Returns counts. A budget stop ends the folder cleanly."""
     manifest, rows, _ = report.load(run_dir)
-    if manifest.get("split") not in DEV_SPLITS:
+    if manifest.get("split") not in DEV_SPLITS and not registered:
         raise ValueError(f"{run_dir}: manifest split is {manifest.get('split')!r}, not one of "
                          f"{DEV_SPLITS}; refusing")
     cand = candidates(rows)
@@ -133,6 +150,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--ledger")
     ap.add_argument("--key-env", default="PROJECTS_ANTHROPIC_KEY", metavar="NAME")
     ap.add_argument("--model", default=None)
+    ap.add_argument("--registered-run", metavar="REGISTRATION", default=None,
+                    help="grade a completed held-out run: allowed only when the split's question-id "
+                         "hash is written in this registration file and matches")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--max-tokens", type=int, default=20,
                     help="output cap of each judge call (default 20: ten cuts NOT_EQUIVALENT)")
@@ -158,13 +178,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     rc = 0
     for d in a.run_dir:
         manifest, _rows, _ = report.load(d)
-        if manifest.get("split") not in DEV_SPLITS:
+        if manifest.get("split") not in DEV_SPLITS and not a.registered_run:
             print(f"error: {d}: manifest split is {manifest.get('split')!r}, not one of "
                   f"{DEV_SPLITS}; refusing", file=sys.stderr)
             return 2
         ds = _load_dataset(manifest["dataset"])
         qs = {q.id: q for q in ds.questions[manifest["split"]]}
-        st = judge_folder(d, qs, llm, workers=a.workers, max_tokens=a.max_tokens, dry_run=not a.paid)
+        if manifest.get("split") not in DEV_SPLITS:
+            why = registered_split_ok(manifest, ds.questions[manifest["split"]], a.registered_run)
+            if why:
+                print(f"error: {d}: {why}; refusing", file=sys.stderr)
+                return 2
+        st = judge_folder(d, qs, llm, workers=a.workers, max_tokens=a.max_tokens, dry_run=not a.paid,
+                          registered=bool(a.registered_run))
         print(json.dumps({"run_dir": d, **st}))
         if st["stopped"]:
             rc = 1
