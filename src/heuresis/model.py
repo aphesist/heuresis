@@ -271,6 +271,9 @@ class Claim:
     #: exists / valid_at_date / supported / numbers_traced -> bool
     checks: dict[str, bool] = field(default_factory=dict)
     note: str = ""
+    #: "cited" (the sentence cites passages or tool results) or "derived" (a conclusion
+    #: that cites nothing and only combines cited sentences). Used by the v2 judge.
+    kind: str = "cited"
 
 
 @dataclass
@@ -308,6 +311,8 @@ class Answer:
     tool_results: list[ToolResult] = field(default_factory=list)
     query: Query | None = None
     trace: list[StageTrace] = field(default_factory=list)
+    #: Free-form details of the engine that produced the answer (empty for v1).
+    meta: dict = field(default_factory=dict)
 
     @property
     def usd(self) -> float:

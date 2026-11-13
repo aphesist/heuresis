@@ -1,0 +1,1 @@
+No action remains. Do not write SEARCH: or OPEN: lines. Write the final answer from the passages shown, or ABSTAIN <type>: <reason> if they do not settle the question.

@@ -1,0 +1,1 @@
+Ainda pode buscar ou abrir: responda somente com linhas SEARCH: e OPEN:, ou escreva agora a resposta final (ou ABSTAIN <tipo>: <motivo>).

@@ -1,0 +1,32 @@
+{
+  "retrieve": {
+    "k_lexical": 50,
+    "k_dense": 50,
+    "fusion": "convex",
+    "alpha": 0.7,
+    "rrf_k": 60,
+    "k_first": 8,
+    "search_k": 5,
+    "prf_terms": 0,
+    "prf_docs": 3,
+    "open_radius": 1,
+    "edge_expand": false
+  },
+  "agent": {
+    "max_turns": 6,
+    "queries_per_turn": 3,
+    "max_context_chars": 40000,
+    "max_sentences": 0,
+    "max_tokens": 4096
+  },
+  "repair": {
+    "rounds": 1
+  },
+  "route": {
+    "lookup_direct": true,
+    "escalate": false
+  },
+  "judge": {
+    "max_tokens": 400
+  }
+}

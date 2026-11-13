@@ -1,0 +1,1 @@
+Nao resta nenhuma acao. Nao escreva linhas SEARCH: nem OPEN:. Escreva a resposta final a partir dos trechos mostrados, citando o artigo e a norma pela marca do trecho, ou ABSTAIN <tipo>: <motivo> se eles nao resolverem a pergunta.
