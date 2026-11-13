@@ -243,3 +243,59 @@ def test_thinking_default_sends_no_field_and_a_rejection_is_not_dropped():
     with pytest.raises(LLMError):
         llm2.complete("s", "p")
     assert len(calls2) == 1 and llm2.thinking == {"type": "disabled"}
+
+
+# ---------------------------------------------------------------------------
+# cache break (v2 contracts section 8)
+# ---------------------------------------------------------------------------
+
+from heuresis.llm import CACHE_BREAK
+
+
+def _body(calls):
+    return json.loads(calls[0].data.decode())
+
+
+def test_cache_off_payload_unchanged_and_marker_stripped():
+    calls = []
+    llm, _ = make([OK, OK], calls)
+    assert llm.supports_cache_break is False
+    llm.complete("sys", "plain prompt")
+    b = _body(calls)
+    assert b["system"] == "sys"
+    assert b["messages"] == [{"role": "user", "content": "plain prompt"}]
+    calls.clear()
+    llm.complete("sys", "stable" + CACHE_BREAK + "volatile")
+    assert _body(calls)["messages"][0]["content"] == "stablevolatile"
+
+
+def test_cache_on_splits_at_last_marker():
+    calls = []
+    llm, _ = make([OK], calls, cache=True)
+    assert llm.supports_cache_break is True
+    llm.complete("sys", "a" + CACHE_BREAK + "b" + CACHE_BREAK + "c")
+    b = _body(calls)
+    eph = {"type": "ephemeral"}
+    assert b["system"] == [{"type": "text", "text": "sys", "cache_control": eph}]
+    assert b["messages"][0]["content"] == [
+        {"type": "text", "text": "ab", "cache_control": eph},
+        {"type": "text", "text": "c"},
+    ]
+
+
+def test_cache_on_without_marker_is_single_plain_block():
+    calls = []
+    llm, _ = make([OK], calls, cache=True)
+    llm.complete("sys", "no marker")
+    assert _body(calls)["messages"][0]["content"] == [{"type": "text", "text": "no marker"}]
+
+
+def test_cache_write_tokens_are_priced():
+    calls = []
+    payload = {"content": [{"type": "text", "text": "x"}],
+               "usage": {"input_tokens": 100, "output_tokens": 10,
+                         "cache_creation_input_tokens": 400, "cache_read_input_tokens": 0}}
+    llm, _ = make([payload], calls, cache=True)
+    _t, u = llm.complete("s", "p")
+    assert u.usd == pytest.approx(price("claude-haiku-5-5", 100, 10, cached=0, cache_write=400))
+    assert u.usd > price("claude-haiku-5-5", 100, 10)

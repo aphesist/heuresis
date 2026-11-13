@@ -20,6 +20,10 @@ class BudgetExceeded(RuntimeError):
     """The running cost has reached the cap; no further call is made."""
 
 
+#: Marks where the stable prefix of a prompt ends. With ``AnthropicLLM(cache=True)`` the text
+#: before the last marker is cached; otherwise the marker is removed before sending.
+CACHE_BREAK = "\x00cache\x00"
+
 _RETRY_STATUS = {429, 529} | set(range(500, 600))
 
 
@@ -37,8 +41,14 @@ class AnthropicLLM:
         sleep: Callable[[float], None] | None = None,
         temperature: float | None = None,
         thinking: dict | None = None,
+        cache: bool = False,
     ):
         self.id = model
+        #: When true, the system prompt and the prompt prefix before the last ``CACHE_BREAK``
+        #: carry ``cache_control`` breakpoints (Anthropic prompt caching).
+        self.cache = bool(cache)
+        #: Callers insert ``CACHE_BREAK`` into prompts only when this is true.
+        self.supports_cache_break = self.cache
         #: Sampling temperature sent in every request; ``None`` (the default) sends none.
         self.temperature = temperature
         #: Whether requests carry ``temperature``; turns False if the API rejects it.
@@ -88,11 +98,26 @@ class AnthropicLLM:
         self, system: str, prompt: str, *, max_tokens: int = 600
     ) -> tuple[str, Usage]:
         key = self._key()
+        if self.cache:
+            eph = {"type": "ephemeral"}
+            sys_field: Any = [{"type": "text", "text": system, "cache_control": dict(eph)}]
+            head, sep, tail = prompt.rpartition(CACHE_BREAK)
+            if sep:
+                content: Any = [
+                    {"type": "text", "text": head.replace(CACHE_BREAK, ""),
+                     "cache_control": dict(eph)},
+                    {"type": "text", "text": tail},
+                ]
+            else:
+                content = [{"type": "text", "text": prompt}]
+        else:
+            sys_field = system
+            content = prompt.replace(CACHE_BREAK, "")
         payload: dict[str, Any] = {
             "model": self.model,
             "max_tokens": max_tokens,
-            "system": system,
-            "messages": [{"role": "user", "content": prompt}],
+            "system": sys_field,
+            "messages": [{"role": "user", "content": content}],
         }
         if self.thinking is not None:
             payload["thinking"] = dict(self.thinking)

@@ -444,6 +444,49 @@ class Store:
                         out.append(self._row_to_passage(r, 1.0, "expand"))
         return out
 
+    def passage_at(self, unit_id: str, as_of: AsOf) -> Passage | None:
+        """The version of ``unit_id`` in force at ``as_of`` (as known at ``as_of.recorded``)
+        with title, source, validity, coverage and certainty; stage ``lookup``."""
+        with self._view(as_of) as (vt, _ft):
+            where, params = self._filters(as_of, Scope())
+            sql = (
+                f"SELECT {_PASSAGE_COLS} FROM {vt} v "
+                f"LEFT JOIN sources s ON s.id = v.source_id "
+                f"WHERE v.unit_id = :uid AND {where} ORDER BY v.seq LIMIT 1"
+            )
+            r = self._con.execute(sql, {**params, "uid": unit_id}).fetchone()
+            return None if r is None else self._row_to_passage(r, 1.0, "lookup")
+
+    def adjacent(self, unit_id: str, as_of: AsOf, radius: int) -> list[Passage]:
+        """Up to ``radius`` units before and after ``unit_id`` in its source, in ingest order
+        (``units.rowid``), each as the version in force at ``as_of``; units with nothing in
+        force are skipped. ``unit_id`` itself is excluded. Stage ``open``."""
+        if radius <= 0:
+            return []
+        row = self._con.execute(
+            "SELECT rowid AS rid, source_id FROM units WHERE id=?", (unit_id,)
+        ).fetchone()
+        if row is None:
+            return []
+        out: list[Passage] = []
+        with self._view(as_of) as (vt, _ft):
+            where, params = self._filters(as_of, Scope())
+            base = (
+                f"SELECT {_PASSAGE_COLS} FROM units u JOIN {vt} v ON v.unit_id = u.id "
+                f"LEFT JOIN sources s ON s.id = v.source_id "
+                f"WHERE u.source_id = :usrc AND {where} "
+            )
+            p = {**params, "usrc": row["source_id"], "rid": row["rid"], "n": int(radius)}
+            before = self._con.execute(
+                base + "AND u.rowid < :rid ORDER BY u.rowid DESC, v.seq LIMIT :n", p
+            ).fetchall()
+            after = self._con.execute(
+                base + "AND u.rowid > :rid ORDER BY u.rowid ASC, v.seq LIMIT :n", p
+            ).fetchall()
+        for r in list(reversed(before)) + list(after):
+            out.append(self._row_to_passage(r, 1.0, "open"))
+        return out
+
     # -- reading: misc -------------------------------------------------------
 
     def missing_vectors(self, embedder_id: str) -> list[tuple[str, int, str]]:
