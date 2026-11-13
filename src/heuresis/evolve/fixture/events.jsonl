@@ -1,0 +1,65 @@
+{"date": "2015-01-01", "id": "fx000-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Koxdathgith bridge opened in 1897.", "unit_id": "fx000"}
+{"date": "2015-01-01", "id": "fx001-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Dalzan tower is 77 metres tall.", "unit_id": "fx001"}
+{"date": "2015-01-01", "id": "fx002-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Douthgexduth lake has a depth of 215 metres.", "unit_id": "fx002"}
+{"date": "2015-01-01", "id": "fx003-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Nathkil school has 267 pupils.", "unit_id": "fx003"}
+{"date": "2015-01-01", "id": "fx004-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Ruxlath museum closes on Fridays.", "unit_id": "fx004"}
+{"date": "2015-01-01", "id": "fx005-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Tathfu toll was 24 coins.", "unit_id": "fx005"}
+{"date": "2021-01-01", "id": "fx005-e1", "op": "replace", "recorded_at": "2021-01-01", "text": "The Tathfu toll was 75 coins.", "unit_id": "fx005"}
+{"date": "2015-01-01", "id": "fx006-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Sothbrirnoun bridge opened in 1979.", "unit_id": "fx006"}
+{"date": "2015-01-01", "id": "fx007-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Furtror tower is 404 metres tall.", "unit_id": "fx007"}
+{"date": "2015-01-01", "id": "fx008-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Rugullour lake has a depth of 89 metres.", "unit_id": "fx008"}
+{"date": "2015-01-01", "id": "fx009-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Zaxfouthsix school has 478 pupils.", "unit_id": "fx009"}
+{"date": "2015-01-01", "id": "fx010-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Brapoxfax museum closes on Saturdays.", "unit_id": "fx010"}
+{"date": "2015-01-01", "id": "fx011-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Brixvaerbor toll was 21 coins.", "unit_id": "fx011"}
+{"date": "2021-01-01", "id": "fx011-e1", "op": "replace", "recorded_at": "2021-01-01", "text": "The Brixvaerbor toll was 80 coins.", "unit_id": "fx011"}
+{"date": "2015-01-01", "id": "fx012-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Klanrex bridge opened in 1921.", "unit_id": "fx012"}
+{"date": "2015-01-01", "id": "fx013-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Voulfelvur tower is 483 metres tall.", "unit_id": "fx013"}
+{"date": "2015-01-01", "id": "fx014-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Zouthpael lake has a depth of 195 metres.", "unit_id": "fx014"}
+{"date": "2015-01-01", "id": "fx015-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Nelennal school has 971 pupils.", "unit_id": "fx015"}
+{"date": "2015-01-01", "id": "fx016-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Pikoth museum closes on Wednesdays.", "unit_id": "fx016"}
+{"date": "2015-01-01", "id": "fx017-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Kaethdoxvrol toll was 36 coins.", "unit_id": "fx017"}
+{"date": "2021-01-01", "id": "fx017-e1", "op": "replace", "recorded_at": "2021-01-01", "text": "The Kaethdoxvrol toll was 81 coins.", "unit_id": "fx017"}
+{"date": "2015-01-01", "id": "fx018-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Klaelde bridge opened in 1916.", "unit_id": "fx018"}
+{"date": "2015-01-01", "id": "fx019-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Lardaku tower is 217 metres tall.", "unit_id": "fx019"}
+{"date": "2015-01-01", "id": "fx020-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Founvex lake has a depth of 141 metres.", "unit_id": "fx020"}
+{"date": "2015-01-01", "id": "fx021-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Togoulbrol school has 439 pupils.", "unit_id": "fx021"}
+{"date": "2015-01-01", "id": "fx022-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Kaxsaer museum closes on Thursdays.", "unit_id": "fx022"}
+{"date": "2015-01-01", "id": "fx023-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Trantrin toll was 45 coins.", "unit_id": "fx023"}
+{"date": "2021-01-01", "id": "fx023-e1", "op": "replace", "recorded_at": "2021-01-01", "text": "The Trantrin toll was 66 coins.", "unit_id": "fx023"}
+{"date": "2015-01-01", "id": "fx024-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Faertrintoun bridge opened in 1958.", "unit_id": "fx024"}
+{"date": "2015-01-01", "id": "fx025-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Nunnoulneth tower is 283 metres tall.", "unit_id": "fx025"}
+{"date": "2015-01-01", "id": "fx026-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Barklintox lake has a depth of 190 metres.", "unit_id": "fx026"}
+{"date": "2015-01-01", "id": "fx027-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Fenonsel school has 759 pupils.", "unit_id": "fx027"}
+{"date": "2015-01-01", "id": "fx028-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Klaerfoux museum closes on Mondays.", "unit_id": "fx028"}
+{"date": "2015-01-01", "id": "fx029-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Monzouxsax toll was 36 coins.", "unit_id": "fx029"}
+{"date": "2021-01-01", "id": "fx029-e1", "op": "replace", "recorded_at": "2021-01-01", "text": "The Monzouxsax toll was 85 coins.", "unit_id": "fx029"}
+{"date": "2015-01-01", "id": "fx030-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Faenlekul bridge opened in 1973.", "unit_id": "fx030"}
+{"date": "2015-01-01", "id": "fx031-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Klaerkuth tower is 98 metres tall.", "unit_id": "fx031"}
+{"date": "2015-01-01", "id": "fx032-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Bouxgux lake has a depth of 83 metres.", "unit_id": "fx032"}
+{"date": "2015-01-01", "id": "fx033-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Mounbinrun school has 902 pupils.", "unit_id": "fx033"}
+{"date": "2015-01-01", "id": "fx034-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Pulkaxtox museum closes on Fridays.", "unit_id": "fx034"}
+{"date": "2015-01-01", "id": "fx035-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Trethkuthboul toll was 22 coins.", "unit_id": "fx035"}
+{"date": "2021-01-01", "id": "fx035-e1", "op": "replace", "recorded_at": "2021-01-01", "text": "The Trethkuthboul toll was 80 coins.", "unit_id": "fx035"}
+{"date": "2015-01-01", "id": "fx036-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Kenklux bridge opened in 1905.", "unit_id": "fx036"}
+{"date": "2015-01-01", "id": "fx037-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Saethtrul tower is 432 metres tall.", "unit_id": "fx037"}
+{"date": "2015-01-01", "id": "fx038-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Vranmi lake has a depth of 62 metres.", "unit_id": "fx038"}
+{"date": "2015-01-01", "id": "fx039-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Vrabrithtruth school has 324 pupils.", "unit_id": "fx039"}
+{"date": "2015-01-01", "id": "fx040-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Bruthkluntrith museum closes on Tuesdays.", "unit_id": "fx040"}
+{"date": "2015-01-01", "id": "fx041-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Kovorfaen toll was 38 coins.", "unit_id": "fx041"}
+{"date": "2021-01-01", "id": "fx041-e1", "op": "replace", "recorded_at": "2021-01-01", "text": "The Kovorfaen toll was 62 coins.", "unit_id": "fx041"}
+{"date": "2015-01-01", "id": "fx042-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Roukaex bridge opened in 1974.", "unit_id": "fx042"}
+{"date": "2015-01-01", "id": "fx043-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Kinbrexgol tower is 114 metres tall.", "unit_id": "fx043"}
+{"date": "2015-01-01", "id": "fx044-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Laeltror lake has a depth of 227 metres.", "unit_id": "fx044"}
+{"date": "2015-01-01", "id": "fx045-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Titar school has 687 pupils.", "unit_id": "fx045"}
+{"date": "2015-01-01", "id": "fx046-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Braevithru museum closes on Mondays.", "unit_id": "fx046"}
+{"date": "2015-01-01", "id": "fx047-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Garpan toll was 28 coins.", "unit_id": "fx047"}
+{"date": "2021-01-01", "id": "fx047-e1", "op": "replace", "recorded_at": "2021-01-01", "text": "The Garpan toll was 56 coins.", "unit_id": "fx047"}
+{"date": "2015-01-01", "id": "fx048-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Ponvruthklaer bridge opened in 1901.", "unit_id": "fx048"}
+{"date": "2015-01-01", "id": "fx049-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Douxlopax tower is 76 metres tall.", "unit_id": "fx049"}
+{"date": "2015-01-01", "id": "fx050-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Funfibrar lake has a depth of 225 metres.", "unit_id": "fx050"}
+{"date": "2015-01-01", "id": "fx051-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Kathnanpan school has 326 pupils.", "unit_id": "fx051"}
+{"date": "2015-01-01", "id": "fx052-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Runrothlir museum closes on Sundays.", "unit_id": "fx052"}
+{"date": "2015-01-01", "id": "fx053-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Pabaeth toll was 46 coins.", "unit_id": "fx053"}
+{"date": "2021-01-01", "id": "fx053-e1", "op": "replace", "recorded_at": "2021-01-01", "text": "The Pabaeth toll was 78 coins.", "unit_id": "fx053"}
+{"date": "2015-01-01", "id": "fx054-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Nozaelvroul bridge opened in 1954.", "unit_id": "fx054"}
+{"date": "2015-01-01", "id": "fx055-e0", "op": "create", "recorded_at": "2015-01-01", "text": "The Mermouxkor tower is 58 metres tall.", "unit_id": "fx055"}

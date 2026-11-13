@@ -1,0 +1,74 @@
+{"answerable": true, "answers": ["227 metres"], "as_of": null, "cluster": "fx044", "gold_units": ["fx044"], "id": "s000", "kind": "", "split": "smoke", "text": "What is the depth of the Laeltror lake?"}
+{"answerable": true, "answers": ["Thursday"], "as_of": null, "cluster": "fx022", "gold_units": ["fx022"], "id": "s001", "kind": "", "split": "smoke", "text": "When does the Kaxsaer museum close?"}
+{"answerable": true, "answers": ["141 metres"], "as_of": null, "cluster": "fx020", "gold_units": ["fx020"], "id": "s002", "kind": "", "split": "smoke", "text": "What is the depth of the Founvex lake?"}
+{"answerable": true, "answers": ["971"], "as_of": null, "cluster": "fx015", "gold_units": ["fx015"], "id": "s003", "kind": "", "split": "smoke", "text": "How many pupils does the Nelennal school have?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "s004", "kind": "unanswerable", "split": "smoke", "text": "How tall is the Klipex tower?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "s005", "kind": "unanswerable", "split": "smoke", "text": "When did the Saelkixkax bridge open?"}
+{"answerable": true, "answers": ["1916"], "as_of": null, "cluster": "fx018", "gold_units": ["fx018"], "id": "a000", "kind": "", "split": "anchor", "text": "When did the Klaelde bridge open?"}
+{"answerable": true, "answers": ["326"], "as_of": null, "cluster": "fx051", "gold_units": ["fx051"], "id": "a001", "kind": "", "split": "anchor", "text": "How many pupils does the Kathnanpan school have?"}
+{"answerable": true, "answers": ["439"], "as_of": null, "cluster": "fx021", "gold_units": ["fx021"], "id": "a002", "kind": "", "split": "anchor", "text": "How many pupils does the Togoulbrol school have?"}
+{"answerable": true, "answers": ["58 metres"], "as_of": null, "cluster": "fx055", "gold_units": ["fx055"], "id": "a003", "kind": "", "split": "anchor", "text": "How tall is the Mermouxkor tower?"}
+{"answerable": true, "answers": ["1974"], "as_of": null, "cluster": "fx042", "gold_units": ["fx042"], "id": "a004", "kind": "", "split": "anchor", "text": "When did the Roukaex bridge open?"}
+{"answerable": true, "answers": ["687"], "as_of": null, "cluster": "fx045", "gold_units": ["fx045"], "id": "a005", "kind": "", "split": "anchor", "text": "How many pupils does the Titar school have?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "a006", "kind": "unanswerable", "split": "anchor", "text": "What is the depth of the Kothdo lake?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "a007", "kind": "unanswerable", "split": "anchor", "text": "How tall is the Baxpon tower?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "a008", "kind": "unanswerable", "split": "anchor", "text": "How tall is the Birsurnar tower?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "a009", "kind": "unanswerable", "split": "anchor", "text": "How tall is the Funsix tower?"}
+{"answerable": true, "answers": ["1905"], "as_of": null, "cluster": "fx036", "gold_units": ["fx036"], "id": "p000", "kind": "", "split": "pool", "text": "When did the Kenklux bridge open?"}
+{"answerable": true, "answers": ["283 metres"], "as_of": null, "cluster": "fx025", "gold_units": ["fx025"], "id": "p001", "kind": "", "split": "pool", "text": "How tall is the Nunnoulneth tower?"}
+{"answerable": true, "answers": ["1973"], "as_of": null, "cluster": "fx030", "gold_units": ["fx030"], "id": "p002", "kind": "", "split": "pool", "text": "When did the Faenlekul bridge open?"}
+{"answerable": true, "answers": ["76 metres"], "as_of": null, "cluster": "fx049", "gold_units": ["fx049"], "id": "p003", "kind": "", "split": "pool", "text": "How tall is the Douxlopax tower?"}
+{"answerable": true, "answers": ["1979"], "as_of": null, "cluster": "fx006", "gold_units": ["fx006"], "id": "p004", "kind": "", "split": "pool", "text": "When did the Sothbrirnoun bridge open?"}
+{"answerable": true, "answers": ["1954"], "as_of": null, "cluster": "fx054", "gold_units": ["fx054"], "id": "p005", "kind": "", "split": "pool", "text": "When did the Nozaelvroul bridge open?"}
+{"answerable": true, "answers": ["215 metres"], "as_of": null, "cluster": "fx002", "gold_units": ["fx002"], "id": "p006", "kind": "", "split": "pool", "text": "What is the depth of the Douthgexduth lake?"}
+{"answerable": true, "answers": ["62 metres"], "as_of": null, "cluster": "fx038", "gold_units": ["fx038"], "id": "p007", "kind": "", "split": "pool", "text": "What is the depth of the Vranmi lake?"}
+{"answerable": true, "answers": ["78 coins"], "as_of": "2022-06-01", "cluster": "fx053", "gold_units": ["fx053"], "id": "p008", "kind": "temporal", "split": "pool", "text": "What was the Pabaeth toll?"}
+{"answerable": true, "answers": ["77 metres"], "as_of": null, "cluster": "fx001", "gold_units": ["fx001"], "id": "p009", "kind": "", "split": "pool", "text": "How tall is the Dalzan tower?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p010", "kind": "unanswerable", "split": "pool", "text": "What is the depth of the Trethtruna lake?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p011", "kind": "unanswerable", "split": "pool", "text": "What is the depth of the Raethrolbrou lake?"}
+{"answerable": true, "answers": ["1921"], "as_of": null, "cluster": "fx012", "gold_units": ["fx012"], "id": "p012", "kind": "", "split": "pool", "text": "When did the Klanrex bridge open?"}
+{"answerable": true, "answers": ["483 metres"], "as_of": null, "cluster": "fx013", "gold_units": ["fx013"], "id": "p013", "kind": "", "split": "pool", "text": "How tall is the Voulfelvur tower?"}
+{"answerable": true, "answers": ["1901"], "as_of": null, "cluster": "fx048", "gold_units": ["fx048"], "id": "p014", "kind": "", "split": "pool", "text": "When did the Ponvruthklaer bridge open?"}
+{"answerable": true, "answers": ["902"], "as_of": null, "cluster": "fx033", "gold_units": ["fx033"], "id": "p015", "kind": "", "split": "pool", "text": "How many pupils does the Mounbinrun school have?"}
+{"answerable": true, "answers": ["62 coins"], "as_of": "2022-06-01", "cluster": "fx041", "gold_units": ["fx041"], "id": "p016", "kind": "temporal", "split": "pool", "text": "What was the Kovorfaen toll?"}
+{"answerable": true, "answers": ["89 metres"], "as_of": null, "cluster": "fx008", "gold_units": ["fx008"], "id": "p017", "kind": "", "split": "pool", "text": "What is the depth of the Rugullour lake?"}
+{"answerable": true, "answers": ["1958"], "as_of": null, "cluster": "fx024", "gold_units": ["fx024"], "id": "p018", "kind": "", "split": "pool", "text": "When did the Faertrintoun bridge open?"}
+{"answerable": true, "answers": ["190 metres"], "as_of": null, "cluster": "fx026", "gold_units": ["fx026"], "id": "p019", "kind": "", "split": "pool", "text": "What is the depth of the Barklintox lake?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p020", "kind": "unanswerable", "split": "pool", "text": "What is the depth of the Broutru lake?"}
+{"answerable": true, "answers": ["324"], "as_of": null, "cluster": "fx039", "gold_units": ["fx039"], "id": "p021", "kind": "", "split": "pool", "text": "How many pupils does the Vrabrithtruth school have?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p022", "kind": "unanswerable", "split": "pool", "text": "When did the Naexbrol bridge open?"}
+{"answerable": true, "answers": ["195 metres"], "as_of": null, "cluster": "fx014", "gold_units": ["fx014"], "id": "p023", "kind": "", "split": "pool", "text": "What is the depth of the Zouthpael lake?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p024", "kind": "unanswerable", "split": "pool", "text": "How tall is the Raenfuthkaex tower?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p025", "kind": "unanswerable", "split": "pool", "text": "When did the Baethnor bridge open?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p026", "kind": "unanswerable", "split": "pool", "text": "When did the Kaldorgaen bridge open?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p027", "kind": "unanswerable", "split": "pool", "text": "When did the Puxmethbar bridge open?"}
+{"answerable": true, "answers": ["56 coins"], "as_of": "2022-06-01", "cluster": "fx047", "gold_units": ["fx047"], "id": "p028", "kind": "temporal", "split": "pool", "text": "What was the Garpan toll?"}
+{"answerable": true, "answers": ["432 metres"], "as_of": null, "cluster": "fx037", "gold_units": ["fx037"], "id": "p029", "kind": "", "split": "pool", "text": "How tall is the Saethtrul tower?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p030", "kind": "unanswerable", "split": "pool", "text": "What is the depth of the Raller lake?"}
+{"answerable": true, "answers": ["Sunday"], "as_of": null, "cluster": "fx052", "gold_units": ["fx052"], "id": "p031", "kind": "", "split": "pool", "text": "When does the Runrothlir museum close?"}
+{"answerable": true, "answers": ["Friday"], "as_of": null, "cluster": "fx004", "gold_units": ["fx004"], "id": "p032", "kind": "", "split": "pool", "text": "When does the Ruxlath museum close?"}
+{"answerable": true, "answers": ["81 coins"], "as_of": "2022-06-01", "cluster": "fx017", "gold_units": ["fx017"], "id": "p033", "kind": "temporal", "split": "pool", "text": "What was the Kaethdoxvrol toll?"}
+{"answerable": true, "answers": ["66 coins"], "as_of": "2022-06-01", "cluster": "fx023", "gold_units": ["fx023"], "id": "p034", "kind": "temporal", "split": "pool", "text": "What was the Trantrin toll?"}
+{"answerable": true, "answers": ["Monday"], "as_of": null, "cluster": "fx028", "gold_units": ["fx028"], "id": "p035", "kind": "", "split": "pool", "text": "When does the Klaerfoux museum close?"}
+{"answerable": true, "answers": ["Friday"], "as_of": null, "cluster": "fx034", "gold_units": ["fx034"], "id": "p036", "kind": "", "split": "pool", "text": "When does the Pulkaxtox museum close?"}
+{"answerable": true, "answers": ["Tuesday"], "as_of": null, "cluster": "fx040", "gold_units": ["fx040"], "id": "p037", "kind": "", "split": "pool", "text": "When does the Bruthkluntrith museum close?"}
+{"answerable": true, "answers": ["404 metres"], "as_of": null, "cluster": "fx007", "gold_units": ["fx007"], "id": "p038", "kind": "", "split": "pool", "text": "How tall is the Furtror tower?"}
+{"answerable": true, "answers": ["85 coins"], "as_of": "2022-06-01", "cluster": "fx029", "gold_units": ["fx029"], "id": "p039", "kind": "temporal", "split": "pool", "text": "What was the Monzouxsax toll?"}
+{"answerable": true, "answers": ["80 coins"], "as_of": "2022-06-01", "cluster": "fx035", "gold_units": ["fx035"], "id": "p040", "kind": "temporal", "split": "pool", "text": "What was the Trethkuthboul toll?"}
+{"answerable": true, "answers": ["267"], "as_of": null, "cluster": "fx003", "gold_units": ["fx003"], "id": "p041", "kind": "", "split": "pool", "text": "How many pupils does the Nathkil school have?"}
+{"answerable": true, "answers": ["Saturday"], "as_of": null, "cluster": "fx010", "gold_units": ["fx010"], "id": "p042", "kind": "", "split": "pool", "text": "When does the Brapoxfax museum close?"}
+{"answerable": true, "answers": ["75 coins"], "as_of": "2022-06-01", "cluster": "fx005", "gold_units": ["fx005"], "id": "p043", "kind": "temporal", "split": "pool", "text": "What was the Tathfu toll?"}
+{"answerable": true, "answers": ["225 metres"], "as_of": null, "cluster": "fx050", "gold_units": ["fx050"], "id": "p044", "kind": "", "split": "pool", "text": "What is the depth of the Funfibrar lake?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p045", "kind": "unanswerable", "split": "pool", "text": "What is the depth of the Klaerdux lake?"}
+{"answerable": true, "answers": ["Monday"], "as_of": null, "cluster": "fx046", "gold_units": ["fx046"], "id": "p046", "kind": "", "split": "pool", "text": "When does the Braevithru museum close?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p047", "kind": "unanswerable", "split": "pool", "text": "When did the Faeltraer bridge open?"}
+{"answerable": true, "answers": ["98 metres"], "as_of": null, "cluster": "fx031", "gold_units": ["fx031"], "id": "p048", "kind": "", "split": "pool", "text": "How tall is the Klaerkuth tower?"}
+{"answerable": false, "answers": [], "as_of": null, "cluster": "", "gold_units": [], "id": "p049", "kind": "unanswerable", "split": "pool", "text": "How tall is the Kaergol tower?"}
+{"answerable": true, "answers": ["759"], "as_of": null, "cluster": "fx027", "gold_units": ["fx027"], "id": "p050", "kind": "", "split": "pool", "text": "How many pupils does the Fenonsel school have?"}
+{"answerable": true, "answers": ["1897"], "as_of": null, "cluster": "fx000", "gold_units": ["fx000"], "id": "p051", "kind": "", "split": "pool", "text": "When did the Koxdathgith bridge open?"}
+{"answerable": true, "answers": ["Wednesday"], "as_of": null, "cluster": "fx016", "gold_units": ["fx016"], "id": "p052", "kind": "", "split": "pool", "text": "When does the Pikoth museum close?"}
+{"answerable": true, "answers": ["83 metres"], "as_of": null, "cluster": "fx032", "gold_units": ["fx032"], "id": "p053", "kind": "", "split": "pool", "text": "What is the depth of the Bouxgux lake?"}
+{"answerable": true, "answers": ["217 metres"], "as_of": null, "cluster": "fx019", "gold_units": ["fx019"], "id": "p054", "kind": "", "split": "pool", "text": "How tall is the Lardaku tower?"}
+{"answerable": true, "answers": ["80 coins"], "as_of": "2022-06-01", "cluster": "fx011", "gold_units": ["fx011"], "id": "p055", "kind": "temporal", "split": "pool", "text": "What was the Brixvaerbor toll?"}
+{"answerable": true, "answers": ["114 metres"], "as_of": null, "cluster": "fx043", "gold_units": ["fx043"], "id": "p056", "kind": "", "split": "pool", "text": "How tall is the Kinbrexgol tower?"}
+{"answerable": true, "answers": ["478"], "as_of": null, "cluster": "fx009", "gold_units": ["fx009"], "id": "p057", "kind": "", "split": "pool", "text": "How many pupils does the Zaxfouthsix school have?"}
