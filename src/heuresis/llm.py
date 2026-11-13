@@ -27,6 +27,18 @@ CACHE_BREAK = "\x00cache\x00"
 _RETRY_STATUS = {429, 529} | set(range(500, 600))
 
 
+def _error_detail(raw: str) -> str:
+    """The API error as ``type: message`` from a JSON body, else the raw text (never headers)."""
+    try:
+        err = json.loads(raw).get("error")
+    except (ValueError, AttributeError):
+        return raw
+    if isinstance(err, dict):
+        parts = [str(err[k]) for k in ("type", "message") if err.get(k)]
+        return ": ".join(parts) or raw
+    return str(err) if err else raw
+
+
 class AnthropicLLM:
     def __init__(
         self,
@@ -56,9 +68,11 @@ class AnthropicLLM:
         #: The ``thinking`` request field sent in every call, e.g. ``{"type": "disabled"}``;
         #: ``None`` (the default) sends none and leaves the model's own default. Thinking
         #: tokens are billed as output tokens and count against ``max_tokens``, so a run
-        #: that wants ``max_tokens`` to bound the visible answer must turn it off. A model
-        #: that rejects the value fails the call (HTTP 400): it is not dropped silently.
+        #: that wants ``max_tokens`` to bound the visible answer must turn it off.
         self.thinking = dict(thinking) if thinking else None
+        #: Whether requests carry ``thinking``; turns False if the API rejects it (HTTP 400
+        #: naming ``thinking``), after which the field is left out for this instance.
+        self.thinking_sent = self.thinking is not None
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
@@ -119,12 +133,17 @@ class AnthropicLLM:
             "system": sys_field,
             "messages": [{"role": "user", "content": content}],
         }
-        if self.thinking is not None:
-            payload["thinking"] = dict(self.thinking)
         base = dict(payload)
-        if self.temperature_sent:
-            payload["temperature"] = float(self.temperature)
-        body = json.dumps(payload).encode("utf-8")
+
+        def encode() -> bytes:
+            fields = dict(base)
+            if self.thinking_sent:
+                fields["thinking"] = dict(self.thinking)
+            if self.temperature_sent:
+                fields["temperature"] = float(self.temperature)
+            return json.dumps(fields).encode("utf-8")
+
+        body = encode()
         t0 = time.perf_counter()
         last = "unknown error"
         attempt = -1
@@ -148,15 +167,21 @@ class AnthropicLLM:
             except urllib.error.HTTPError as e:
                 headers = e.headers
                 try:
-                    detail = e.read().decode("utf-8", "replace")[:300]
+                    raw = e.read().decode("utf-8", "replace")
                 except Exception:
-                    detail = ""
-                last = f"HTTP {e.code}: {detail}"
-                if (e.code == 400 and self.temperature_sent
-                        and "temperature" in detail.lower()):
+                    raw = ""
+                detail = _error_detail(raw)
+                last = f"HTTP {e.code}: {detail[:300]}"
+                low = detail.lower()
+                if e.code == 400 and self.temperature_sent and "temperature" in low:
                     # The model rejects the parameter: drop it for good and retry once.
                     self.temperature_sent = False
-                    body = json.dumps(base).encode("utf-8")
+                    body = encode()
+                    attempt -= 1
+                    continue
+                if e.code == 400 and self.thinking_sent and "thinking" in low:
+                    self.thinking_sent = False
+                    body = encode()
                     attempt -= 1
                     continue
                 if e.code not in _RETRY_STATUS:

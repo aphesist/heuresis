@@ -232,17 +232,12 @@ def test_thinking_setting_is_sent_and_stop_reason_and_blocks_are_recorded():
     assert u.stop_reason == "max_tokens" and u.blocks == {"thinking": 1, "text": 1}
 
 
-def test_thinking_default_sends_no_field_and_a_rejection_is_not_dropped():
+def test_thinking_default_sends_no_field():
     calls = []
     llm, _ = make([OK], calls)
     llm.complete("s", "p")
     assert "thinking" not in json.loads(calls[0].data)
-    calls2 = []
-    bad = urllib.error.HTTPError("u", 400, "x", {}, io.BytesIO(b'{"error":"thinking is not supported"}'))
-    llm2, _ = make([bad], calls2, thinking={"type": "disabled"})
-    with pytest.raises(LLMError):
-        llm2.complete("s", "p")
-    assert len(calls2) == 1 and llm2.thinking == {"type": "disabled"}
+    assert llm.thinking_sent is False
 
 
 # ---------------------------------------------------------------------------
@@ -299,3 +294,53 @@ def test_cache_write_tokens_are_priced():
     _t, u = llm.complete("s", "p")
     assert u.usd == pytest.approx(price("claude-haiku-5-5", 100, 10, cached=0, cache_write=400))
     assert u.usd > price("claude-haiku-5-5", 100, 10)
+
+
+def test_error_message_has_status_and_api_message_but_not_key():
+    calls = []
+    err = http_400('{"type":"error","error":{"type":"invalid_request_error","message":"bad max_tokens"}}')
+    llm, _ = make([err], calls)
+    with pytest.raises(LLMError) as ei:
+        llm.complete("s", "p")
+    msg = str(ei.value)
+    assert "400" in msg and "invalid_request_error" in msg and "bad max_tokens" in msg
+    assert KEY not in msg and "x-api-key" not in msg.lower()
+
+
+def test_error_message_is_truncated():
+    calls = []
+    llm, _ = make([http_400(json.dumps({"error": {"type": "t", "message": "m" * 1000}}))], calls)
+    with pytest.raises(LLMError) as ei:
+        llm.complete("s", "p")
+    assert len(str(ei.value)) < 330
+
+
+def test_thinking_400_falls_back_once_and_is_remembered():
+    calls = []
+    err = http_400('{"error":{"type":"invalid_request_error","message":"thinking is not supported"}}')
+    llm, sleeps = make([err, OK, OK], calls, thinking={"type": "disabled"})
+    assert llm.thinking_sent is True
+    text, _ = llm.complete("s", "p")
+    assert text == "hello [t1]." and llm.thinking_sent is False
+    assert json.loads(calls[0].data)["thinking"] == {"type": "disabled"}
+    assert "thinking" not in json.loads(calls[1].data)
+    assert sleeps == []
+    llm.complete("s", "p")
+    assert len(calls) == 3 and "thinking" not in json.loads(calls[2].data)
+
+
+def test_thinking_fallback_keeps_temperature():
+    calls = []
+    err = http_400('{"error":{"message":"thinking not allowed"}}')
+    llm, _ = make([err, OK], calls, thinking={"type": "disabled"}, temperature=0.0)
+    llm.complete("s", "p")
+    assert json.loads(calls[1].data)["temperature"] == 0.0
+
+
+def test_other_400_with_thinking_is_not_retried():
+    calls = []
+    llm, _ = make([http_400('{"error":{"message":"max_tokens too large"}}'), OK], calls,
+                  thinking={"type": "disabled"})
+    with pytest.raises(LLMError):
+        llm.complete("s", "p")
+    assert len(calls) == 1 and llm.thinking_sent is True
