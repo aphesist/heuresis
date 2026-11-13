@@ -90,3 +90,4 @@ accuracy is about 0.05-0.07 (`PREREGISTRATION.md` section 4.4), so smaller diffe
 | Date | Change | Reason | Data seen at the time |
 |---|---|---|---|
 | | (empty at registration) | | |
+| 2026-11-13 | Judge `max_tokens` raised from 400 to 4096 (`JUDGE_MAX_TOKENS`; surface default and schema range follow); a judge reply that stops at `max_tokens` now counts as unreadable | The judge model thinks by default and its thinking tokens count against `max_tokens`, so a smoke call was truncated at 400 | None: made before any registered run |

@@ -178,7 +178,13 @@ def parse_verdict(raw: str, n: int) -> Verdict:
     return v
 
 
-def judge(llm, question, as_of, claims, passages, tool_results, *, max_tokens=400) -> Verdict:
+#: Output cap of one judge call. The judge model thinks by default and its thinking tokens count
+#: against ``max_tokens``, so a small cap truncated the verdict on a real call.
+JUDGE_MAX_TOKENS = 4096
+
+
+def judge(llm, question, as_of, claims, passages, tool_results, *,
+          max_tokens=JUDGE_MAX_TOKENS) -> Verdict:
     """One call on ``claims`` (the sentences that passed the gates, in order)."""
     prompt = judge_prompt(question, as_of, claims, passages, tool_results)
     raw, usage = llm.complete(JUDGE_SYSTEM, prompt, max_tokens=max_tokens)
@@ -186,6 +192,8 @@ def judge(llm, question, as_of, claims, passages, tool_results, *, max_tokens=40
     if all(isinstance(getattr(usage, n, None), (int, float))
            for n in ("tokens_in", "tokens_out", "usd")):
         v.usage = usage
+        if "max_tokens" in str(getattr(usage, "stop_reason", "") or "").split(","):
+            v.readable = False  # cut off at the cap: the verdict may be incomplete, never pass it
     else:  # no usable usage: the reply is not trusted
         v.readable = False
     return v

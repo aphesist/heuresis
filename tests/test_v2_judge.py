@@ -153,3 +153,29 @@ def test_long_passage_shows_head_and_tail():
     short = "y " * 3900  # 7800 chars: shown whole by default
     pr = J.judge_prompt("q", None, [Claim("a.", ["t1"])], [Passage("u", 0, short, mark="t1")], [])
     assert "[...]" not in pr
+
+
+def test_judge_cap_is_one_named_constant():
+    from heuresis.v2.locked import schema as S
+    assert J.JUDGE_MAX_TOKENS == 4096
+    assert S.SCHEMA["judge"]["max_tokens"].default == 4096
+    llm = Scripted(FULL)
+    J.judge(llm, "q", "2024-01-01", [Claim("x", ())], [], [])
+    assert llm.calls[0][2] == 4096
+
+
+def test_reply_cut_at_max_tokens_is_unreadable():
+    class Cut(Scripted):
+        def complete(self, system, prompt, *, max_tokens=600):
+            return self.reply, Usage(model="j", tokens_in=7, tokens_out=4096, usd=0.01,
+                                     stop_reason="max_tokens")
+
+    v = J.judge(Cut(FULL), "q", "2024-01-01", [Claim("x", ())], [], [])
+    assert v.readable is False
+
+    class Done(Scripted):
+        def complete(self, system, prompt, *, max_tokens=600):
+            return self.reply, Usage(model="j", tokens_in=7, tokens_out=9, usd=0.01,
+                                     stop_reason="end_turn")
+
+    assert J.judge(Done(FULL), "q", "2024-01-01", [Claim("x", ())], [], []).readable is True

@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .judge import JUDGE_MAX_TOKENS
+
 #: Marker of the canary passages used by the improvement loop; no prompt may contain it.
 CANARY_MARKER = "hx-canary-"
 
@@ -62,7 +64,7 @@ SCHEMA: dict[str, dict[str, Field]] = {
         "lookup_direct": Field("bool", True),
         "escalate": Field("bool", False),
     },
-    "judge": {"max_tokens": _i(400, 64, 2000)},
+    "judge": {"max_tokens": _i(JUDGE_MAX_TOKENS, 64, 16000)},
 }
 
 PROMPTS: dict[str, PromptSpec] = {

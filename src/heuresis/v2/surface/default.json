@@ -27,6 +27,6 @@
     "escalate": false
   },
   "judge": {
-    "max_tokens": 400
+    "max_tokens": 4096
   }
 }
