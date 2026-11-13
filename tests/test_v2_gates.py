@@ -126,20 +126,114 @@ def test_numbers_traced(world):
     assert not c.checks["numbers_traced"]
 
 
-def test_numbers_inside_resolved_reference_are_skipped(world):
+def test_reference_digits_are_checked_not_masked(world):
     store, _ = world
     p = [P(store, A1, "t1")]
-    p[0].title = ""  # 10 and 2020 are then in neither the text nor the title
     s = "O art. 1º da Lei nº 1, de 10 de março de 2020, fixa 30 dias."
+    # the title of the cited unit carries 1, 10 (as 03-10 is in the id) and 2020
     c, = run(world, [S(s, ["t1"])], p, domain=True)
     assert c.checks["references_traced"] and c.checks["numbers_traced"]
-    # without a resolver the same sentence has untraced numbers
-    c, = run(world, [S(s, ["t1"])], p)
-    assert not c.checks["numbers_traced"] and c.checks["references_traced"]
+    # a made-up paragraph number inside a resolved span is now an untraced number
+    c, = run(world, [S("O art. 1º, § 7º da Lei nº 1, de 10 de março de 2020, fixa 30 dias.", ["t1"])],
+             p, domain=True)
+    assert not c.checks["numbers_traced"] and "7" in c.note
+    # a unit whose title lacks the numbers: the digits of its id are allowed
+    q = [P(store, A1, "t1")]
+    q[0].title = ""
+    c, = run(world, [S(s, ["t1"])], q, domain=True)
+    assert c.checks["numbers_traced"]
     # a number outside the reference still fails
     c, = run(world, [S("O art. 1º da Lei nº 1, de 10 de março de 2020, fixa 31 dias.", ["t1"])],
              p, domain=True)
     assert not c.checks["numbers_traced"]
+
+
+def test_as_of_date_digits(world):
+    store, _ = world
+    p = [P(store, A1, "t1")]
+    # the full date and the year are allowed; day and month only with the year in the sentence
+    assert run(world, [S("Em 31/12/2021 vale 30 dias.", ["t1"])], p, date="2021-12-31")[0].checks["numbers_traced"]
+    assert run(world, [S("Em 2021 vale 30 dias.", ["t1"])], p, date="2021-12-31")[0].checks["numbers_traced"]
+    assert not run(world, [S("Vale 31 dias.", ["t1"])], p, date="2021-12-31")[0].checks["numbers_traced"]
+    assert not run(world, [S("Vale 12 dias.", ["t1"])], p, date="2021-12-31")[0].checks["numbers_traced"]
+    assert run(world, [S("No dia 31 de 12 de 2021 vale 30 dias.", ["t1"])], p,
+               date="2021-12-31")[0].checks["numbers_traced"]
+
+
+def test_no_as_of_date_allows_no_date_digits():
+    assert G.untraced_numbers("em 2026-11-13", set(), None) == ["2026", "11", "13"]
+    assert G.untraced_numbers("em 2026-11-13", set(), "") == ["2026", "11", "13"]
+    assert G.untraced_numbers("em 2026-11-13 e 13/11/2026", set(), "2026-11-13") == []
+    assert G.untraced_numbers("dia 13", set(), "2026-11-13") == ["13"]
+    assert G.untraced_numbers("dia 13 de 2026", set(), "2026-11-13") == []
+    # the check does not read the clock
+    p = Passage("u", 0, "Vale 5 dias.", mark="t1")
+    from datetime import datetime, timezone
+    t = datetime.now(timezone.utc).date()
+    c, = G.check(Draft(sentences=[S(f"Vale 5 dias em {t.year}.", ["t1"])]), [p], [], None, AsOf())
+    assert not c.checks["numbers_traced"]
+
+
+def test_sentence_without_passage_mark_is_derived():
+    p = Passage("u", 0, "Vale 5 dias.", mark="t1")
+    r = ToolResult("k1", "calc", {"expr": "5"}, ok=True, value=5)
+    cited = S("Vale 5 dias.", ["t1"])
+    _, c = G.check(Draft(sentences=[cited, S("Logo {k1}.", [], ["k1"])]), [p], [r], None,
+                   AsOf(valid="2020-01-01"))
+    assert c.kind == "derived" and not G.deterministic_failure(c) and c.text == "Logo 5."
+    only, = G.check(Draft(sentences=[S("Vale {k1}.", [], ["k1"])]), [p], [r], None, AsOf(valid="2020-01-01"))
+    assert only.kind == "derived" and not only.checks["exists"]
+
+
+def test_missing_or_failed_tool_never_fills(world):
+    store, _ = world
+    p = [P(store, A1, "t1")]
+    bad = ToolResult("k1", "calc", {"expr": "2+"}, ok=False, error="x")
+    for sents in ([S("Vale {k1}.", ["t1"])], [S("Vale 30 dias.", ["t1"], ["k1"])],
+                  [S("Vale 30 dias.", ["t1"]), S("Soma {k1}.")],
+                  [S("Vale 30 dias.", ["t1"]), S("Soma 3.", [], ["k1"])]):
+        out = run(world, sents, p, [bad])
+        assert not out[-1].checks["exists"]
+        assert all("[not checked]" not in c.text for c in out)
+    miss = run(world, [S("Vale 30 dias.", ["t1"]), S("Soma {k7}.")], p)
+    assert not miss[1].checks["exists"]
+
+
+def test_tool_arguments_must_be_traced(world):
+    store, _ = world
+    p = [P(store, A1, "t1")]
+    inv = ToolResult("k1", "calc", {"expr": "99"}, ok=True, value=99)
+    c, = run(world, [S("Vale {k1} dias.", ["t1"], ["k1"])], p, [inv])
+    assert not c.checks["numbers_traced"] and "k1" in c.note and "99" in c.note
+    ok = ToolResult("k1", "calc", {"expr": "30 * 2"}, ok=True, value=60)
+    # 2 is in no passage: untraced
+    c, = run(world, [S("Vale {k1} dias.", ["t1"], ["k1"])], p, [ok])
+    assert not c.checks["numbers_traced"]
+    c, = run(world, [S("Vale {k1} dias.", ["t1"], ["k1"])], p, [ok], question="Dobro de 2?")
+    assert c.checks["numbers_traced"]
+    # a date in the call is traced to the as-of date
+    dt = ToolResult("k1", "dates", {"a": "2021-01-01", "b": "2021-01-31"}, ok=True, value=30)
+    c, = run(world, [S("Vale {k1} dias.", ["t1"], ["k1"])], p, [dt])
+    assert not c.checks["numbers_traced"]  # 31 untraced
+    dt2 = ToolResult("k1", "dates", {"a": "2021-01-01", "b": "2021-01-01"}, ok=True, value=30)
+    c, = run(world, [S("Vale {k1} dias.", ["t1"], ["k1"])], p, [dt2])
+    assert c.checks["numbers_traced"]
+
+
+def test_derived_placeholder_is_filled_and_traced(world):
+    store, _ = world
+    p = [P(store, A1, "t1")]
+    cited = S("O zorblax é obrigatório em 30 dias.", ["t1"])
+    inv = ToolResult("k1", "calc", {"expr": "99999"}, ok=True, value=99999)
+    _, d = run(world, [cited, S("Total {k1} dias.")], p, [inv])
+    assert "99999" in d.text and not d.checks["numbers_traced"] and "k1" in d.note
+    good = ToolResult("k1", "calc", {"expr": "30 + 30"}, ok=True, value=60)
+    _, d = run(world, [cited, S("Total {k1} dias.")], p, [good])
+    assert d.text == "Total 60 dias." and d.checks["numbers_traced"]
+    # args traced to another cited sentence that passes
+    _, c2 = run(world, [S("O zorblax é obrigatório em 30 dias.", ["t1"]),
+                        S("Vale {k1} dias.", ["t1"], ["k1"])], p, [good])
+    assert c2.checks["numbers_traced"]
 
 
 def test_references_traced(world):

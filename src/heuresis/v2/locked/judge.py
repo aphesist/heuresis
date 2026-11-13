@@ -51,13 +51,17 @@ class Verdict:
 
 
 def _cut(text: str, n: int) -> str:
+    """At most about ``n`` characters: the whole text, else its head and its tail windows."""
     text = text or ""
-    return text if len(text) <= n else text[:n].rstrip() + " [...]"
+    if len(text) <= n:
+        return text
+    h = max(n // 2, 1)
+    return text[:h].rstrip() + " [...] " + text[-h:].lstrip()
 
 
 def judge_prompt(question: str, as_of: str | None, claims: list[Claim],
                  passages: list[Passage], tool_results: list[ToolResult],
-                 max_chars: int = 2500) -> str:
+                 max_chars: int = 8000) -> str:
     by_mark = {p.mark: p for p in passages if p.mark}
     tools = {t.mark: t for t in tool_results}
     out = [f"Question: {question}", f"As-of date: {as_of or 'not given'}", "", "Answer sentences:"]
@@ -100,41 +104,75 @@ def _norm(word: str) -> str:
 
 
 def parse_verdict(raw: str, n: int) -> Verdict:
-    """Parse the reply; never raises. Sentence lines not seen read as ``NOT_SUPPORTED``."""
+    """Parse the reply; never raises. Fails closed: a missing ANSWER, SUFFICIENT or PREMISE
+    line, an unknown PREMISE value, a CONFLICT value that is neither NONE nor two marks, or two
+    lines that contradict each other for the same key (or the same sentence) make the reply
+    unreadable; ``PREMISE: FALSE`` on any line wins. A missing CONFLICT line reads as none and a
+    CONFLICT value whose first word is NONE is none. Sentence lines not seen read as
+    ``NOT_SUPPORTED``."""
     v = Verdict(raw=raw if isinstance(raw, str) else "")
     try:
         seen: dict[int, str] = {}
-        answer = sufficient = None
+        single: dict[str, set[str]] = {"ANSWER": set(), "SUFFICIENT": set()}
+        premises: list[str] = []
+        conflicts: list[frozenset | None] = []
+        pairs: dict[frozenset, tuple[str, str]] = {}
+        bad = False
         for line in v.raw.splitlines():
             line = line.strip().strip("`").strip("*- ").strip()
             m = _S_RE.match(line)
             if m:
                 word = _norm(m.group(2))
                 idx = int(m.group(1)) - 1
-                if word in SENTENCE_VERDICTS and 0 <= idx < n and idx not in seen:
-                    seen[idx] = word
+                if word in SENTENCE_VERDICTS and 0 <= idx < n:
+                    if idx in seen and seen[idx] != word:
+                        bad = True
+                    seen.setdefault(idx, word)
                 continue
             m = _KV_RE.match(line)
             if not m:
                 continue
             key, val = m.group(1).upper(), m.group(2)
             word = _norm(val.split()[0].strip(".,;")) if val.split() else ""
-            if key == "ANSWER" and word in ("DIRECT", "PARTIAL", "NO") and answer is None:
-                answer = word
-            elif key == "SUFFICIENT" and word in ("YES", "NO") and sufficient is None:
-                sufficient = word
-            elif key == "PREMISE" and word in ("OK", "FALSE"):
-                v.premise = word
+            if key in single:
+                ok = ("DIRECT", "PARTIAL", "NO") if key == "ANSWER" else ("YES", "NO")
+                if word in ok:
+                    single[key].add(word)
+                else:
+                    bad = True
+            elif key == "PREMISE":
+                premises.append(word)
             elif key == "CONFLICT":
-                marks = []
+                if word == "NONE":
+                    conflicts.append(None)
+                    continue
+                marks: list[str] = []
                 for x in _MARK_RE.findall(val):
                     x = x.lower()
                     if x not in marks:
                         marks.append(x)
-                v.conflict = (marks[0], marks[1]) if len(marks) >= 2 else None
+                if len(marks) >= 2:
+                    k = frozenset(marks[:2])
+                    pairs.setdefault(k, (marks[0], marks[1]))
+                    conflicts.append(k)
+                else:
+                    bad = True
         v.sentences = {i: seen.get(i, "NOT_SUPPORTED") for i in range(n)}
-        v.answer, v.sufficient = answer or "", sufficient or ""
-        v.readable = answer is not None and sufficient is not None
+        if any(len(x) > 1 for x in single.values()):
+            bad = True
+        v.answer = next(iter(single["ANSWER"])) if len(single["ANSWER"]) == 1 else ""
+        v.sufficient = next(iter(single["SUFFICIENT"])) if len(single["SUFFICIENT"]) == 1 else ""
+        if "FALSE" in premises:
+            v.premise = "FALSE"
+        elif premises and all(x == "OK" for x in premises):
+            v.premise = "OK"
+        else:
+            bad = True  # missing or unknown PREMISE
+        if len(set(conflicts)) > 1:
+            bad = True  # a pair and NONE, or two different pairs
+        elif conflicts and conflicts[0] is not None:
+            v.conflict = pairs[conflicts[0]]
+        v.readable = not bad and bool(v.answer) and bool(v.sufficient)
     except Exception:
         v.readable = False
     return v
@@ -145,5 +183,9 @@ def judge(llm, question, as_of, claims, passages, tool_results, *, max_tokens=40
     prompt = judge_prompt(question, as_of, claims, passages, tool_results)
     raw, usage = llm.complete(JUDGE_SYSTEM, prompt, max_tokens=max_tokens)
     v = parse_verdict(raw, len(claims))
-    v.usage = usage
+    if all(isinstance(getattr(usage, n, None), (int, float))
+           for n in ("tokens_in", "tokens_out", "usd")):
+        v.usage = usage
+    else:  # no usable usage: the reply is not trusted
+        v.readable = False
     return v

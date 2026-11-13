@@ -325,7 +325,7 @@ def test_model_decline_skips_the_judge():
 
 
 def test_tool_value_is_filled_in_the_text():
-    gen = Script(['CALL k1 calc {"expr": "40 * 2"}\nTwice the fee, {k1} units, is charged [t1][k1].'])
+    gen = Script(['CALL k1 calc {"expr": "40 + 40"}\nTwice the fee, {k1} units, is charged [t1][k1].'])
     a = make(gen=gen, judge=Script([verdict("SUPPORTED")])).ask(Q, as_of=D21)
     assert a.status == "answered", (a.abstention, [c.note for c in a.claims])
     assert "80" in a.text and "{k1}" not in a.text and a.tool_results[0].ok
@@ -363,16 +363,28 @@ def test_calibration_tau_applies_only_when_the_surface_hash_matches(tmp_path):
     assert c.status == "answered" and c.meta["calibrated"] and c.meta["tau"] == 0.3
     # nothing certified: the default threshold applies
     assert run_cal(cal_for(s, None)).meta["calibrated"] is False
-    # a directory path is searched with the surface hash
+    # a directory path alone is NOT searched; with calibration_dataset it is, by dataset
     cal_mod.save(cal_for(s, 0.95), tmp_path / "cal" / "a.json")
-    d = run_cal(str(tmp_path / "cal"))
+    assert run_cal(str(tmp_path / "cal")).meta["calibrated"] is False
+    d = make(gen=Script(["The pilotage fee is 40 units [t1]."]), judge=Script([verdict("SUPPORTED")]),
+             calibration=str(tmp_path / "cal"), calibration_dataset="toy").ask(Q, as_of=D21)
     assert d.status == "abstained" and d.meta["calibrated"] is True
+    e = make(gen=Script(["The pilotage fee is 40 units [t1]."]), judge=Script([verdict("SUPPORTED")]),
+             calibration=str(tmp_path / "cal"), calibration_dataset="other").ask(Q, as_of=D21)
+    assert e.meta["calibrated"] is False
     assert run_cal(str(tmp_path / "missing")).meta["calibrated"] is False
+    # a file path is loaded
+    f = run_cal(str(tmp_path / "cal" / "a.json"))
+    assert f.meta["calibrated"] is True
 
 
-def test_default_calibration_lookup_tolerates_a_missing_directory():
+def test_no_calibration_means_nothing_is_searched(monkeypatch):
+    called = []
+    monkeypatch.setattr(cal_mod, "find", lambda *a, **k: called.append(a))
     eng = make(gen=Script(["x"]))
-    assert eng.calibration is None or eng.calibration.surface_hash == eng.surface_hash
+    assert eng.calibration is None and not called
+    a = run_cal(None)
+    assert a.meta["calibrated"] is False and not called
 
 
 # -- budget and failures -------------------------------------------------------------------

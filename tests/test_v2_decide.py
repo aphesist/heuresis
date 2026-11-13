@@ -109,10 +109,13 @@ def two_claims():
 
 def test_6_conflict_equal_authority():
     v = V(("SUPPORTED", "SUPPORTED"), conflict=("t1", "t2"))
-    d = D.decide(two_claims(), v, ps(), Q, POL, store=FakeStore({"s1": 3, "s2": 3}))
+    cs = two_claims()
+    d = D.decide(cs, v, ps(), Q, POL, store=FakeStore({"s1": 3, "s2": 3}))
     assert d.status == "divergent" and d.abstention.type == "conflict"
-    assert "t1" in d.abstention.message and "t2" in d.abstention.message
-    assert d.kept == [0, 1] and d.confidence > 0
+    assert [c.label for c in cs] == ["supported", "supported"]
+    assert "T1" in d.abstention.message and "T2" in d.abstention.message
+    assert d.abstention.searched == ["T1 [..)", "T2 [..)"]
+    assert d.kept == [] and d.confidence == 0.0
     # no store: treated as equal
     assert D.decide(two_claims(), v, ps(), Q, POL).status == "divergent"
     # unknown source: authority 0 == 0
@@ -139,10 +142,35 @@ def test_6_conflict_ignored_cases():
     assert D.decide(two_claims(), v, old, Q, POL).status == "answered"
 
 
-def test_6_conflict_with_nothing_kept_has_zero_confidence():
-    v = V(("NOT_SUPPORTED", "NOT_SUPPORTED"), conflict=("t1", "t2"))
-    d = D.decide(two_claims(), v, ps(), Q, POL)
+def test_6_divergent_keeps_nothing_and_labels_every_claim():
+    claims = two_claims() + [cl("c.", (), "derived"), cl("d.", ("t1",), numbers_traced=True)]
+    v = V(("SUPPORTED", "NOT_SUPPORTED", "FOLLOWS"), conflict=("t1", "t2"))
+    d = D.decide(claims, v, ps(), Q, POL, tau=0.0)
     assert d.status == "divergent" and d.kept == [] and d.confidence == 0.0
+    assert all(c.label for c in claims)
+    assert [c.label for c in claims[:3]] == ["supported", "unsupported", "supported"]
+
+
+def test_6_conflict_needs_both_marks_cited_by_claims_that_passed_the_gates():
+    v = V(("SUPPORTED",), conflict=("t1", "t2"))
+    # t2 is in the evidence but no passing claim cites it
+    d = D.decide([cl("a.", ("t1",))], v, ps(), Q, POL)
+    assert d.status == "answered"
+    # the claim citing t2 failed a gate: the judge never saw that passage
+    claims = [cl("a.", ("t1",)), cl("b.", ("t2",), numbers_traced=True)]
+    d = D.decide(claims, v, ps(), Q, POL)
+    assert d.status == "partial" and d.kept == [0]
+    # a derived claim does not count as citing
+    d = D.decide([cl("a.", ("t1",)), cl("b.", ("t2",), "derived")], V(("SUPPORTED", "FOLLOWS"),
+                 conflict=("t1", "t2")), ps(), Q, POL)
+    assert d.status == "answered"
+
+
+def test_6_conflict_span_in_the_message():
+    p = ps()
+    p[0].valid_from, p[1].title, p[1].valid_to = "2020-01-01", "", "2030-01-01"
+    d = D.decide(two_claims(), V(("SUPPORTED", "SUPPORTED"), conflict=("t1", "t2")), p, Q, POL)
+    assert "T1 [2020-01-01..)" in d.abstention.message and "u2 [..2030-01-01)" in d.abstention.message
 
 
 # 7 sentence verdicts
@@ -244,3 +272,54 @@ def test_11_answered_and_partial():
     claims = [cl("a."), cl("b.")]
     d = D.decide(claims, V(("SUPPORTED", "NOT_SUPPORTED")), ps(), Q, POL)
     assert d.status == "partial" and d.kept == [0] and d.confidence == pytest.approx(0.72)
+
+
+# 7 (item 2): numbers of derived sentences after the judge
+def test_derived_number_from_a_removed_sentence_is_dropped():
+    claims = [cl("Vale 30 dias."), cl("Vale 40 dias."), cl("Logo, 40 dias.", (), "derived")]
+    d = D.decide(claims, V(("SUPPORTED", "NOT_SUPPORTED", "FOLLOWS")), ps(), Q, POL, tau=0.0)
+    assert d.kept == [0] and claims[2].label == "unsupported"
+    assert "number from a removed sentence" in claims[2].note
+    assert any("number from a removed sentence" in r for r in d.reasons)
+    # the number is allowed again when the cited sentence is kept, or the question has it
+    claims = [cl("Vale 30 dias."), cl("Vale 40 dias."), cl("Logo, 40 dias.", (), "derived")]
+    d = D.decide(claims, V(("SUPPORTED", "SUPPORTED", "FOLLOWS")), ps(), Q, POL, tau=0.0)
+    assert d.kept == [0, 1, 2]
+    claims = [cl("Vale 30 dias."), cl("Logo, 40 dias.", (), "derived")]
+    d = D.decide(claims, V(("SUPPORTED", "FOLLOWS")), ps(), Query("São 40 dias?", AsOf(valid="2021-01-01")),
+                 POL, tau=0.0)
+    assert d.kept == [0, 1]
+    # explicit question keyword and the as-of date (year, full date)
+    claims = [cl("Vale 30 dias."), cl("Logo, 2021 e 2021-01-01 e 45.", (), "derived")]
+    d = D.decide(claims, V(("SUPPORTED", "FOLLOWS")), ps(), Q, POL, tau=0.0, question="45?",
+                 as_of=AsOf(valid="2021-01-01"))
+    assert d.kept == [0, 1]
+    # no as-of date: date digits are not free
+    claims = [cl("Vale 30 dias."), cl("Logo, em 2021.", (), "derived")]
+    d = D.decide(claims, V(("SUPPORTED", "FOLLOWS")), ps(), Q, POL, tau=0.0, as_of=AsOf())
+    assert d.kept == [0]
+
+
+def test_derived_tool_value_needs_traced_arguments_against_kept_sentences():
+    from heuresis.model import ToolResult
+    good = ToolResult("k1", "calc", {"expr": "30 + 30"}, ok=True, value=60)
+    claims = [cl("Vale 30 dias."), cl("Logo, 60 dias.", (), "derived")]
+    d = D.decide(claims, V(("SUPPORTED", "FOLLOWS")), ps(), Q, POL, tau=0.0, tool_results=[good])
+    assert d.kept == [0, 1]
+    # the operand 30 came from a sentence the judge dropped
+    claims = [cl("Vale 30 dias."), cl("Vale 31 dias."), cl("Logo, 61 dias.", (), "derived")]
+    inv = ToolResult("k1", "calc", {"expr": "31 + 30"}, ok=True, value=61)
+    d = D.decide(claims, V(("SUPPORTED", "NOT_SUPPORTED", "FOLLOWS")), ps(), Q, POL, tau=0.0,
+                 tool_results=[inv])
+    assert d.kept == [0]
+    # no tool results given: the value is not allowed
+    claims = [cl("Vale 30 dias."), cl("Logo, 60 dias.", (), "derived")]
+    assert D.decide(claims, V(("SUPPORTED", "FOLLOWS")), ps(), Q, POL, tau=0.0).kept == [0]
+
+
+# 9 (item 7): the dropped factor applies to any claim not kept
+def test_9_dropped_factor_for_a_gate_failure_too():
+    claims = [cl("a."), cl("b.", numbers_traced=True)]
+    d = D.decide(claims, V(("SUPPORTED",)), ps(), Q, POL, tau=0.0)
+    assert d.status == "partial" and d.confidence == pytest.approx(0.9 * 0.8)
+    assert D.decide([cl("a.")], V(("SUPPORTED",)), ps(), Q, POL).confidence == 0.9

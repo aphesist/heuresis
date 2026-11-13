@@ -4,8 +4,9 @@ resolves to a unit with nothing in force at the date, is left alone (the gate fa
 from __future__ import annotations
 
 from ..interfaces import domain_references
-from ..model import AsOf, Draft
+from ..model import AsOf, Draft, Scope
 from ..references import has_resolver
+from .retrieve import in_scope
 
 __all__ = ["bind"]
 
@@ -14,8 +15,9 @@ def _cited(unit_ids, passages) -> bool:
     return any(p.unit_id == u or p.unit_id.startswith(u + "!") for p in passages for u in unit_ids)
 
 
-def bind(draft: Draft, evidence, store, domain, as_of: AsOf) -> list[str]:
-    """Add the missing citations to ``draft`` in place; returns one note per binding."""
+def bind(draft: Draft, evidence, store, domain, as_of: AsOf, scope: Scope | None = None) -> list[str]:
+    """Add the missing citations to ``draft`` in place; returns one note per binding. A provision
+    outside ``scope`` is never bound."""
     notes: list[str] = []
     if not has_resolver(domain):
         return notes
@@ -32,7 +34,7 @@ def bind(draft: Draft, evidence, store, domain, as_of: AsOf) -> list[str]:
                 continue
             for uid in r.unit_ids:
                 p = store.passage_at(uid, as_of)
-                if p is None:
+                if p is None or not in_scope(store, p, scope):
                     continue
                 shown = next((q for q in evidence.passages
                               if (q.unit_id, q.seq) == (p.unit_id, p.seq)), None)

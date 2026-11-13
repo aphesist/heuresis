@@ -179,6 +179,12 @@ def _ms(t0: float) -> float:
     return (time.perf_counter() - t0) * 1000.0
 
 
+def _usage_ok(usage) -> bool:
+    """A usage object with the numeric fields the loop reads."""
+    return all(isinstance(getattr(usage, n, None), (int, float))
+               for n in ("tokens_in", "tokens_out", "usd"))
+
+
 def _call_note(extra: str, usage) -> str:
     cached = int(getattr(usage, "tokens_cached", 0) or 0)
     parts = [x for x in (extra, f"cached={cached}" if cached else "") if x]
@@ -211,12 +217,13 @@ def _run_actions(acts: Actions, query: Query, evidence: Evidence, surface, *, st
             anchor = evidence.by_mark(target) if re.fullmatch(r"[tT]\d+", target) else None
             if anchor is not None:
                 found = retrieve_mod.open_unit(store, anchor.unit_id, query.as_of,
-                                               int(cfg["open_radius"]))
+                                               int(cfg["open_radius"]), query.scope)
             else:
-                found, _refs = retrieve_mod.lookup(store, domain, target, query.as_of)
+                found, _refs = retrieve_mod.lookup(store, domain, target, query.as_of,
+                                                   query.scope)
                 if not found and store.has_unit(target):
                     found = retrieve_mod.open_unit(store, target, query.as_of,
-                                                   int(cfg["open_radius"]))
+                                                   int(cfg["open_radius"]), query.scope)
         except Exception as e:
             note = f"error: {type(e).__name__}; "
         fresh = [p for p in found if _key(p) not in evidence.seen()]
@@ -265,6 +272,8 @@ def propose(llm, query: Query, evidence: Evidence, tools, surface, *, store, dom
         t0 = time.perf_counter()
         try:
             raw, usage = llm.complete(system, prompt, max_tokens=max_tokens)
+            if not _usage_ok(usage):
+                raise TypeError("the model returned no usable usage")
         except BudgetExceeded:
             trace.append(StageTrace("draft", _ms(t0), note=NOTE_BUDGET))
             return None, ("abstained", "budget", "")

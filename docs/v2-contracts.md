@@ -140,8 +140,11 @@ def adjacent(self, unit_id: str, as_of: AsOf, radius: int) -> list[Passage]
 ```python
 def search(store, query: Query, cfg: dict, *, embedder=None, trace: list | None = None,
            k: int | None = None, exclude: set[tuple[str, int]] = frozenset()) -> list[Passage]
-def lookup(store, domain, text: str, as_of: AsOf) -> tuple[list[Passage], list[Reference]]
-def open_unit(store, unit_id: str, as_of: AsOf, radius: int) -> list[Passage]
+def lookup(store, domain, text: str, as_of: AsOf, scope: Scope | None = None
+           ) -> tuple[list[Passage], list[Reference]]
+def open_unit(store, unit_id: str, as_of: AsOf, radius: int, scope: Scope | None = None
+              ) -> list[Passage]
+def unit_in_scope(store, unit_id: str, scope: Scope | None) -> bool
 def expansion_terms(question: str, passages: list[Passage], n_terms: int, n_docs: int) -> list[str]
 ```
 
@@ -152,12 +155,19 @@ def expansion_terms(question: str, passages: list[Passage], n_terms: int, n_docs
   (`rrf`, or `convex`: min-max normalised scores, `alpha * lexical + (1 - alpha) * dense`);
   if `edge_expand`, `store.neighbours` of the top results appended; returns at most `k`
   (default `k_first`) passages not in `exclude`, without marks. One `StageTrace` per stage
-  that ran (`lexical`, `expand_terms`, `dense`, `edges`).
+  that ran (`lexical`, `expand_terms`, `dense`, `edges`). Neighbours added by the edges step
+  outside `query.scope` are dropped.
 - `lookup`: runs the domain's reference resolver (if any) on `text`; for each `resolved`
   reference returns `store.passage_at` for its units (stage `lookup`); also returns the
-  references so the caller can see which were not found or not in force.
-- `open_unit`: the unit in force at the date plus `store.adjacent`.
-- Nothing here takes a date from the model. Every call uses `query.as_of` and `query.scope`.
+  references so the caller can see which were not found or not in force. A passage outside
+  `scope` (`source_ids`, `kinds`, `unit_prefix`) is dropped.
+- `open_unit`: the unit in force at the date plus `store.adjacent`, all inside `scope`; a
+  unit outside `scope` gives `[]` (and no neighbours).
+- Nothing here takes a date or a scope from the model. Every call uses `query.as_of` and
+  `query.scope`: `search` through the store's SQL filters, and `lookup`, `open_unit`, the
+  edges step and `bind` through `unit_in_scope`, so no out-of-scope passage can enter the
+  evidence by naming it, opening it, adjacency or binding. The store methods themselves
+  (`passage_at`, `adjacent`, `neighbours`) are unchanged and take no scope.
 
 ## 5. Propose loop (`v2/agent.py`), binding (`v2/bind.py`), repair (`v2/repair.py`)
 
@@ -201,10 +211,11 @@ Reply protocol of a propose call (plain text; the `LLM` protocol is unchanged):
   The text up to the end of the evidence is stable across turns; `llm.CACHE_BREAK` is
   inserted after it when the LLM has `supports_cache_break` (section 8).
 
-`bind.bind(draft, evidence, store, domain, as_of) -> list[str]`: for every sentence, every
+`bind.bind(draft, evidence, store, domain, as_of, scope=None) -> list[str]`: for every sentence, every
 reference the domain resolver finds with status `resolved` whose unit is not cited by a
 mark of that sentence: if `store.passage_at(unit, as_of)` exists, the passage is added to
-the evidence (label `Bound`) and its mark is appended to the sentence. Returns notes. A
+the evidence (label `Bound`) and its mark is appended to the sentence; a unit outside `scope`
+is never bound. Returns notes. A
 reference that does not resolve, or resolves to a unit with nothing in force at the date,
 is left alone: the gate fails it. Domains without a resolver: no-op.
 
@@ -227,24 +238,49 @@ def deterministic_failure(claim: Claim) -> bool
 def failure_reason(claim: Claim) -> str
 ```
 
-One `Claim` per sentence. `kind = "derived"` when the sentence has no mark, else `"cited"`.
+One `Claim` per sentence. `kind = "derived"` when the sentence has no PASSAGE mark (a sentence
+with tool marks only is a computed conclusion, hence derived), else `"cited"`. The claim text
+has every `{kN}` placeholder FILLED with the tool value (the judge and the answer see it).
+
+For any sentence: a `{kN}` placeholder or `[kN]` mark whose tool result is missing or not `ok`
+sets `exists = False` (the text `[not checked]` never reaches an answer). A tool value may be
+used in a sentence only if every number in that tool call's arguments (the calc expression,
+the dates of a dates call, ...) is traced: for a cited sentence to its cited passages (text or
+title), the question, the as-of date, or another cited sentence that passes the gates; for a
+derived sentence to the question, the as-of date or a cited sentence that passes the gates.
+Otherwise `numbers_traced = False` with a note naming the untraced tool argument.
+
+Number rules (`numbers_traced`), for numbers written in digits only: nothing is masked, every
+digit of the sentence is checked, including those of a resolved reference (the cited
+passages' titles and unit ids carry the article, law number and year). The as-of date is
+allowed in its ISO and dd/mm/yyyy renderings and as its year; its day and month numbers
+only when the year also occurs in the same sentence. With no as-of date given, no date
+digits are allowed (the check never reads the clock). Numbers written in words, Roman or
+circled numerals are not detected (the judge's job).
 
 Cited sentence:
-- `exists`: every passage mark is among `passages`, every tool mark is an `ok` tool result.
+- `exists`: every passage mark is among `passages`; every tool mark and placeholder is an
+  `ok` tool result.
 - `valid_at_date`: for every cited passage `store.text_at(unit_id, as_of)` exists and has the
   same `seq` (the store, not the passage copy, decides).
-- `numbers_traced`: every number in the sentence appears in a cited passage (text or
-  title), in a cited tool value, in the question, or is part of the as-of date; numbers
-  inside a reference the resolver resolved to a cited unit are skipped.
+- `numbers_traced`: every number in the (filled) sentence appears in a cited passage (text,
+  title or unit id), in an allowed tool value, in the question, or is part of the as-of
+  date by the rule above; and the tool arguments are traced (above).
 - `references_traced` (domains with a resolver): every reference found in the sentence
   resolves, and resolves to a unit the sentence cites (same rule as v1 `references.py`).
 
-Derived sentence (a conclusion that cites nothing):
+Derived sentence (a conclusion that cites no passage):
 - `exists` is true only if at least one cited sentence of the same draft passes all its
-  gates; `numbers_traced`: every number appears in the question, in the as-of date, or in a
-  cited sentence that passes; `references_traced`: the sentence contains no reference at
-  all; `valid_at_date` is true.
-- A derived sentence is kept only if the model judge also says it follows (6.3).
+  gates; `numbers_traced`: every number of the filled text appears in the question, in the
+  as-of date, in an allowed tool value (arguments traced as above) or in a cited sentence
+  that passes; `references_traced`: the sentence contains no reference at all;
+  `valid_at_date` is true.
+- A derived sentence is kept only if the model judge also says it follows, and its numbers
+  hold again after the judge (6.3 step 7).
+
+Helpers exposed for `decide`: `numbers_of(text)`, `untraced_numbers(text, allowed, as_of_valid)`,
+`tool_arg_untraced(tool_result, allowed, as_of_valid)`, `allowed_tool_keys(tool_results, allowed,
+as_of_valid)`.
 
 `check` never calls a model and never raises on malformed input (a failing sentence is the
 result). Notes name each failure.
@@ -272,7 +308,7 @@ class Verdict:
 
 def judge_prompt(question: str, as_of: str | None, claims: list[Claim],
                  passages: list[Passage], tool_results: list[ToolResult],
-                 max_chars: int = 2500) -> str
+                 max_chars: int = 8000) -> str
 def parse_verdict(raw: str, n: int) -> Verdict
 def judge(llm, question, as_of, claims, passages, tool_results, *, max_tokens=400) -> Verdict
 ```
@@ -280,9 +316,20 @@ def judge(llm, question, as_of, claims, passages, tool_results, *, max_tokens=40
 Reply format the parser reads (one line each; anything else is ignored):
 `S<i>: SUPPORTED|PARTIAL|NOT_SUPPORTED` for cited sentences, `S<i>: FOLLOWS|NOT_FOLLOWS`
 for derived ones, `ANSWER: DIRECT|PARTIAL|NO`, `SUFFICIENT: YES|NO`, `PREMISE: OK|FALSE`,
-`CONFLICT: NONE` or `CONFLICT: t<a>, t<b>`. A missing sentence line reads as
-`NOT_SUPPORTED` / `NOT_FOLLOWS`; a missing `ANSWER` or `SUFFICIENT` line makes the verdict
-unreadable (`readable = False`), which the decision rule treats as a failed check.
+`CONFLICT: NONE` or `CONFLICT: t<a>, t<b>`. The parser fails closed:
+- A missing sentence line reads as `NOT_SUPPORTED` / `NOT_FOLLOWS`.
+- A missing `ANSWER`, `SUFFICIENT` or `PREMISE` line, or an unknown value of any of them,
+  makes the verdict unreadable (`readable = False`), which the decision rule treats as a
+  failed check. A missing `CONFLICT` line reads as none; a `CONFLICT` value whose first word
+  is `NONE` is none whatever follows; any other value without two marks is unreadable.
+- `PREMISE: FALSE` on any line wins. Otherwise two lines for the same key that contradict
+  each other (two different `ANSWER` or `SUFFICIENT` values, a conflict pair and `NONE`, two
+  different pairs, two different verdicts for the same `S<i>`) make the reply unreadable.
+- A model reply without a usable usage object is an unreadable verdict.
+
+The prompt shows each cited passage whole up to `max_chars` (default 8000, the maximum
+length of a unit); a longer passage is shown as its head and its tail windows joined by
+`[...]`, never only the head.
 
 What each line asks: *S*: do the cited passages state what the sentence states (all of it,
 part, none)? For derived: does it follow from the supported sentences alone? *ANSWER*:
@@ -315,7 +362,8 @@ def load_policy(path=None) -> Policy
 def confidence(claims, kept, verdict, passages, policy) -> float
 def decide(claims: list[Claim], verdict: Verdict | None, passages: list[Passage],
            query: Query, policy: Policy, *, tau: float | None = None, store=None,
-           declined: str | None = None) -> Decision
+           declined: str | None = None, question: str = "", as_of=None,
+           tool_results=()) -> Decision
 ```
 
 The rule, in order:
@@ -326,18 +374,28 @@ The rule, in order:
    `unsupported`.
 4. No verdict or an unreadable verdict: abstained `unsupported` (reason "judge unreadable").
 5. `premise == FALSE`: abstained `false_premise`.
-6. `conflict` names two marks that exist, cite different units, both pass `valid_at_date`,
-   and their sources have equal `authority`: status `divergent`, abstention `conflict`
-   listing both; with unequal authority the conflict is ignored (the higher source rules).
+6. `conflict` names two marks that exist, are cited by claims that passed the gates (the
+   passages the judge was shown), cite different units, both pass `valid_at_date`, and
+   their sources have equal `authority`: status `divergent`, abstention `conflict`. No
+   sentence is kept (`kept = []`, confidence 0.0, `Answer.text` empty); every claim still
+   gets its label; the message names both passages (title, else unit id, with the validity
+   span) and `searched` lists them: both sides are shown and neither is chosen. With
+   unequal authority, or any other condition failing, the conflict is ignored.
 7. Sentence verdicts: `NOT_SUPPORTED` and `NOT_FOLLOWS` are dropped. A derived sentence is
-   kept only with `FOLLOWS`. If no cited claim is kept: `unsupported`.
+   kept only with `FOLLOWS`. Then every kept derived sentence is re-checked: each of its
+   numbers must appear in the question (`question`, default `query.text`), the as-of date
+   (`as_of`, default `query.as_of`), an allowed tool value (`tool_results`; arguments traced
+   as in 6.1 against the KEPT cited sentences) or a KEPT cited sentence; otherwise it is
+   dropped (reason "number from a removed sentence"). If no cited claim is kept:
+   `unsupported`.
 8. `answer == NO`: abstained `unsupported` ("does not answer the question").
    `sufficient == NO` and `answer != DIRECT`: abstained `no_source` ("the sources found do
    not settle the question").
 9. Confidence = min of: lowest sentence value among kept claims, the `ANSWER` value, the
    `SUFFICIENT` value, lowest certainty of cited passages (`low` 0.33, `medium` 0.66,
    `high` 1.0), lowest coverage of cited passages / 4; multiplied by `values["dropped"]`
-   when the judge dropped any sentence.
+   when ANY claim of the draft is not kept (a gate failure, the judge or the number
+   re-check).
 10. `confidence < tau` (`tau` from the calibration file, else `policy.default_tau`):
     abstained `unsupported` ("below the confidence threshold").
 11. Otherwise `answered` if every claim is kept, else `partial` (dropped sentences removed
@@ -365,7 +423,11 @@ so no multiplicity correction): at each `tau`, the answered set is the rows with
 Clopper-Pearson upper bound of its error rate at confidence `1 - delta` is at most
 `alpha` the threshold is accepted and the walk continues; the walk stops at the first
 threshold that fails. The result is the loosest accepted threshold, or `None` (nothing
-certified). The engine uses a calibration file only when its `surface_hash` equals the
+certified). The engine uses a calibration ONLY when the caller passes one (`calibration=` a
+`Calibration` or the path of a file; a directory path is searched with
+`find(dir, surface_hash, dataset)` only when the caller also passes
+`calibration_dataset="<name>"`); with `calibration=None` nothing is searched. A passed
+calibration is used only when its `surface_hash` equals the
 running surface's hash; otherwise `default_tau` applies and `Answer.meta["calibrated"]`
 is false. `label` records what "wrong" meant (`containment`, `judge_equivalent`, ...).
 
@@ -396,7 +458,7 @@ separate step in review.
 class EngineV2:
     def __init__(self, store, domain, *, surface=None, llm=None, judge_llm=None,
                  strong_llm=None, embedder=None, classifier=None, calibration=None,
-                 policy=None, router_cfg=None)
+                 policy=None, router_cfg=None, calibration_dataset=None)
     @classmethod
     def open(cls, path, domain=None, **kw) -> "EngineV2"     # same domain rules as Engine.open
     def ask(self, question, as_of=None, scope=None, budget_usd=None) -> Answer
@@ -408,7 +470,7 @@ class EngineV2:
 1. [understand] `router.understand` and the same date-settling rule as v1
    (`Engine._settle_date` logic). `needs_input` and `out_of_scope` exit here.
 2. [lookup] if `route.lookup_direct` and the domain has a resolver: `retrieve.lookup` on
-   the question. Passages go first in the evidence. A named provision that exists in the
+   the question (inside the question's scope). Passages go first in the evidence. A named provision that exists in the
    store but has no version in force at the date is recorded for the abstention message.
 3. [retrieve] `retrieve.search`. No evidence at all: `not_valid_at_date` if
    `store.lexical_any_date` finds something, else `no_source`; all coverage 0:
@@ -422,13 +484,16 @@ class EngineV2:
    draft replaces the old one only if it has at least as many passing cited sentences.
 9. [judge] `locked.judge.judge` on the claims that pass the gates (skipped when none pass
    or the model declined).
-10. [decide] `locked.decide.decide` with `tau` from the matching calibration file.
+10. [decide] `locked.decide.decide` with `tau` from the passed calibration (section 6.4), else
+    the default, and the question, as-of date and tool results for the derived-number re-check.
 11. [escalate] if the result is an `unsupported` abstention, `route.escalate` is on, a
     `strong_llm` was given and budget allows: steps 4-10 once more with the strong model
     and the evidence gathered so far.
-12. [assemble] text of kept sentences with tool values filled; `Answer.claims` holds every
-    claim with its checks, label (`supported` / `partial` / `unsupported`), `support`
-    (the sentence value) and note; `Answer.passages` is exactly what the model was shown.
+12. [assemble] text of kept sentences with tool values filled (empty for `divergent`, whose
+    abstention names both sides and is not replaced by a domain text); `Answer.claims`
+    holds every claim with its checks, label (`supported` / `partial` / `unsupported`),
+    `support` (the sentence value) and note; `Answer.passages` holds every passage shown to
+    the model plus the passages added by binding (which the judge sees).
 
 `Answer.meta`: `{"engine": "v2", "surface_hash", "confidence", "tau", "calibrated",
 "verdict": {"answer", "sufficient", "premise", "conflict"}, "bound": n, "repairs": n,
@@ -436,7 +501,8 @@ class EngineV2:
 
 Failure handling: a model error or unreadable reply in propose or judge ends in
 `unsupported` with a trace note (`model error`), a budget stop in `budget`; `ask` does not
-raise for these. `judge_llm` defaults to `llm`.
+raise for these. A model reply that is not `(text, usage)` with numeric usage fields is a
+model error (generator) or an unreadable verdict (judge). `judge_llm` defaults to `llm`.
 
 ## 8. LLM cache break (`llm.py`)
 

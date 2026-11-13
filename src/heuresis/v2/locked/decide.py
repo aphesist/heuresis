@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ...model import Abstention, Claim, Passage, Query
+from . import gates as gates_mod
 from .gates import deterministic_failure
 from .judge import Verdict
 
@@ -61,7 +62,7 @@ def _by_mark(passages: list[Passage]) -> dict[str, Passage]:
 def confidence(claims, kept, verdict, passages, policy) -> float:
     """Min of the lowest kept-sentence value, the ANSWER value, the SUFFICIENT value, the
     lowest certainty and the lowest coverage / 4 of the cited passages; times ``dropped`` when
-    the judge dropped a sentence."""
+    any claim of the draft is not kept (a gate failure, the judge, or the number re-check)."""
     if not kept:
         return 0.0
     v = policy.values
@@ -79,9 +80,7 @@ def confidence(claims, kept, verdict, passages, policy) -> float:
         parts.append(min(_CERT.get(p.certainty, 0.0) for p in cited))
         parts.append(min(p.coverage for p in cited) / 4)
     score = min(parts)
-    dropped = any(_word(claims[i], verdict, pos[i]) in ("NOT_SUPPORTED", "NOT_FOLLOWS")
-                  for i in judged)
-    if dropped:
+    if len(set(kept)) < len(claims):
         score *= v["dropped"]
     return max(0.0, min(1.0, score))
 
@@ -90,6 +89,10 @@ def _abstain(typ: str, msg: str, passages: list[Passage], reason: str | None = N
     return Decision("abstained", 0.0,
                     Abstention(typ, msg, [p.title or p.unit_id for p in passages]),
                     [], [reason or msg])
+
+
+def _shown(p: Passage) -> str:
+    return f"{p.title or p.unit_id} [{p.valid_from or ''}..{p.valid_to or ''})"
 
 
 def _valid_at(p: Passage, query: Query, store) -> bool:
@@ -108,9 +111,58 @@ def _authority(p: Passage, store) -> int:
     return s.authority if s is not None else 0
 
 
+def _apply_verdicts(claims: list[Claim], judged: list[int], verdict: Verdict,
+                    policy: Policy) -> tuple[list[int], list[str]]:
+    """Label every judged claim from its verdict; returns the kept indexes and the reasons."""
+    kept: list[int] = []
+    reasons: list[str] = []
+    for j, i in enumerate(judged):
+        c = claims[i]
+        w = _word(c, verdict, j)
+        if w in ("SUPPORTED", "FOLLOWS"):
+            c.label, c.support = "supported", policy.values.get(w, 0.0)
+            kept.append(i)
+        elif w == "PARTIAL":
+            c.label, c.support = "partial", policy.values.get("PARTIAL", 0.0)
+            kept.append(i)
+        else:
+            c.label, c.support = "unsupported", 0.0
+            reasons.append(f"dropped by the judge: {c.text}")
+            c.note = "; ".join(x for x in (c.note, "dropped by the judge") if x)
+    return kept, reasons
+
+
+def _recheck_derived(claims: list[Claim], kept: list[int], question: str, as_of_valid,
+                     tool_results) -> tuple[list[int], list[str]]:
+    """Every number of a kept derived sentence must be in the question, the as-of date, an allowed
+    tool value or a KEPT cited sentence; otherwise the sentence is dropped."""
+    base = set(gates_mod.numbers_of(question or ""))
+    for i in kept:
+        if claims[i].kind != "derived":
+            base |= gates_mod.numbers_of(claims[i].text)
+    allowed = base | gates_mod.allowed_tool_keys(tool_results, base, as_of_valid)
+    out: list[int] = []
+    reasons: list[str] = []
+    for i in kept:
+        c = claims[i]
+        if c.kind == "derived":
+            bad = gates_mod.untraced_numbers(c.text, allowed, as_of_valid)
+            if bad:
+                c.label, c.support = "unsupported", 0.0
+                c.note = "; ".join(x for x in (
+                    c.note, "number from a removed sentence: " + ", ".join(bad)) if x)
+                reasons.append(f"number from a removed sentence: {c.text}")
+                continue
+        out.append(i)
+    return out, reasons
+
+
 def decide(claims: list[Claim], verdict: Verdict | None, passages: list[Passage],
            query: Query, policy: Policy, *, tau: float | None = None, store=None,
-           declined: str | None = None) -> Decision:
+           declined: str | None = None, question: str = "", as_of=None,
+           tool_results=()) -> Decision:
+    question = question or query.text
+    as_of_valid = (as_of if as_of is not None else query.as_of).valid
     # 1. the model declined
     if declined:
         return _abstain(declined, "The model declined to answer.", passages,
@@ -145,37 +197,33 @@ def decide(claims: list[Claim], verdict: Verdict | None, passages: list[Passage]
                         passages)
     judged = _judged(claims)
     bm = _by_mark(passages)
-    # 6. conflict between two equal-authority passages in force
+    # 6. conflict between two equal-authority passages in force, both cited by claims that passed
+    # the gates (the passages the judge was shown). Neither side is chosen: no sentence is kept.
     if verdict.conflict:
-        a, b = (bm.get(m) for m in verdict.conflict)
-        if (a is not None and b is not None and a.unit_id != b.unit_id
+        shown = {m for i in judged if claims[i].kind != "derived"
+                 for m in claims[i].passage_marks}
+        ma, mb = verdict.conflict
+        a, b = bm.get(ma), bm.get(mb)
+        if (a is not None and b is not None and ma in shown and mb in shown
+                and a.unit_id != b.unit_id
                 and _valid_at(a, query, store) and _valid_at(b, query, store)
                 and _authority(a, store) == _authority(b, store)):
-            ma, mb = verdict.conflict
-            kept = [i for j, i in enumerate(judged)
-                    if _word(claims[i], verdict, j) in ("SUPPORTED", "PARTIAL", "FOLLOWS")]
-            conf = confidence(claims, kept, verdict, passages, policy) if kept else 0.0
+            _apply_verdicts(claims, judged, verdict, policy)
+            for c in claims:
+                if not c.label:
+                    c.label, c.support = "unsupported", 0.0
+            sides = [_shown(a), _shown(b)]
             return Decision(
-                "divergent", conf,
-                Abstention("conflict", f"Sources of equal authority disagree: {ma} and {mb}.",
-                           [p.title or p.unit_id for p in (a, b)]),
-                kept, [f"conflict between {ma} and {mb}"])
+                "divergent", 0.0,
+                Abstention("conflict",
+                           f"Sources of equal authority disagree: {sides[0]} and {sides[1]}. "
+                           "Both are shown; neither is chosen.", sides),
+                [], [f"conflict between {ma} and {mb}"])
     # 7. sentence verdicts
-    kept: list[int] = []
-    reasons: list[str] = []
-    for j, i in enumerate(judged):
-        c = claims[i]
-        w = _word(c, verdict, j)
-        if w in ("SUPPORTED", "FOLLOWS"):
-            c.label, c.support = "supported", policy.values.get(w, 0.0)
-            kept.append(i)
-        elif w == "PARTIAL":
-            c.label, c.support = "partial", policy.values.get("PARTIAL", 0.0)
-            kept.append(i)
-        else:
-            c.label, c.support = "unsupported", 0.0
-            reasons.append(f"dropped by the judge: {c.text}")
-            c.note = "; ".join(x for x in (c.note, "dropped by the judge") if x)
+    kept, reasons = _apply_verdicts(claims, judged, verdict, policy)
+    # 7b. the numbers of derived sentences, against what was kept
+    kept, more = _recheck_derived(claims, kept, question, as_of_valid, tool_results)
+    reasons += more
     if not any(claims[i].kind != "derived" for i in kept):
         return _abstain("unsupported", "No sentence is supported by the sources.", passages,
                         "no cited sentence is supported")

@@ -14,10 +14,10 @@ from dataclasses import replace
 from typing import Any, Iterable
 
 from ..interfaces import Reference, domain_references
-from ..model import AsOf, Passage, Query, StageTrace
+from ..model import AsOf, Passage, Query, Scope, StageTrace
 from ..retrieve import rrf
 
-__all__ = ["search", "lookup", "open_unit", "expansion_terms"]
+__all__ = ["search", "lookup", "open_unit", "expansion_terms", "unit_in_scope", "in_scope"]
 
 _STOP = frozenset("""
 about above after again against also among because been before being below between both but
@@ -57,6 +57,31 @@ def _dedup(passages: Iterable[Passage]) -> list[Passage]:
             seen.add(_key(p))
             out.append(p)
     return out
+
+
+def unit_in_scope(store, unit_id: str, scope: Scope | None) -> bool:
+    """True when ``unit_id`` lies inside ``scope`` (source ids, unit kinds, id prefix). An empty
+    scope allows everything; a unit that cannot be looked up is outside any non-empty scope."""
+    if scope is None or not (scope.source_ids or scope.kinds or scope.unit_prefix):
+        return True
+    if scope.unit_prefix and not unit_id.startswith(scope.unit_prefix):
+        return False
+    if not (scope.source_ids or scope.kinds):
+        return True
+    try:
+        row = store._con.execute("SELECT source_id, kind FROM units WHERE id=?",
+                                 (unit_id,)).fetchone()
+    except Exception:
+        return False
+    if row is None:
+        return False
+    if scope.source_ids and row[0] not in scope.source_ids:
+        return False
+    return not scope.kinds or row[1] in scope.kinds
+
+
+def in_scope(store, p: Passage, scope: Scope | None) -> bool:
+    return unit_in_scope(store, p.unit_id, scope)
 
 
 def _ms(t0: float) -> float:
@@ -169,7 +194,7 @@ def search(store, query: Query, cfg: dict, *, embedder=None, trace: list | None 
         seen = {_key(p) for p in current} | set(exclude)
         extra: list[Passage] = []
         for p in store.neighbours([p.unit_id for p in out], as_of):
-            if _key(p) not in seen:
+            if _key(p) not in seen and in_scope(store, p, scope):
                 seen.add(_key(p))
                 extra.append(replace(p, stage="expand", score=0.0))
         out = (out + extra)[:k]
@@ -179,8 +204,10 @@ def search(store, query: Query, cfg: dict, *, embedder=None, trace: list | None 
     return [replace(p, mark="") for p in out]
 
 
-def lookup(store, domain, text: str, as_of: AsOf) -> tuple[list[Passage], list[Reference]]:
-    """Provisions the text names, as in force at ``as_of``; and the references found."""
+def lookup(store, domain, text: str, as_of: AsOf, scope: Scope | None = None
+           ) -> tuple[list[Passage], list[Reference]]:
+    """Provisions the text names, as in force at ``as_of`` and inside ``scope``; and the
+    references found."""
     refs = domain_references(domain, text, store) if domain is not None else []
     out: list[Passage] = []
     seen: set[str] = set()
@@ -192,15 +219,20 @@ def lookup(store, domain, text: str, as_of: AsOf) -> tuple[list[Passage], list[R
                 continue
             seen.add(uid)
             p = store.passage_at(uid, as_of)
-            if p is not None:
+            if p is not None and in_scope(store, p, scope):
                 out.append(p)
     return out, refs
 
 
-def open_unit(store, unit_id: str, as_of: AsOf, radius: int) -> list[Passage]:
-    """The unit in force at ``as_of`` followed by its neighbours; empty when nothing is in
-    force (the neighbours are then not shown either)."""
+def open_unit(store, unit_id: str, as_of: AsOf, radius: int,
+              scope: Scope | None = None) -> list[Passage]:
+    """The unit in force at ``as_of`` followed by its neighbours, all inside ``scope``; empty
+    when nothing is in force or the unit is out of scope (the neighbours are then not shown
+    either)."""
+    if not unit_in_scope(store, unit_id, scope):
+        return []
     p = store.passage_at(unit_id, as_of)
     if p is None:
         return []
-    return [replace(p, stage="open"), *store.adjacent(unit_id, as_of, radius)]
+    return [replace(p, stage="open"),
+            *[q for q in store.adjacent(unit_id, as_of, radius) if in_scope(store, q, scope)]]

@@ -101,7 +101,7 @@ class EngineV2:
     def __init__(self, store: Store, domain: Any, *, surface=None, llm: Any = None,
                  judge_llm: Any = None, strong_llm: Any = None, embedder: Any = None,
                  classifier: Any = None, calibration: Any = None, policy: Any = None,
-                 router_cfg: Any = None):
+                 router_cfg: Any = None, calibration_dataset: str | None = None):
         self.store = store
         self.domain = domain
         self.surface = surface if surface is not None else load_surface(domain=domain.name)
@@ -113,6 +113,7 @@ class EngineV2:
         self.policy = policy if policy is not None else decide_mod.load_policy()
         self.router_cfg = router_cfg if router_cfg is not None else load_config().router
         self.surface_hash = surface_hash(self.surface)
+        self.calibration_dataset = calibration_dataset
         self.calibration = self._resolve_calibration(calibration)
         self._sql_db: str | None = None
 
@@ -166,13 +167,20 @@ class EngineV2:
     _settle_date = Engine._settle_date
 
     def _resolve_calibration(self, calibration: Any):
+        """A calibration is used ONLY when the caller passes one: a ``Calibration``, the path of
+        its file, or a directory together with ``calibration_dataset`` (searched with the surface
+        hash and that dataset). ``None`` searches nothing."""
         try:
+            if calibration is None:
+                return None
             if isinstance(calibration, cal_mod.Calibration):
                 return calibration
-            if calibration is None:
-                return cal_mod.find(CALIBRATION_DIR, self.surface_hash)
             p = Path(calibration)
-            return cal_mod.load(p) if p.is_file() else cal_mod.find(p, self.surface_hash)
+            if p.is_file():
+                return cal_mod.load(p)
+            if p.is_dir() and self.calibration_dataset:
+                return cal_mod.find(p, self.surface_hash, self.calibration_dataset)
+            return None
         except (OSError, ValueError, TypeError):
             return None
 
@@ -197,7 +205,7 @@ class EngineV2:
         out: list[Passage] = []
         seen: set[tuple[str, int]] = set()
         if self.surface.get("route", "lookup_direct") and has_resolver(self.domain):
-            for p in retrieve_mod.lookup(self.store, self.domain, q.text, q.as_of)[0]:
+            for p in retrieve_mod.lookup(self.store, self.domain, q.text, q.as_of, q.scope)[0]:
                 if (p.unit_id, p.seq) not in seen:
                     seen.add((p.unit_id, p.seq))
                     out.append(p)
@@ -223,11 +231,12 @@ class EngineV2:
 
         def finish(status: str, kind: str | None = None, message: str = "",
                    searched: list[str] | None = None, query: Query | None = None,
-                   run: _Run | None = None, text: str = "", grade: float = 0.0) -> Answer:
+                   run: _Run | None = None, text: str = "", grade: float = 0.0,
+                   exact: bool = False) -> Answer:
             ab = None
             if kind:
                 custom = None
-                if query is not None:
+                if query is not None and not exact:
                     try:
                         custom = self.domain.abstention_text(kind, query)
                     except Exception:
@@ -256,14 +265,16 @@ class EngineV2:
         if surf.get("route", "lookup_direct") and has_resolver(self.domain):
             t0 = time.perf_counter()
             try:
-                lp, refs = retrieve_mod.lookup(self.store, self.domain, query.text, query.as_of)
+                lp, refs = retrieve_mod.lookup(self.store, self.domain, query.text, query.as_of,
+                                               query.scope)
             except Exception:
                 lp, refs = [], []
             got = {p.unit_id for p in lp}
             for r in refs:
                 if r.status == "resolved":
                     for uid in r.unit_ids:
-                        if uid not in got and uid not in absent and self.store.has_unit(uid):
+                        if (uid not in got and uid not in absent and self.store.has_unit(uid)
+                                and retrieve_mod.unit_in_scope(self.store, uid, query.scope)):
                             absent.append(uid)
             if lp:
                 evidence.add("Lookup", lp)
@@ -320,19 +331,20 @@ class EngineV2:
         dec = run.decision
         t0 = time.perf_counter()
         text = ""
-        if dec.status in ("answered", "partial", "divergent") and run.draft is not None:
+        if dec.status in ("answered", "partial") and run.draft is not None:
             keep = [run.draft.sentences[i] for i in dec.kept if i < len(run.draft.sentences)]
             text = draft_mod.render(dataclasses.replace(run.draft, sentences=keep), run.results)
         trace.append(StageTrace("assemble", _ms(t0), note=dec.status))
-        grade = dec.confidence if dec.status in ("answered", "partial", "divergent") else 0.0
+        grade = dec.confidence if dec.status in ("answered", "partial") else 0.0
         if dec.abstention is None:
             return finish(dec.status, query=query, run=run, text=text, grade=grade)
         kind, msg, searched = self._late(dec.abstention.type, dec.abstention.message,
                                          list(dec.abstention.searched), absent, trace)
-        if dec.status == "divergent":
+        divergent = dec.status == "divergent"
+        if divergent:  # both sides are named as they are: no custom text, nothing chosen
             kind, msg, searched = dec.abstention.type, dec.abstention.message, dec.abstention.searched
         return finish(dec.status, kind, msg, searched, query=query, run=run, text=text,
-                      grade=grade)
+                      grade=grade, exact=divergent)
 
     # -- steps ---------------------------------------------------------------
 
@@ -452,7 +464,9 @@ class EngineV2:
         cal = self._active_calibration()
         run.decision = decide_mod.decide(claims, verdict, evidence.passages, query, self.policy,
                                          tau=cal.tau if cal is not None else None,
-                                         store=self.store, declined=d.declined)
+                                         store=self.store, declined=d.declined,
+                                         question=query.text, as_of=query.as_of,
+                                         tool_results=results)
         trace.append(StageTrace("decide", _ms(t0), note=run.decision.status))
         return run
 
@@ -485,7 +499,7 @@ class EngineV2:
     def _check(self, d: Draft, results: list, query: Query, evidence, trace: list[StageTrace]):
         """Steps 6-7: bind missing citations, then the deterministic gates."""
         t0 = time.perf_counter()
-        notes = bind_mod.bind(d, evidence, self.store, self.domain, query.as_of)
+        notes = bind_mod.bind(d, evidence, self.store, self.domain, query.as_of, query.scope)
         if notes:
             trace.append(StageTrace("bind", _ms(t0), n_out=len(notes), note="; ".join(notes)[:300]))
         t0 = time.perf_counter()

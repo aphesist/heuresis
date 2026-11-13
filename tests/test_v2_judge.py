@@ -41,10 +41,10 @@ def test_parse_conflict_and_variants():
 
 
 def test_missing_sentence_lines_read_as_not_supported():
-    v = J.parse_verdict("S1: SUPPORTED\nANSWER: DIRECT\nSUFFICIENT: YES", 3)
+    v = J.parse_verdict("S1: SUPPORTED\nANSWER: DIRECT\nSUFFICIENT: YES\nPREMISE: OK", 3)
     assert v.sentences == {0: "SUPPORTED", 1: "NOT_SUPPORTED", 2: "NOT_SUPPORTED"} and v.readable
     # out-of-range index and unknown words are ignored
-    v = J.parse_verdict("S9: SUPPORTED\nS1: GREAT\nANSWER: DIRECT\nSUFFICIENT: YES", 1)
+    v = J.parse_verdict("S9: SUPPORTED\nS1: GREAT\nANSWER: DIRECT\nSUFFICIENT: YES\nPREMISE: OK", 1)
     assert v.sentences == {0: "NOT_SUPPORTED"}
 
 
@@ -55,10 +55,46 @@ def test_unreadable(raw):
     assert J.parse_verdict(raw, 1).readable is False
 
 
-def test_premise_defaults_ok_and_never_raises():
-    v = J.parse_verdict("ANSWER: NO\nSUFFICIENT: NO", 0)
-    assert v.premise == "OK" and v.readable and v.sentences == {}
+def test_missing_premise_is_unreadable_missing_conflict_is_none_and_never_raises():
+    assert J.parse_verdict("ANSWER: NO\nSUFFICIENT: NO", 0).readable is False
+    v = J.parse_verdict("ANSWER: NO\nSUFFICIENT: NO\nPREMISE: OK", 0)
+    assert v.premise == "OK" and v.readable and v.sentences == {} and v.conflict is None
     assert J.parse_verdict(None, 2).readable is False
+
+
+BASE = "S1: SUPPORTED\nANSWER: DIRECT\nSUFFICIENT: YES\n"
+
+
+def test_premise_false_anywhere_wins():
+    for tail in ("PREMISE: FALSE\nPREMISE: OK", "PREMISE: OK\nPREMISE: FALSE", "PREMISE: FALSE."):
+        v = J.parse_verdict(BASE + tail, 1)
+        assert v.premise == "FALSE" and v.readable, tail
+
+
+@pytest.mark.parametrize("tail", [
+    "PREMISE: OK\nCONFLICT: t1, t2\nCONFLICT: NONE",
+    "PREMISE: OK\nCONFLICT: t1, t2\nCONFLICT: t1, t3",
+    "PREMISE: OK\nANSWER: NO",
+    "PREMISE: OK\nSUFFICIENT: NO",
+    "PREMISE: contradicted",
+    "PREMISE: the question assumes x, which is FALSE-ish",
+    "PREMISE: NOT OK",
+    "PREMISE:",
+    "PREMISE: OK\nCONFLICT: t1",
+    "PREMISE: OK\nS1: NOT_SUPPORTED",
+])
+def test_contradictory_or_unknown_lines_are_unreadable(tail):
+    assert J.parse_verdict(BASE + tail, 1).readable is False
+
+
+def test_conflict_none_wins_over_what_follows_and_repeats_are_fine():
+    v = J.parse_verdict(BASE + "PREMISE: OK\nCONFLICT: NONE (t1 and t2 agree)", 1)
+    assert v.conflict is None and v.readable
+    v = J.parse_verdict(BASE + "PREMISE: OK\nCONFLICT: none; t1 vs t2 do not conflict", 1)
+    assert v.conflict is None and v.readable
+    v = J.parse_verdict(BASE + "PREMISE: OK\nPREMISE: OK\nANSWER: DIRECT\nS1: SUPPORTED\n"
+                        "CONFLICT: t1, t2\nCONFLICT: t2, t1", 1)
+    assert v.readable and set(v.conflict) == {"t1", "t2"}
 
 
 def passages():
@@ -73,6 +109,7 @@ def test_prompt_content():
               Claim("Outra.", ["t2"])]
     tools = [ToolResult("k1", "calc", {}, True, value=5), ToolResult("k2", "calc", {}, True, value=9)]
     pr = J.judge_prompt("Quanto?", "2021-01-01", claims, passages(), tools, max_chars=100)
+    assert J.judge_prompt.__defaults__[0] == 8000
     assert "Question: Quanto?" in pr and "As-of date: 2021-01-01" in pr
     assert "S1 (cited [t1][k1]): Vale 5 dias." in pr
     assert "S2 (derived): Logo, vale." in pr and "S3 (cited [t2])" in pr
@@ -106,3 +143,13 @@ def test_judge_unreadable_reply_and_error_propagation():
     for exc in (LLMError("x"), BudgetExceeded("y")):
         with pytest.raises(type(exc)):
             J.judge(Scripted(exc=exc), "q", None, [Claim("a.", ["t1"])], passages(), [])
+
+
+def test_long_passage_shows_head_and_tail():
+    text = "HEAD " + "x " * 6000 + "TAIL-FACT 40 units"
+    p = [Passage("u", 0, text, mark="t1")]
+    pr = J.judge_prompt("q", None, [Claim("a.", ["t1"])], p, [])
+    assert "HEAD" in pr and "TAIL-FACT 40 units" in pr and "[...]" in pr
+    short = "y " * 3900  # 7800 chars: shown whole by default
+    pr = J.judge_prompt("q", None, [Claim("a.", ["t1"])], [Passage("u", 0, short, mark="t1")], [])
+    assert "[...]" not in pr

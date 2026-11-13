@@ -192,8 +192,10 @@ property test):
 3. **Every sentence kept in an answer either cites at least one such passage, or is a
    derived sentence** that introduces no number and no reference beyond the question, the
    date and the kept cited sentences, in an answer that keeps at least one cited sentence.
-4. **Every number in a kept sentence** appears in a passage it cites (text or title), in a
-   tool result it cites, in the question, or in the as-of date.
+4. **Every number written in digits in a kept sentence** appears in a passage it cites
+   (text, title or unit id), in a tool result it cites (whose own arguments are traced the
+   same way), in the question, or in the as-of date. Numbers written in words are left to
+   the judge.
 5. **In a domain with a reference resolver, every source reference named in a kept sentence
    resolves to a unit of the corpus that the sentence cites.** A reference to something
    that does not exist in the corpus, or that has no version in force at the date, removes
@@ -205,6 +207,10 @@ What this does *not* guarantee: that the corpus is complete or right (a provisio
 in fact but not in the corpus still counts as in force: `docs/legal-citation-test.md`,
 limits), or that the resolver recognises every way of naming a source (99.2% of gold
 references on the law corpus, measured).
+A number that appears in the question may be repeated in a cited sentence even if the passage
+gives another number (the judge is the check for that). Binding cites the provision a
+sentence names, so whether that provision supports the sentence is judged by the model, not
+by code.
 
 ### Judged by a model
 
