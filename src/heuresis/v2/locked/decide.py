@@ -21,6 +21,7 @@ class Policy:
     grid: tuple[float, ...]
     min_calibration_answers: int
     values: dict[str, float]
+    judge_model: str = ""    # the model the judge runs on in paid runs; recorded in every manifest
 
 
 @dataclass
@@ -36,7 +37,8 @@ def load_policy(path=None) -> Policy:
     d = json.loads(Path(path or POLICY_PATH).read_text(encoding="utf-8"))
     return Policy(float(d["alpha"]), float(d["delta"]), float(d["default_tau"]),
                   tuple(float(x) for x in d["grid"]), int(d["min_calibration_answers"]),
-                  {k: float(v) for k, v in d["values"].items()})
+                  {k: float(v) for k, v in d["values"].items()},
+                  str(d.get("judge_model", "")))
 
 
 def _judged(claims: list[Claim]) -> list[int]:

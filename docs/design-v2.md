@@ -142,7 +142,7 @@ per call with default thinking) and the dev2 runs. Local stages cost no money.
 | 6 | Bind: named provisions in force become citations | code | 0 | — |
 | 7 | Gates: per sentence, in code | code | 0; ms | all sentences pass → 9 |
 | 8 | Repair: one more propose call with the failures explained | model | ≈ US$0.0009, only when a gate fails | — |
-| 9 | Judge: one call, thinking off, at most 400 output tokens | model | ≈ US$0.0003-0.0005 (≈ 3k input tokens, short output) | no sentence passed the gates (no judge call is made) |
+| 9 | Judge: one call, thinking off, at most 400 output tokens | model | ≈ US$0.0004 on Haiku 5.5; ≈ US$0.0075 on Sonnet 5.5 (≈ 3k input, 150 output tokens at US$2 / US$10 per million) | no sentence passed the gates (no judge call is made) |
 | 10 | Decide: locked rule, calibrated threshold | code | 0 | always: answered / partial / divergent / a typed abstention |
 | 11 | Escalate (off by default): 4-10 once more with a stronger model | model | one strong-model pass | only after an `unsupported` refusal |
 
@@ -153,7 +153,16 @@ is roughly half of a call's cost here, so the saving is at most about 20-25% of 
 cost (modelled; a prompt below the model's minimum cacheable length is not cached: 512 tokens
 for Haiku 5.5 according to the provider's prompt-caching documentation, read 2026-11-13).
 
-**Cost per useful answer** (modelled): at the v1 useful rate (34%) US$0.0079; at the
+**The judge model decides the cost.** The owner's decision for the paid tests is to run the
+locked judge on Claude Sonnet 5.5 (a stronger model of the same family, recorded in
+`policy.json` as a frozen setting) while the generator stays Haiku 5.5. A Sonnet judge call
+costs about US$0.0075 (modelled), so the engine costs about **US$0.010 per question**, of
+which three quarters is the judge. With that judge the engine cannot be cheaper per useful
+answer than agentic search (US$0.0047) or than v1 (US$0.0078) at any plausible useful rate;
+what it buys is a checker stronger than the writer. The figures below are for a Haiku judge
+and are what a dev-only ablation arm (`--judge-model claude-haiku-5-5`) would test.
+
+**Cost per useful answer, Haiku judge** (modelled): at the v1 useful rate (34%) US$0.0079; at the
 agentic rate (38.4%) US$0.0070; at 45% US$0.0060. **So v2 is expected to be cheaper per
 useful answer than v1 only if it raises the useful rate, and matching agentic search's
 US$0.0047 needs both a useful rate near 45% and the caching saving. That is a hypothesis,
@@ -207,7 +216,8 @@ These are judgements and can be wrong. Known error rates of this kind of judge e
 automatic citation judges agree with people 78-85% of the time (R§2.5); the v1 support
 judge agreed with a second, stronger model on 94.5% of 200 rows (measured, model-reviewed,
 not human-reviewed). The judge and the generator may be the same family, so their errors
-can correlate (R§2.4); the harness lets the judge be another model.
+can correlate (R§2.4). In the paid tests the judge is Claude Sonnet 5.5 and the generator
+Haiku 5.5 (`policy.json`, `judge_model`): a stronger checker, still the same family.
 
 ### Calibrated
 
@@ -232,9 +242,15 @@ The statement this supports, and its limits:
   containment grade; for law it is a model judge's "equivalent to the official answer",
   which is itself unvalidated by people. A bound against a model's labels is not a bound
   against the truth.
-- Sample size: 45 answered with 0 errors, 77 with 1, about 300 with 10 are needed to
-  certify 5% at 90% (R§3.2, arithmetic). With dev sets of 100 the walk will often certify
-  nothing; then the engine says so and stays on the default threshold.
+- Sample size: 45 answered with 0 errors, 77 with 1, 132 with 3, about 300 with 10 are
+  needed to certify 5% at 90% (R§3.2, arithmetic). A dev set of 100 will often certify
+  nothing. The owner's decision is a dedicated calibration draw: a block of 400 questions
+  per English dataset with an unused pool (`cal0` of MultiHop-RAG and HoH, disjoint from
+  every rotating and promotion block and from `test` and `sealed`). At about 70% coverage
+  that is about 280 answered questions, which certifies if the error rate among them is at
+  most about 3%. For law only `dev` and `temporal` exist (220 questions, labelled by a
+  model judge); they will probably certify nothing, and then the engine says so and stays
+  on the default threshold for law.
 
 ### When the engine abstains
 
@@ -403,13 +419,18 @@ direction as the generator.
 
 ### Budget per cycle (modelled)
 
-At US$0.003 per question for the engine: champion on the rotating draw (2 datasets × 100)
-US$0.60; screening 6 candidates × 60 questions US$1.10; dev for 2 candidates × 200
-US$1.20; anchors for 2 candidates × 420 US$2.50; promotion 1 × 600 plus champion (cached
-after its first run) US$1.80-3.60; reflective proposer US$0.30. **About US$7.50-9.50 per
-cycle, hard-capped by the ledger (default cap US$10 per cycle; the loop stops cleanly when
-the cap is reached and resumes from the archive).** Anchors are the largest line; running
-them only for the candidate that reaches promotion brings a cycle to about US$5.
+With the Sonnet judge the engine costs about US$0.010 per question (section (c)), so the
+default cap of US$10 per cycle buys about 1,000 engine questions. A default cycle that
+fits: champion on the rotating draw (2 datasets × 100) US$2.00; screening 4 candidates ×
+60 questions US$2.40; dev for 1 candidate × 200 US$2.00; promotion for that one candidate
+on as much of the sealed set as the remaining budget allows (never fewer than 200
+questions, with the champion's rows cached after its first run) about US$2.00-3.00;
+reflective proposer US$0.30. Anchors run only for a candidate that passed promotion, in
+the next cycle's budget, before it becomes champion. **The ledger hard-caps the cycle
+(default US$10); the loop stops cleanly at the cap and resumes from the archive.** At 200
+paired promotion questions only gains of roughly 6-8 points of the primary score can be
+certified (`bench.stats.min_detectable_diff`); smaller true gains will not be promoted.
+With a Haiku judge the same cap buys about three times as many questions.
 
 ### How it plugs into autopoiesis
 
@@ -448,7 +469,7 @@ keep it going without autopoiesis.
 | H3 | **Citation integrity is kept.** v2's rate of answers with a fabricated or out-of-force citation on law is not above v1's (non-inferiority, margin 1 point) and below every baseline's. | goal 3 |
 | H4 | **Dates.** On dated questions (HoH; law `temporal`) v2 gives the version in force at least as often as `agentic+asof`. | goal 4 |
 | H5 | **Multi-hop.** On MuSiQue and MultiHop-RAG the penalised score of v2 is not below `agentic+asof`'s by more than 0.05 and above v1's. | goal 1 |
-| H6 | **Cost.** v2's cost per useful (law) or correct (English) answer is below v1's; secondary: not above agentic's. | cost |
+| H6 | **Cost.** v2's cost per useful (law) or correct (English) answer is below v1's; secondary: not above agentic's. With the Sonnet judge chosen for the paid tests this is expected to fail (section (c)); it is reported with both judges on dev. | cost |
 | H7 | **Calibration.** On a split not used for fitting, the error rate among answered questions is at most α + 3 points (α = 5%). | the calibrated statement in (d) |
 | H8 | **The loop improves and does not game.** After N cycles the promoted champion beats the starting surface on a fresh draw never used by the loop; planted bad candidates (a prompt containing the canary marker; a surface with an out-of-bounds value; an edit to a protected file) are all rejected; honest candidates trip no wire. | goal 5 |
 
@@ -463,7 +484,8 @@ same model, default thinking, no truncation (`max_tokens` 4096), one run.
 | Stage | Data | Purpose |
 |---|---|---|
 | A. Offline | fixtures, fakes | the build works (`pytest`; dry runs) |
-| B. Design check (paid, small) | law `dev` (100), `temporal` (120); English `dev2` (3 × 100) | does v2 run on real models; first look at H1-H6; fit calibration. **Calibration data: seen during v1 design.** |
+| B. Design check (paid, small) | law `dev` (100), `temporal` (120); English `dev2` (3 × 100) | does v2 run on real models; first look at H1-H6. **Calibration data: seen during v1 design.** |
+| B2. Calibration draw | `cal0` of MultiHop-RAG and HoH (2 × 400, from the unused pools), plus the law runs of B | fit the confidence threshold per dataset |
 | C. Fresh dev | rotating draw 1 for MultiHop-RAG and HoH (2 × 100), never used by anyone | H2, H5, H7 on unseen questions before any registration; decide go / no-go |
 | D. Loop | rotating draws 2+, sealed promotion set, anchors | H8 |
 | E. Registered test, English | `test` of the three English datasets (3 × 500), never run with a model | H2, H4, H5, H6, H7 |
@@ -489,8 +511,11 @@ nothing to the first run.** Reasons:
   this benchmark; it does not show the reading in (a) generalises.
 - For `temporal_test` (240) the primary outcome sat at the floor in the first run
   (baselines 0.4-2.1%), so it can show H3 non-inferiority and H4 only. A third dated set
-  from the 54 unused provisions (108 questions) would be the clean held-out for H4; it
-  needs a download from the Câmara portal and is left as an owner decision.
+  could be built from the 54 unused provisions (108 questions); the owner decided not to
+  build it, so H4 on law rests on the re-used `temporal_test`.
+- The benchmark's own judges (answer judge, support judge) stay unchanged and on Haiku
+  5.5, so the two registered runs are comparable; only the engine's internal locked judge
+  runs on Sonnet 5.5. Registration: `PREREGISTRATION-legal-v2.md`.
 - The English `test` splits have never been answered by any model (two retrieval-only
   checks touched them, disclosed in `PREREGISTRATION.md` 2a), so stage E is a first test.
 
