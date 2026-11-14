@@ -1,0 +1,313 @@
+{
+  "config": {
+    "answer": {
+      "max_searches": 4,
+      "mode": "search",
+      "search_k": 5
+    },
+    "decide": {
+      "conflict_margin": 0.1,
+      "min_supported_fraction": 1.0,
+      "mode": "grade",
+      "partial_fraction": 0.5
+    },
+    "draft": {
+      "max_context_chars": 24000,
+      "max_sentences": 0,
+      "max_tokens": 4096,
+      "model": "claude-haiku-5-5",
+      "prompt": "v2"
+    },
+    "retrieve": {
+      "dense": true,
+      "early_stop": true,
+      "early_stop_margin": 0.35,
+      "expand": false,
+      "expand_hops": 1,
+      "k_dense": 50,
+      "k_lexical": 50,
+      "rerank": false,
+      "rerank_in": 50,
+      "rerank_out": 8,
+      "rewrite": false,
+      "rrf_k": 60,
+      "second_round": false
+    },
+    "router": {
+      "ask_threshold": 0.6,
+      "default_intent": "lookup"
+    },
+    "verify": {
+      "answers_question": false,
+      "atomic_claims": false,
+      "partial_threshold": 0.3,
+      "support": "window_title",
+      "support_threshold": 0.5
+    }
+  },
+  "corpus_tokens": 14404906,
+  "dataset": "brlaw-core",
+  "dry_run": false,
+  "engine_config": {
+    "answer": {
+      "max_searches": 4,
+      "mode": "search",
+      "search_k": 5
+    },
+    "decide": {
+      "conflict_margin": 0.1,
+      "min_supported_fraction": 1.0,
+      "mode": "grade",
+      "partial_fraction": 0.5
+    },
+    "draft": {
+      "max_context_chars": 24000,
+      "max_sentences": 3,
+      "max_tokens": 4096,
+      "model": "claude-haiku-5-5",
+      "prompt": "v2"
+    },
+    "retrieve": {
+      "dense": true,
+      "early_stop": true,
+      "early_stop_margin": 0.35,
+      "expand": false,
+      "expand_hops": 1,
+      "k_dense": 50,
+      "k_lexical": 50,
+      "rerank": false,
+      "rerank_in": 50,
+      "rerank_out": 8,
+      "rewrite": false,
+      "rrf_k": 60,
+      "second_round": false
+    },
+    "router": {
+      "ask_threshold": 0.6,
+      "default_intent": "lookup"
+    },
+    "verify": {
+      "answers_question": false,
+      "atomic_claims": false,
+      "partial_threshold": 0.3,
+      "support": "llm",
+      "support_threshold": 0.5
+    }
+  },
+  "engine_configs": {
+    "engine": {
+      "answer": {
+        "max_searches": 4,
+        "mode": "search",
+        "search_k": 5
+      },
+      "decide": {
+        "conflict_margin": 0.1,
+        "min_supported_fraction": 1.0,
+        "mode": "grade",
+        "partial_fraction": 0.5
+      },
+      "draft": {
+        "max_context_chars": 24000,
+        "max_sentences": 3,
+        "max_tokens": 4096,
+        "model": "claude-haiku-5-5",
+        "prompt": "v2"
+      },
+      "retrieve": {
+        "dense": true,
+        "early_stop": true,
+        "early_stop_margin": 0.35,
+        "expand": false,
+        "expand_hops": 1,
+        "k_dense": 50,
+        "k_lexical": 50,
+        "rerank": false,
+        "rerank_in": 50,
+        "rerank_out": 8,
+        "rewrite": false,
+        "rrf_k": 60,
+        "second_round": false
+      },
+      "router": {
+        "ask_threshold": 0.6,
+        "default_intent": "lookup"
+      },
+      "verify": {
+        "answers_question": false,
+        "atomic_claims": false,
+        "partial_threshold": 0.3,
+        "support": "llm",
+        "support_threshold": 0.5
+      }
+    }
+  },
+  "first_started": "2026-11-13T09:21:19Z",
+  "judge_is_policy_model": true,
+  "judge_model": "claude-sonnet-5-5",
+  "judge_model_policy": "claude-sonnet-5-5",
+  "last_run": {
+    "errors": 4,
+    "skipped": 0,
+    "stopped": null,
+    "written": 30
+  },
+  "last_started": "2026-11-13T09:21:19Z",
+  "latency_note": "ms is wall-clock around System.answer, measured the same way for every system, with 4 concurrent workers; stage_ms (engine only) is the sum of the engine's stage timings",
+  "ledger": {
+    "cap_usd": 2.7,
+    "margin_usd": 0.25,
+    "path": "runs/v2/ledger-B.jsonl"
+  },
+  "licence": "tax tier: CC BY 4.0 (unicamp-dl/BR-TaxQA-R); federal tier: texts are official acts (not protected by copyright, Lei 9.610/1998 art. 8, I, as stated by ctresb/leis; scripts MIT), referenced by commit and URN, not redistributed; versioned tier: official texts of the C\u00e2mara dos Deputados portal",
+  "limit": 5,
+  "locked_hash": "f13783b57968b2b8b9313bb31d89f83aac1ea417520a9de70676aa890d52ad53",
+  "model_provenance": {
+    "embedder": {
+      "id": "onnx:intfloat/multilingual-e5-small",
+      "onnx_sha256": "ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665",
+      "tokenizer_sha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39"
+    },
+    "entailer": {
+      "id": "onnx:MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+      "onnx_sha256": "79f8cda2b1230585a95ea0514a6f1bd21c5c986ba0529bb3261213a3e195fa6e",
+      "tokenizer_sha256": "098c131bb4423163db239755e309facaa6850059f850f9f3d88a78344a4b631c"
+    },
+    "generator": {
+      "id": "claude-haiku-5-5",
+      "max_tokens": 4096,
+      "note": "not sent: the model rejects the parameter; sampling is the API default",
+      "temperature": null,
+      "thinking": null
+    },
+    "reranker": {
+      "id": "onnx:cross-encoder/mmarco-mMiniLMv2-L12-H384-v1",
+      "onnx_sha256": "3e9a03ed1e966f7c5288dd4230e3d6a9bf5e3a170a06f1f4241c5bca12c6487c",
+      "tokenizer_sha256": "62c24cdc13d4c9952d63718d6c9fa4c287974249e16b7ade6d5a85e7bbb75626"
+    }
+  },
+  "models": {
+    "embedder": "onnx:intfloat/multilingual-e5-small",
+    "entailer": "onnx:MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+    "generator": "claude-haiku-5-5",
+    "reranker": "onnx:cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+  },
+  "n_questions": 5,
+  "params": {
+    "agent_k": 5,
+    "agent_rerank": false,
+    "cap_usd": 2.7,
+    "data_root": "data",
+    "dataset": "brlaw-core",
+    "dry_run": false,
+    "embedder": null,
+    "entailer": null,
+    "estimate_usd": 0.02,
+    "judge_model": null,
+    "k": 8,
+    "key_env": "PROJECTS_ANTHROPIC_KEY",
+    "ledger": "runs/v2/ledger-B.jsonl",
+    "legal_prompt": "v2",
+    "limit": 5,
+    "long_context_limit": 90000,
+    "margin_usd": 0.25,
+    "max_actions": 4,
+    "model": null,
+    "out": "runs/v2/B/smoke-law",
+    "overrides": [
+      "draft.max_tokens=4096"
+    ],
+    "paid": true,
+    "registered_run": null,
+    "reranker": null,
+    "seed": 0,
+    "split": "dev",
+    "strong_model": null,
+    "systems": "closed_book,hybrid,agentic,engine,engine2",
+    "thinking": "default",
+    "time_aware": false,
+    "time_aware_variants": true,
+    "v2_cache": true,
+    "v2_calibration": null,
+    "v2_candidate": null,
+    "v2_sets": [],
+    "variants_of": "agentic",
+    "workers": 4
+  },
+  "price_table": "anthropic-2026-11",
+  "prompts_hash": "c025db9efc35daf759babe28848d6db14a0f8c2fbc853ea21cd60e01505d3a7b",
+  "protected_hash": "3b4e5db71c21d17660e927052c2e46c09630c56972ab452ee5690db1dee2aed0",
+  "question_ids": [
+    "taxqa-038",
+    "taxqa-259",
+    "taxqa-379",
+    "taxqa-416",
+    "taxqa-681"
+  ],
+  "seed": 0,
+  "spent_usd": 0.06384325499999999,
+  "split": "dev",
+  "split_ids_sha256": "bc7d55c5cfc963d158e35251a03d5786d1c3d5d842784b3cd6bea3f2bf8e89d2",
+  "strong_model": null,
+  "surface_hash": "5e5f9afb2ae735c7fdc2ab9c8c3ae11cdefe0c88a2dd0354d165b203d7b299a4",
+  "systems": [
+    {
+      "available": true,
+      "exploratory": false,
+      "name": "closed_book",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 8,
+      "name": "hybrid",
+      "reason": "",
+      "time_aware": false
+    },
+    {
+      "available": true,
+      "exploratory": false,
+      "k": 5,
+      "max_actions": 4,
+      "name": "agentic",
+      "reason": "",
+      "retriever": "hybrid",
+      "time_aware": false
+    },
+    {
+      "answer_mode": "search",
+      "available": true,
+      "decide_mode": "grade",
+      "exploratory": false,
+      "max_searches": 4,
+      "name": "engine",
+      "reason": "",
+      "time_aware": true
+    },
+    {
+      "available": true,
+      "calibration_file": false,
+      "calibration_tau": null,
+      "exploratory": false,
+      "name": "engine2",
+      "reason": "",
+      "surface_hash": "4a46984530d0a1dcdcca108b4c51153631cfea4fd79d83122e0f2e060f91a3fd",
+      "time_aware": true
+    },
+    {
+      "available": true,
+      "exploratory": true,
+      "k": 5,
+      "max_actions": 4,
+      "name": "agentic+asof",
+      "reason": "",
+      "retriever": "hybrid",
+      "time_aware": true
+    }
+  ],
+  "v2_cache": true,
+  "v2_surface_hash": "4a46984530d0a1dcdcca108b4c51153631cfea4fd79d83122e0f2e060f91a3fd",
+  "workers": 4
+}
