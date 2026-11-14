@@ -5,7 +5,7 @@ Code state: `v2` at c0de81c (judge max_tokens 4096, a reply cut at max_tokens co
 Hashes: protected 5caae6ef44e8634d2e03134bc6f08073627b9fd6112ca65b84b5ffd2bada9657, locked f13783b57968b2b8b9313bb31d89f83aac1ea417520a9de70676aa890d52ad53,
 surface 547d7f32387e2e4aff33eaa5ff39a388b52084f3680e54515ccc3d1433d878b3, prompts c025db9efc35daf759babe28848d6db14a0f8c2fbc853ea21cd60e01505d3a7b.
 Generator claude-haiku-5-5 (thinking at default, caching on); engine2 judge claude-sonnet-5-5 (ablation: claude-haiku-5-5).
-Full per-run tables are in each folder's `results.md` (not committed: they come from rows that carry answer text); the family tables and the legal analysis are committed beside this file.
+Full per-run tables are in each folder's `results.md` and `results.json`; the family tables and the legal analysis are beside this file. The row files (results.jsonl, citations.jsonl) carry answer text and are not committed.
 
 ## Spending (US$)
 | ledger | what | total |
