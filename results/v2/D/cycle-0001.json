@@ -1,0 +1,17 @@
+{
+  "calibration": null,
+  "candidates": [
+    "b41a64b4ec24b64a9dc23588503a0699089b6919380d75e221f8ce1a9cda727f",
+    "1e7db6468ea3224cacf49bb9b8d99ade3666bbf9e241c0132e708c513dfc709f",
+    "2bec347688c2bcdd404e4324fc5982f05f6d0044a3b7ba30549d3a8ef19fcb27",
+    "3fd05f012eeea7ed5869060071d200314a71e8700f0f58be5e8035ea5d2032a3"
+  ],
+  "cycle": 1,
+  "judge_model": "claude-sonnet-5-5",
+  "parent": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "promoted": null,
+  "rollback": null,
+  "seed": 20261113,
+  "status": "complete",
+  "tripwires": []
+}

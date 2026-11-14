@@ -1,0 +1,64 @@
+{
+  "cycle": 1,
+  "status": "complete",
+  "parent": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "champion": {
+    "id": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "surface_hash": "df02f70a1a6d20b39b1fa16f23407a1afc3ac31139f5d80d1613a3c32bb8e505"
+  },
+  "promoted": null,
+  "rollback": null,
+  "calibration": null,
+  "tripwires": [],
+  "candidates": [
+    {
+      "id": "b41a64b4ec24b64a9dc23588503a0699089b6919380d75e221f8ce1a9cda727f",
+      "status": "archived",
+      "reason": "not among the top for the dev stage",
+      "score": 0.8375,
+      "stages": {
+        "static": true,
+        "smoke": true,
+        "screen": true
+      }
+    },
+    {
+      "id": "1e7db6468ea3224cacf49bb9b8d99ade3666bbf9e241c0132e708c513dfc709f",
+      "status": "archived",
+      "reason": "not among the top for the dev stage",
+      "score": 0.8,
+      "stages": {
+        "static": true,
+        "smoke": true,
+        "screen": true
+      }
+    },
+    {
+      "id": "2bec347688c2bcdd404e4324fc5982f05f6d0044a3b7ba30549d3a8ef19fcb27",
+      "status": "archived",
+      "reason": "not among the top for the dev stage",
+      "score": 0.84375,
+      "stages": {
+        "static": true,
+        "smoke": true,
+        "screen": true
+      }
+    },
+    {
+      "id": "3fd05f012eeea7ed5869060071d200314a71e8700f0f58be5e8035ea5d2032a3",
+      "status": "rejected_dev",
+      "reason": "paired difference -0.080 is not positive",
+      "score": 0.84,
+      "stages": {
+        "static": true,
+        "smoke": true,
+        "screen": true,
+        "dev": false
+      }
+    }
+  ],
+  "judge_model": "claude-sonnet-5-5",
+  "cost_usd": 1.417816,
+  "spent_usd": 1.417816,
+  "cap_usd": 10.0
+}
