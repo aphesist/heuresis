@@ -1,0 +1,15 @@
+{
+  "alpha": 0.05,
+  "coverage": 0.0,
+  "created": "2026-11-14T19:33:28Z",
+  "dataset": "brlaw-core",
+  "delta": 0.1,
+  "errors": 0,
+  "label": "judge_equivalent",
+  "n_answered": 0,
+  "n_questions": 100,
+  "split": "dev",
+  "surface_hash": "f108cf9817e0a526ad227c0d33ef6c0fda239b46348a4afadeb3a9c90bdfa652",
+  "tau": null,
+  "upper": 1.0
+}

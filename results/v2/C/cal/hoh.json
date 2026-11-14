@@ -1,0 +1,15 @@
+{
+  "alpha": 0.05,
+  "coverage": 0.0,
+  "created": "2026-11-14T19:33:27Z",
+  "dataset": "hoh",
+  "delta": 0.1,
+  "errors": 0,
+  "label": "containment",
+  "n_answered": 0,
+  "n_questions": 400,
+  "split": "cal0",
+  "surface_hash": "df02f70a1a6d20b39b1fa16f23407a1afc3ac31139f5d80d1613a3c32bb8e505",
+  "tau": null,
+  "upper": 1.0
+}
