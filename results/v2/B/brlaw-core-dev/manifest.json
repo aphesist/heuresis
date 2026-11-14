@@ -148,11 +148,11 @@
   "judge_model_policy": "claude-sonnet-5-5",
   "last_run": {
     "errors": 0,
-    "skipped": 597,
+    "skipped": 600,
     "stopped": null,
-    "written": 3
+    "written": 0
   },
-  "last_started": "2026-11-13T10:07:53Z",
+  "last_started": "2026-11-14T01:12:18Z",
   "latency_note": "ms is wall-clock around System.answer, measured the same way for every system, with 4 concurrent workers; stage_ms (engine only) is the sum of the engine's stage timings",
   "ledger": {
     "cap_usd": 2.7,
@@ -340,7 +340,7 @@
     "taxqa-701"
   ],
   "seed": 0,
-  "spent_usd": 2.043551345,
+  "spent_usd": 2.460482999999994,
   "split": "dev",
   "split_ids_sha256": "bc7d55c5cfc963d158e35251a03d5786d1c3d5d842784b3cd6bea3f2bf8e89d2",
   "strong_model": null,

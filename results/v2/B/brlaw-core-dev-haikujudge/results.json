@@ -1,0 +1,203 @@
+{
+  "banner": null,
+  "dry_run": false,
+  "dataset": "brlaw-core",
+  "split": "dev",
+  "n_questions_planned": 100,
+  "error_rows": 0,
+  "complete_case": {
+    "systems": [
+      "engine2"
+    ],
+    "n_common": 100,
+    "completed": {
+      "engine2": 100
+    }
+  },
+  "workers": 4,
+  "locked_hash": "f13783b57968b2b8b9313bb31d89f83aac1ea417520a9de70676aa890d52ad53",
+  "surface_hash": "5e5f9afb2ae735c7fdc2ab9c8c3ae11cdefe0c88a2dd0354d165b203d7b299a4",
+  "prompts_hash": "c025db9efc35daf759babe28848d6db14a0f8c2fbc853ea21cd60e01505d3a7b",
+  "price_table": "anthropic-2026-11",
+  "models": {
+    "embedder": "onnx:intfloat/multilingual-e5-small",
+    "entailer": "onnx:MoritzLaurer/multilingual-MiniLMv2-L6-mnli-xnli",
+    "generator": "claude-haiku-5-5",
+    "reranker": "onnx:cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+  },
+  "bootstrap_iters": 10000,
+  "seed": 0,
+  "unavailable": {},
+  "systems": {
+    "engine2": {
+      "n": 100,
+      "counts": {
+        "correct": 0,
+        "wrong": 20,
+        "abstained": 80
+      },
+      "wilson": {
+        "correct": {
+          "p": 0.0,
+          "lo": 0.0,
+          "hi": 0.03699349820698566
+        },
+        "wrong": {
+          "p": 0.2,
+          "lo": 0.1333669333310325,
+          "hi": 0.28882916559315885
+        },
+        "abstained": {
+          "p": 0.8,
+          "lo": 0.7111708344068413,
+          "hi": 0.8666330666689674
+        }
+      },
+      "errors": 0,
+      "penalised_score": {
+        "est": -0.2,
+        "lo": -0.28,
+        "hi": -0.12
+      },
+      "accuracy": 0.0,
+      "error_rate_answered": {
+        "p": 1.0,
+        "wrong": 20,
+        "answered": 20,
+        "lo": 0.8388748419471808,
+        "hi": 1.0
+      },
+      "coverage": 0.2,
+      "selective_accuracy": 0.0,
+      "aurc": 1.0,
+      "risk_coverage": [
+        [
+          0.05,
+          1.0
+        ],
+        [
+          0.1,
+          1.0
+        ],
+        [
+          0.15,
+          1.0
+        ],
+        [
+          0.2,
+          1.0
+        ],
+        [
+          0.25,
+          1.0
+        ],
+        [
+          0.3,
+          1.0
+        ],
+        [
+          0.35,
+          1.0
+        ],
+        [
+          0.4,
+          1.0
+        ],
+        [
+          0.45,
+          1.0
+        ],
+        [
+          0.5,
+          1.0
+        ],
+        [
+          0.55,
+          1.0
+        ],
+        [
+          0.6,
+          1.0
+        ],
+        [
+          0.65,
+          1.0
+        ],
+        [
+          0.7,
+          1.0
+        ],
+        [
+          0.75,
+          1.0
+        ],
+        [
+          0.8,
+          1.0
+        ],
+        [
+          0.85,
+          1.0
+        ],
+        [
+          0.9,
+          1.0
+        ],
+        [
+          0.95,
+          1.0
+        ],
+        [
+          1.0,
+          1.0
+        ]
+      ],
+      "unanswerable": {
+        "n": 0,
+        "abstain_rate": null
+      },
+      "citation": {
+        "n": 18,
+        "precision": 0.4898148148148148,
+        "recall": 0.6177248677248677
+      },
+      "retrieval_recall": {
+        "n": 77,
+        "value": 0.4653693708888515
+      },
+      "cost": {
+        "mean_usd": 0.00451941855,
+        "total_usd": 0.451941855,
+        "mean_tokens_in": 3994.87,
+        "mean_tokens_out": 2720.83
+      },
+      "cost_per_correct": {
+        "est": null,
+        "lo": null,
+        "hi": null
+      },
+      "latency_ms": {
+        "median": 12229.023917499944,
+        "p95": 28706.99244360003
+      },
+      "stage_ms_median": 13758.848022499478,
+      "mean_answer_chars": 826.0,
+      "mean_calls": 3.15,
+      "mean_searches": 4.22,
+      "time_aware": true
+    }
+  },
+  "paired": {},
+  "exploratory_paired": {},
+  "reference": "engine2",
+  "exploratory_systems": [],
+  "pareto": {
+    "engine2": {
+      "mean_usd": 0.00451941855,
+      "accuracy": 0.0,
+      "penalised_score": -0.2,
+      "pareto_accuracy": true,
+      "pareto_penalised_score": true
+    }
+  }
+}

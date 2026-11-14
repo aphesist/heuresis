@@ -1,0 +1,1558 @@
+{
+ "reference": "engine2",
+ "systems": [
+  "closed_book",
+  "hybrid",
+  "agentic",
+  "agentic+asof",
+  "engine",
+  "engine2"
+ ],
+ "sets": {
+  "dev": {
+   "folder": "runs/v2/B/brlaw-core-dev",
+   "questions": 100,
+   "complete_cases": 100,
+   "systems_present": [
+    "closed_book",
+    "hybrid",
+    "agentic",
+    "agentic+asof",
+    "engine",
+    "engine2"
+   ],
+   "systems_missing": [],
+   "errors": {
+    "closed_book": 0,
+    "hybrid": 0,
+    "agentic": 0,
+    "agentic+asof": 0,
+    "engine": 0,
+    "engine2": 0
+   },
+   "systems": {
+    "closed_book": {
+     "answered": 75,
+     "abstained": 25,
+     "coverage": [
+      0.75,
+      0.657,
+      0.8245
+     ],
+     "tainted_all": [
+      14,
+      100,
+      [
+       0.14,
+       0.0853,
+       0.2214
+      ]
+     ],
+     "tainted_answered": [
+      14,
+      75,
+      [
+       0.1867,
+       0.1146,
+       0.2893
+      ]
+     ],
+     "tainted_covered_only_all": [
+      13,
+      100,
+      [
+       0.13,
+       0.0776,
+       0.2098
+      ]
+     ],
+     "refs_per_answer": 2.65,
+     "norm_not_found": [
+      2,
+      156
+     ],
+     "article_not_found": [
+      20,
+      156
+     ],
+     "not_in_force": [
+      0,
+      134
+     ],
+     "no_reference": [
+      1,
+      75
+     ],
+     "usd": 0.0672,
+     "usd_per_question": 0.00067,
+     "usd_generator": 0.0672,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00067,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 1.0,
+     "searches_mean": 0.0,
+     "latency_ms_median": 6765.828322000743,
+     "equivalent_answers": 28,
+     "useful": [
+      21,
+      100,
+      [
+       0.21,
+       0.1417,
+       0.2998
+      ]
+     ],
+     "usd_per_useful": 0.0032,
+     "usd_per_useful_generator": 0.0032,
+     "usd_per_useful_judge": 0.0,
+     "support": [
+      26,
+      134,
+      [
+       0.194,
+       0.136,
+       0.2691
+      ]
+     ]
+    },
+    "hybrid": {
+     "answered": 62,
+     "abstained": 38,
+     "coverage": [
+      0.62,
+      0.5221,
+      0.709
+     ],
+     "tainted_all": [
+      5,
+      100,
+      [
+       0.05,
+       0.0215,
+       0.1118
+      ]
+     ],
+     "tainted_answered": [
+      5,
+      62,
+      [
+       0.0806,
+       0.0349,
+       0.1753
+      ]
+     ],
+     "tainted_covered_only_all": [
+      3,
+      100,
+      [
+       0.03,
+       0.0103,
+       0.0845
+      ]
+     ],
+     "refs_per_answer": 3.4,
+     "norm_not_found": [
+      3,
+      182
+     ],
+     "article_not_found": [
+      3,
+      182
+     ],
+     "not_in_force": [
+      0,
+      176
+     ],
+     "no_reference": [
+      0,
+      62
+     ],
+     "usd": 0.0988,
+     "usd_per_question": 0.00099,
+     "usd_generator": 0.0988,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00099,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 1.0,
+     "searches_mean": 1.0,
+     "latency_ms_median": 5980.697544000577,
+     "equivalent_answers": 35,
+     "useful": [
+      33,
+      100,
+      [
+       0.33,
+       0.2456,
+       0.4269
+      ]
+     ],
+     "usd_per_useful": 0.00299,
+     "usd_per_useful_generator": 0.00299,
+     "usd_per_useful_judge": 0.0,
+     "support": [
+      149,
+      175,
+      [
+       0.8514,
+       0.7912,
+       0.8965
+      ]
+     ]
+    },
+    "agentic": {
+     "answered": 75,
+     "abstained": 25,
+     "coverage": [
+      0.75,
+      0.657,
+      0.8245
+     ],
+     "tainted_all": [
+      9,
+      100,
+      [
+       0.09,
+       0.0481,
+       0.1623
+      ]
+     ],
+     "tainted_answered": [
+      9,
+      75,
+      [
+       0.12,
+       0.0644,
+       0.2126
+      ]
+     ],
+     "tainted_covered_only_all": [
+      5,
+      100,
+      [
+       0.05,
+       0.0215,
+       0.1118
+      ]
+     ],
+     "refs_per_answer": 3.24,
+     "norm_not_found": [
+      5,
+      197
+     ],
+     "article_not_found": [
+      7,
+      197
+     ],
+     "not_in_force": [
+      0,
+      185
+     ],
+     "no_reference": [
+      0,
+      75
+     ],
+     "usd": 0.1879,
+     "usd_per_question": 0.00188,
+     "usd_generator": 0.1879,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00188,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 3.01,
+     "searches_mean": 2.01,
+     "latency_ms_median": 9375.011207999705,
+     "equivalent_answers": 36,
+     "useful": [
+      32,
+      100,
+      [
+       0.32,
+       0.2367,
+       0.4166
+      ]
+     ],
+     "usd_per_useful": 0.00587,
+     "usd_per_useful_generator": 0.00587,
+     "usd_per_useful_judge": 0.0,
+     "support": [
+      160,
+      185,
+      [
+       0.8649,
+       0.8081,
+       0.9068
+      ]
+     ]
+    },
+    "agentic+asof": {
+     "answered": 73,
+     "abstained": 27,
+     "coverage": [
+      0.73,
+      0.6357,
+      0.8073
+     ],
+     "tainted_all": [
+      6,
+      100,
+      [
+       0.06,
+       0.0278,
+       0.1248
+      ]
+     ],
+     "tainted_answered": [
+      6,
+      73,
+      [
+       0.0822,
+       0.0382,
+       0.1679
+      ]
+     ],
+     "tainted_covered_only_all": [
+      4,
+      100,
+      [
+       0.04,
+       0.0157,
+       0.0984
+      ]
+     ],
+     "refs_per_answer": 3.22,
+     "norm_not_found": [
+      2,
+      193
+     ],
+     "article_not_found": [
+      4,
+      193
+     ],
+     "not_in_force": [
+      0,
+      187
+     ],
+     "no_reference": [
+      0,
+      73
+     ],
+     "usd": 0.1989,
+     "usd_per_question": 0.00199,
+     "usd_generator": 0.1989,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00199,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 3.04,
+     "searches_mean": 2.04,
+     "latency_ms_median": 8171.36385699996,
+     "equivalent_answers": 40,
+     "useful": [
+      37,
+      100,
+      [
+       0.37,
+       0.2818,
+       0.4678
+      ]
+     ],
+     "usd_per_useful": 0.00538,
+     "usd_per_useful_generator": 0.00538,
+     "usd_per_useful_judge": 0.0,
+     "support": [
+      160,
+      187,
+      [
+       0.8556,
+       0.7981,
+       0.8988
+      ]
+     ]
+    },
+    "engine": {
+     "answered": 76,
+     "abstained": 24,
+     "coverage": [
+      0.76,
+      0.6677,
+      0.8331
+     ],
+     "tainted_all": [
+      0,
+      100,
+      [
+       0.0,
+       0.0,
+       0.037
+      ]
+     ],
+     "tainted_answered": [
+      0,
+      76,
+      [
+       0.0,
+       0.0,
+       0.0481
+      ]
+     ],
+     "tainted_covered_only_all": [
+      0,
+      100,
+      [
+       0.0,
+       0.0,
+       0.037
+      ]
+     ],
+     "refs_per_answer": 4.11,
+     "norm_not_found": [
+      0,
+      291
+     ],
+     "article_not_found": [
+      0,
+      291
+     ],
+     "not_in_force": [
+      0,
+      291
+     ],
+     "no_reference": [
+      0,
+      76
+     ],
+     "usd": 0.2964,
+     "usd_per_question": 0.00296,
+     "usd_generator": 0.2964,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00296,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 3.15,
+     "searches_mean": 2.39,
+     "latency_ms_median": 17311.52672400094,
+     "equivalent_answers": 25,
+     "useful": [
+      25,
+      100,
+      [
+       0.25,
+       0.1755,
+       0.343
+      ]
+     ],
+     "usd_per_useful": 0.01186,
+     "usd_per_useful_generator": 0.01186,
+     "usd_per_useful_judge": 0.0,
+     "support": [
+      208,
+      289,
+      [
+       0.7197,
+       0.6653,
+       0.7684
+      ]
+     ]
+    },
+    "engine2": {
+     "answered": 41,
+     "abstained": 59,
+     "coverage": [
+      0.41,
+      0.3187,
+      0.508
+     ],
+     "tainted_all": [
+      0,
+      100,
+      [
+       0.0,
+       0.0,
+       0.037
+      ]
+     ],
+     "tainted_answered": [
+      0,
+      41,
+      [
+       0.0,
+       0.0,
+       0.0857
+      ]
+     ],
+     "tainted_covered_only_all": [
+      0,
+      100,
+      [
+       0.0,
+       0.0,
+       0.037
+      ]
+     ],
+     "refs_per_answer": 5.2,
+     "norm_not_found": [
+      0,
+      172
+     ],
+     "article_not_found": [
+      0,
+      172
+     ],
+     "not_in_force": [
+      0,
+      172
+     ],
+     "no_reference": [
+      0,
+      41
+     ],
+     "usd": 1.1943,
+     "usd_per_question": 0.01194,
+     "usd_generator": 0.3958,
+     "usd_judge": 0.7985,
+     "usd_per_question_generator": 0.00396,
+     "usd_per_question_judge": 0.00799,
+     "calls_mean": 3.09,
+     "searches_mean": 4.19,
+     "latency_ms_median": 12534.72114500073,
+     "equivalent_answers": 25,
+     "useful": [
+      25,
+      100,
+      [
+       0.25,
+       0.1755,
+       0.343
+      ]
+     ],
+     "usd_per_useful": 0.04777,
+     "usd_per_useful_generator": 0.01583,
+     "usd_per_useful_judge": 0.03194,
+     "support": [
+      29,
+      171,
+      [
+       0.1696,
+       0.1208,
+       0.2329
+      ]
+     ]
+    }
+   },
+   "error_flag_over_2pct": [],
+   "tainted": {
+    "strict": {
+     "closed_book": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 14,
+      "p_raw": 0.0001220703125,
+      "diff_reference_minus_other": [
+       -0.14,
+       -0.21,
+       -0.08
+      ],
+      "in_holm_family": true,
+      "p_holm": 0.001221,
+      "significant_holm_0.05": true,
+      "reference_tainted_lower": true
+     },
+     "hybrid": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 5,
+      "p_raw": 0.0625,
+      "diff_reference_minus_other": [
+       -0.05,
+       -0.1,
+       -0.01
+      ],
+      "in_holm_family": true,
+      "p_holm": 0.25,
+      "significant_holm_0.05": false,
+      "reference_tainted_lower": true
+     },
+     "agentic": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 9,
+      "p_raw": 0.00390625,
+      "diff_reference_minus_other": [
+       -0.09,
+       -0.15,
+       -0.04
+      ],
+      "in_holm_family": true,
+      "p_holm": 0.027344,
+      "significant_holm_0.05": true,
+      "reference_tainted_lower": true
+     },
+     "agentic+asof": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 6,
+      "p_raw": 0.03125,
+      "diff_reference_minus_other": [
+       -0.06,
+       -0.11,
+       -0.02
+      ],
+      "in_holm_family": true,
+      "p_holm": 0.15625,
+      "significant_holm_0.05": false,
+      "reference_tainted_lower": true
+     },
+     "engine": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 0,
+      "p_raw": 1.0,
+      "diff_reference_minus_other": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "in_holm_family": false,
+      "non_inferiority": {
+       "upper_one_sided_95": 0.0,
+       "margin": 0.01,
+       "non_inferior": true,
+       "p_one_sided": 0.0002,
+       "in_holm_family": true,
+       "p_holm": 0.0018,
+       "significant_holm_0.05": true
+      }
+     }
+    },
+    "covered_only": {
+     "closed_book": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 13,
+      "p_raw": 0.000244140625,
+      "diff_reference_minus_other": [
+       -0.13,
+       -0.2,
+       -0.07
+      ],
+      "in_holm_family": false
+     },
+     "hybrid": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 3,
+      "p_raw": 0.25,
+      "diff_reference_minus_other": [
+       -0.03,
+       -0.07,
+       0.0
+      ],
+      "in_holm_family": false
+     },
+     "agentic": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 5,
+      "p_raw": 0.0625,
+      "diff_reference_minus_other": [
+       -0.05,
+       -0.1,
+       -0.01
+      ],
+      "in_holm_family": false
+     },
+     "agentic+asof": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 4,
+      "p_raw": 0.125,
+      "diff_reference_minus_other": [
+       -0.04,
+       -0.08,
+       -0.01
+      ],
+      "in_holm_family": false
+     },
+     "engine": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 0,
+      "p_raw": 1.0,
+      "diff_reference_minus_other": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "in_holm_family": false,
+      "non_inferiority": {
+       "upper_one_sided_95": 0.0,
+       "margin": 0.01,
+       "non_inferior": true,
+       "p_one_sided": 0.0002,
+       "in_holm_family": false
+      }
+     }
+    }
+   },
+   "useful_diffs": {
+    "closed_book": {
+     "diff_reference_minus_system": [
+      0.04,
+      -0.06,
+      0.14
+     ],
+     "lower_one_sided_95": -0.05
+    },
+    "hybrid": {
+     "diff_reference_minus_system": [
+      -0.08,
+      -0.16,
+      0.0
+     ],
+     "lower_one_sided_95": -0.15
+    },
+    "agentic": {
+     "diff_reference_minus_system": [
+      -0.07,
+      -0.14,
+      0.0
+     ],
+     "lower_one_sided_95": -0.13
+    },
+    "agentic+asof": {
+     "diff_reference_minus_system": [
+      -0.12,
+      -0.2,
+      -0.04
+     ],
+     "lower_one_sided_95": -0.19
+    },
+    "engine": {
+     "diff_reference_minus_system": [
+      0.0,
+      -0.08,
+      0.08
+     ],
+     "lower_one_sided_95": -0.07
+    }
+   },
+   "h1": {
+    "non_inferior_to_agentic": {
+     "lower_one_sided_95": -0.13,
+     "margin": -0.03,
+     "holds": false,
+     "p_one_sided": 0.880024,
+     "p_holm": 1.0
+    },
+    "superior_to_engine": {
+     "diff_ci95": [
+      0.0,
+      -0.08,
+      0.08
+     ],
+     "holds": false,
+     "p_one_sided": 0.559688,
+     "p_holm": 1.0
+    }
+   },
+   "h6": {
+    "engine2_minus_engine": {
+     "usd_per_useful_diff": [
+      0.03592,
+      0.02439,
+      0.05601
+     ]
+    },
+    "engine2_minus_agentic": {
+     "usd_per_useful_diff": [
+      0.0419,
+      0.02966,
+      0.06338
+     ]
+    }
+   },
+   "reference_replay": {
+    "rows_with_replay": 100,
+    "rows": 100,
+    "status": {
+     "answered": 36,
+     "abstained": 59,
+     "partial": 5
+    },
+    "abstention_types": {
+     "unsupported": 30,
+     "no_source": 25,
+     "false_premise": 2,
+     "conflict": 2
+    },
+    "below_tau": 0,
+    "claims": 675,
+    "claim_labels": {
+     "supported": 552,
+     "partial": 61,
+     "unsupported": 62
+    },
+    "claims_failing_check": {
+     "numbers_traced": 8,
+     "references_traced": 11
+    },
+    "dropped_claims": 348,
+    "dropped_by_reason": {
+     "withheld (answer not given)": 286,
+     "judge: unsupported": 44,
+     "gate: references_traced": 10,
+     "gate: numbers_traced": 7,
+     "gate: numbers_traced+references_traced": 1
+    },
+    "dropped_reason_texts_top10": {
+     "withheld: The sources found do not settle the question.": 147,
+     "withheld: The confidence is below the threshold.": 139,
+     "dropped by the judge": 44,
+     "reference problem: 'decisão': names a source none of the cit": 2,
+     "number not in the question, the date or a cited sentence: 1,": 2,
+     "number not in the question, the date or a cited sentence: 1": 1,
+     "reference problem: 'art. 6, do trânsito em julgado da decisã": 1,
+     "reference problem: 'IN RFB nº 897, de 2008': no such source ": 1,
+     "reference problem: 'art. 12-A da Lei nº 7.713, de 1988': the": 1,
+     "reference problem: 'art. 1º da Lei nº 6.321': no such source": 1
+    },
+    "judge_verdicts": {
+     "answer": {
+      "DIRECT": 52,
+      "PARTIAL": 23
+     },
+     "sufficient": {
+      "YES": 54,
+      "NO": 21
+     }
+    },
+    "escalated": 0,
+    "repairs_total": 30
+   }
+  },
+  "temporal": {
+   "folder": "runs/v2/B/brlaw-core-temporal",
+   "questions": 120,
+   "complete_cases": 120,
+   "systems_present": [
+    "closed_book",
+    "hybrid",
+    "agentic",
+    "agentic+asof",
+    "engine",
+    "engine2"
+   ],
+   "systems_missing": [],
+   "errors": {
+    "closed_book": 0,
+    "hybrid": 0,
+    "agentic": 0,
+    "agentic+asof": 0,
+    "engine": 0,
+    "engine2": 0
+   },
+   "systems": {
+    "closed_book": {
+     "answered": 24,
+     "abstained": 96,
+     "coverage": [
+      0.2,
+      0.1382,
+      0.2804
+     ],
+     "tainted_all": [
+      2,
+      120,
+      [
+       0.0167,
+       0.0046,
+       0.0587
+      ]
+     ],
+     "tainted_answered": [
+      2,
+      24,
+      [
+       0.0833,
+       0.0232,
+       0.2585
+      ]
+     ],
+     "tainted_covered_only_all": [
+      2,
+      120,
+      [
+       0.0167,
+       0.0046,
+       0.0587
+      ]
+     ],
+     "refs_per_answer": 3.71,
+     "norm_not_found": [
+      0,
+      46
+     ],
+     "article_not_found": [
+      2,
+      46
+     ],
+     "not_in_force": [
+      2,
+      44
+     ],
+     "no_reference": [
+      0,
+      24
+     ],
+     "usd": 0.0558,
+     "usd_per_question": 0.00047,
+     "usd_generator": 0.0558,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00047,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 1.0,
+     "searches_mean": 0.0,
+     "latency_ms_median": 4563.898271000653,
+     "support": [
+      20,
+      42,
+      [
+       0.4762,
+       0.3336,
+       0.6228
+      ]
+     ]
+    },
+    "hybrid": {
+     "answered": 44,
+     "abstained": 76,
+     "coverage": [
+      0.3667,
+      0.2858,
+      0.4558
+     ],
+     "tainted_all": [
+      0,
+      120,
+      [
+       0.0,
+       0.0,
+       0.031
+      ]
+     ],
+     "tainted_answered": [
+      0,
+      44,
+      [
+       0.0,
+       0.0,
+       0.0803
+      ]
+     ],
+     "tainted_covered_only_all": [
+      0,
+      120,
+      [
+       0.0,
+       0.0,
+       0.031
+      ]
+     ],
+     "refs_per_answer": 2.91,
+     "norm_not_found": [
+      0,
+      109
+     ],
+     "article_not_found": [
+      0,
+      109
+     ],
+     "not_in_force": [
+      0,
+      109
+     ],
+     "no_reference": [
+      0,
+      44
+     ],
+     "usd": 0.05,
+     "usd_per_question": 0.00042,
+     "usd_generator": 0.05,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00042,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 1.0,
+     "searches_mean": 1.0,
+     "latency_ms_median": 3343.33574700031,
+     "support": [
+      99,
+      109,
+      [
+       0.9083,
+       0.8393,
+       0.9494
+      ]
+     ]
+    },
+    "agentic": {
+     "answered": 57,
+     "abstained": 63,
+     "coverage": [
+      0.475,
+      0.3878,
+      0.5637
+     ],
+     "tainted_all": [
+      5,
+      120,
+      [
+       0.0417,
+       0.0179,
+       0.0938
+      ]
+     ],
+     "tainted_answered": [
+      5,
+      57,
+      [
+       0.0877,
+       0.0381,
+       0.1894
+      ]
+     ],
+     "tainted_covered_only_all": [
+      5,
+      120,
+      [
+       0.0417,
+       0.0179,
+       0.0938
+      ]
+     ],
+     "refs_per_answer": 3.46,
+     "norm_not_found": [
+      0,
+      138
+     ],
+     "article_not_found": [
+      1,
+      138
+     ],
+     "not_in_force": [
+      4,
+      137
+     ],
+     "no_reference": [
+      0,
+      57
+     ],
+     "usd": 0.2107,
+     "usd_per_question": 0.00176,
+     "usd_generator": 0.2107,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00176,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 3.54,
+     "searches_mean": 2.54,
+     "latency_ms_median": 9472.212075000016,
+     "support": [
+      107,
+      133,
+      [
+       0.8045,
+       0.729,
+       0.863
+      ]
+     ]
+    },
+    "agentic+asof": {
+     "answered": 100,
+     "abstained": 20,
+     "coverage": [
+      0.8333,
+      0.7565,
+      0.8894
+     ],
+     "tainted_all": [
+      8,
+      120,
+      [
+       0.0667,
+       0.0342,
+       0.1261
+      ]
+     ],
+     "tainted_answered": [
+      8,
+      100,
+      [
+       0.08,
+       0.0411,
+       0.15
+      ]
+     ],
+     "tainted_covered_only_all": [
+      7,
+      120,
+      [
+       0.0583,
+       0.0285,
+       0.1155
+      ]
+     ],
+     "refs_per_answer": 3.06,
+     "norm_not_found": [
+      1,
+      239
+     ],
+     "article_not_found": [
+      5,
+      239
+     ],
+     "not_in_force": [
+      2,
+      233
+     ],
+     "no_reference": [
+      0,
+      100
+     ],
+     "usd": 0.1518,
+     "usd_per_question": 0.00126,
+     "usd_generator": 0.1518,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00126,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 2.5,
+     "searches_mean": 1.5,
+     "latency_ms_median": 4020.670218000305,
+     "support": [
+      211,
+      231,
+      [
+       0.9134,
+       0.8701,
+       0.9433
+      ]
+     ]
+    },
+    "engine": {
+     "answered": 94,
+     "abstained": 26,
+     "coverage": [
+      0.7833,
+      0.7015,
+      0.8476
+     ],
+     "tainted_all": [
+      0,
+      120,
+      [
+       0.0,
+       0.0,
+       0.031
+      ]
+     ],
+     "tainted_answered": [
+      0,
+      94,
+      [
+       0.0,
+       0.0,
+       0.0393
+      ]
+     ],
+     "tainted_covered_only_all": [
+      0,
+      120,
+      [
+       0.0,
+       0.0,
+       0.031
+      ]
+     ],
+     "refs_per_answer": 2.48,
+     "norm_not_found": [
+      0,
+      222
+     ],
+     "article_not_found": [
+      0,
+      222
+     ],
+     "not_in_force": [
+      0,
+      222
+     ],
+     "no_reference": [
+      0,
+      94
+     ],
+     "usd": 0.1254,
+     "usd_per_question": 0.00104,
+     "usd_generator": 0.1254,
+     "usd_judge": 0.0,
+     "usd_per_question_generator": 0.00104,
+     "usd_per_question_judge": 0.0,
+     "calls_mean": 2.19,
+     "searches_mean": 1.4,
+     "latency_ms_median": 5705.648246999999,
+     "support": [
+      212,
+      222,
+      [
+       0.955,
+       0.9191,
+       0.9754
+      ]
+     ]
+    },
+    "engine2": {
+     "answered": 95,
+     "abstained": 25,
+     "coverage": [
+      0.7917,
+      0.7105,
+      0.8547
+     ],
+     "tainted_all": [
+      0,
+      120,
+      [
+       0.0,
+       0.0,
+       0.031
+      ]
+     ],
+     "tainted_answered": [
+      0,
+      95,
+      [
+       0.0,
+       0.0,
+       0.0389
+      ]
+     ],
+     "tainted_covered_only_all": [
+      0,
+      120,
+      [
+       0.0,
+       0.0,
+       0.031
+      ]
+     ],
+     "refs_per_answer": 1.78,
+     "norm_not_found": [
+      0,
+      140
+     ],
+     "article_not_found": [
+      0,
+      140
+     ],
+     "not_in_force": [
+      0,
+      140
+     ],
+     "no_reference": [
+      0,
+      95
+     ],
+     "usd": 0.4912,
+     "usd_per_question": 0.00409,
+     "usd_generator": 0.1319,
+     "usd_judge": 0.3593,
+     "usd_per_question_generator": 0.0011,
+     "usd_per_question_judge": 0.00299,
+     "calls_mean": 2.72,
+     "searches_mean": 2.58,
+     "latency_ms_median": 7105.249614999934,
+     "support": [
+      107,
+      140,
+      [
+       0.7643,
+       0.6875,
+       0.8269
+      ]
+     ]
+    }
+   },
+   "error_flag_over_2pct": [],
+   "tainted": {
+    "strict": {
+     "closed_book": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 2,
+      "p_raw": 0.5,
+      "diff_reference_minus_other": [
+       -0.0167,
+       -0.0417,
+       0.0
+      ],
+      "in_holm_family": true,
+      "p_holm": 1.0,
+      "significant_holm_0.05": false,
+      "reference_tainted_lower": true
+     },
+     "hybrid": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 0,
+      "p_raw": 1.0,
+      "diff_reference_minus_other": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "in_holm_family": true,
+      "p_holm": 1.0,
+      "significant_holm_0.05": false,
+      "reference_tainted_lower": false
+     },
+     "agentic": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 5,
+      "p_raw": 0.0625,
+      "diff_reference_minus_other": [
+       -0.0417,
+       -0.0833,
+       -0.0083
+      ],
+      "in_holm_family": true,
+      "p_holm": 0.25,
+      "significant_holm_0.05": false,
+      "reference_tainted_lower": true
+     },
+     "agentic+asof": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 8,
+      "p_raw": 0.0078125,
+      "diff_reference_minus_other": [
+       -0.0667,
+       -0.1167,
+       -0.025
+      ],
+      "in_holm_family": true,
+      "p_holm": 0.046875,
+      "significant_holm_0.05": true,
+      "reference_tainted_lower": true
+     },
+     "engine": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 0,
+      "p_raw": 1.0,
+      "diff_reference_minus_other": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "in_holm_family": false,
+      "non_inferiority": {
+       "upper_one_sided_95": 0.0,
+       "margin": 0.01,
+       "non_inferior": true,
+       "p_one_sided": 0.0002,
+       "in_holm_family": true,
+       "p_holm": 0.0018,
+       "significant_holm_0.05": true
+      }
+     }
+    },
+    "covered_only": {
+     "closed_book": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 2,
+      "p_raw": 0.5,
+      "diff_reference_minus_other": [
+       -0.0167,
+       -0.0417,
+       0.0
+      ],
+      "in_holm_family": false
+     },
+     "hybrid": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 0,
+      "p_raw": 1.0,
+      "diff_reference_minus_other": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "in_holm_family": false
+     },
+     "agentic": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 5,
+      "p_raw": 0.0625,
+      "diff_reference_minus_other": [
+       -0.0417,
+       -0.0833,
+       -0.0083
+      ],
+      "in_holm_family": false
+     },
+     "agentic+asof": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 7,
+      "p_raw": 0.015625,
+      "diff_reference_minus_other": [
+       -0.0583,
+       -0.1083,
+       -0.0167
+      ],
+      "in_holm_family": false
+     },
+     "engine": {
+      "reference_only_tainted": 0,
+      "other_only_tainted": 0,
+      "p_raw": 1.0,
+      "diff_reference_minus_other": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "in_holm_family": false,
+      "non_inferiority": {
+       "upper_one_sided_95": 0.0,
+       "margin": 0.01,
+       "non_inferior": true,
+       "p_one_sided": 0.0002,
+       "in_holm_family": false
+      }
+     }
+    }
+   },
+   "h4": {
+    "paired": true,
+    "outcomes": {
+     "closed_book": {
+      "abstained": 96,
+      "undetermined": 7,
+      "cited_repealed": 1,
+      "no_gold": 2,
+      "gold_version": 7,
+      "other_version": 7
+     },
+     "hybrid": {
+      "gold_version": 36,
+      "abstained": 76,
+      "undetermined": 4,
+      "other_version": 4
+     },
+     "agentic": {
+      "gold_version": 35,
+      "abstained": 63,
+      "undetermined": 5,
+      "other_version": 12,
+      "cited_repealed": 4,
+      "no_gold": 1
+     },
+     "agentic+asof": {
+      "gold_version": 64,
+      "abstained": 20,
+      "undetermined": 12,
+      "no_gold": 8,
+      "other_version": 14,
+      "cited_repealed": 2
+     },
+     "engine": {
+      "abstained": 26,
+      "no_gold": 11,
+      "undetermined": 21,
+      "gold_version": 51,
+      "answered_without_the_unit": 1,
+      "other_version": 9,
+      "unit_not_cited": 1
+     },
+     "engine2": {
+      "gold_version": 67,
+      "abstained": 25,
+      "no_gold": 11,
+      "undetermined": 11,
+      "other_version": 6
+     }
+    },
+    "vs_agentic+asof": {
+     "gold_version": {
+      "engine2": 67,
+      "agentic+asof": 64,
+      "n": 120
+     },
+     "reference_only": 8,
+     "comparator_only": 5,
+     "p_mcnemar_two_sided": 0.5810546875,
+     "p_one_sided_reference_fewer": 0.866577,
+     "diff_reference_minus_comparator": [
+      0.025,
+      -0.0333,
+      0.0833
+     ],
+     "superseded_wording": {
+      "engine2": 6,
+      "agentic+asof": 14
+     },
+     "h4_not_supported": false
+    }
+   },
+   "reference_replay": {
+    "rows_with_replay": 120,
+    "rows": 120,
+    "status": {
+     "answered": 68,
+     "abstained": 24,
+     "partial": 27,
+     "divergent": 1
+    },
+    "abstention_types": {
+     "no_source": 12,
+     "conflict": 7,
+     "not_valid_at_date": 2,
+     "unsupported": 4
+    },
+    "below_tau": 0,
+    "claims": 471,
+    "claim_labels": {
+     "supported": 400,
+     "partial": 27,
+     "unsupported": 44
+    },
+    "claims_failing_check": {
+     "numbers_traced": 23,
+     "references_traced": 14
+    },
+    "dropped_claims": 82,
+    "dropped_by_reason": {
+     "withheld (answer not given)": 38,
+     "gate: numbers_traced": 23,
+     "gate: references_traced": 14,
+     "judge: unsupported": 7
+    },
+    "dropped_reason_texts_top10": {
+     "withheld: The confidence is below the threshold.": 17,
+     "withheld: The sources found do not settle the question.": 14,
+     "dropped by the judge": 7,
+     "withheld: Sources of equal authority disagree: Decreto-Lei n": 7,
+     "reference problem: 'decisão': names a source none of the cit": 4,
+     "number not in the cited passages: 11, 10, 16": 3,
+     "reference problem: 'CLT': names a source none of the cited p": 2,
+     "reference problem: 'art. 29 da Lei nº 7.713/1988': names a u": 2,
+     "number not in the cited passages: 11, 10, 13": 1,
+     "number not in the cited passages: 17": 1
+    },
+    "judge_verdicts": {
+     "answer": {
+      "DIRECT": 96,
+      "PARTIAL": 8
+     },
+     "sufficient": {
+      "YES": 99,
+      "NO": 5
+     }
+    },
+    "escalated": 0,
+    "repairs_total": 66
+   }
+  }
+ },
+ "seed": 20261112,
+ "bootstrap_iters": 5000,
+ "skipped_folders": [
+  "runs/v2/B/brlaw-core-dev-haikujudge",
+  "runs/v2/B/hoh-dev2",
+  "runs/v2/B/hoh-dev2-haikujudge",
+  "runs/v2/B/multihoprag-dev2",
+  "runs/v2/B/multihoprag-dev2-haikujudge",
+  "runs/v2/B/musique-dev2",
+  "runs/v2/B/musique-dev2-haikujudge"
+ ],
+ "holm_family_size": 10
+}
