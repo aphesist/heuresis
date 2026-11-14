@@ -1,3 +1,5 @@
 B1 first: {"written": 600, "errors": 3, "spent_usd": 2.0383}
 B1 first: {"written": 3, "skipped": 597, "errors": 0, "stopped": null, "spent_usd": 2.043551345}
 B2 interrupted by container restart at 330/720 rows; relaunched (not an API error)
+B1 first: {"written": 0, "skipped": 600, "errors": 0, "stopped": null, "spent_usd": 2.460482999999994}
+B2 first: {"written": 423, "skipped": 297, "errors": 0, "stopped": null, "spent_usd": 3.1320644749999977}
