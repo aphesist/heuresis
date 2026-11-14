@@ -3,3 +3,6 @@ B1 first: {"written": 3, "skipped": 597, "errors": 0, "stopped": null, "spent_us
 B2 interrupted by container restart at 330/720 rows; relaunched (not an API error)
 B1 first: {"written": 0, "skipped": 600, "errors": 0, "stopped": null, "spent_usd": 2.460482999999994}
 B2 first: {"written": 423, "skipped": 297, "errors": 0, "stopped": null, "spent_usd": 3.1320644749999977}
+B3-musique first: {"written": 600, "skipped": 0, "errors": 0, "stopped": null, "spent_usd": 4.066886690000001}
+B3-multihoprag first: {"written": 600, "skipped": 0, "errors": 0, "stopped": null, "spent_usd": 5.316454579999999}
+B3-hoh first: {"written": 600, "skipped": 0, "errors": 0, "stopped": null, "spent_usd": 5.693647590000007}
